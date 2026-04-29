@@ -1,0 +1,70 @@
+<div class="master-page">
+  <div class="page-header">
+    <div>
+      <h1 class="page-title">Dental Services</h1>
+      <p class="page-subtitle">Configure procedures offered by your clinic</p>
+    </div>
+    <button mat-flat-button color="primary" (click)="openDialog()">
+      <i-tabler name="plus" size="18"></i-tabler>
+      Add Service
+    </button>
+  </div>
+
+  @if (loading) {
+    <div class="center-loader"><mat-spinner diameter="40"></mat-spinner></div>
+  } @else {
+    <div class="master-card">
+      <table mat-table [dataSource]="services" class="master-table">
+
+        <ng-container matColumnDef="name">
+          <th mat-header-cell *matHeaderCellDef>Service</th>
+          <td mat-cell *matCellDef="let s">
+            <div class="cell-primary">{{ s.name }}</div>
+            @if (s.description) {
+              <div class="cell-sub">{{ s.description }}</div>
+            }
+          </td>
+        </ng-container>
+
+        <ng-container matColumnDef="duration">
+          <th mat-header-cell *matHeaderCellDef>Duration</th>
+          <td mat-cell *matCellDef="let s">{{ s.duration_minutes }} min</td>
+        </ng-container>
+
+        <ng-container matColumnDef="price">
+          <th mat-header-cell *matHeaderCellDef>Price</th>
+          <td mat-cell *matCellDef="let s" class="cell-primary">₹{{ s.price | number }}</td>
+        </ng-container>
+
+        <ng-container matColumnDef="status">
+          <th mat-header-cell *matHeaderCellDef>Status</th>
+          <td mat-cell *matCellDef="let s">
+            <span class="status-chip" [class.active]="s.is_active" [class.inactive]="!s.is_active">
+              <span class="dot"></span>{{ s.is_active ? 'Active' : 'Inactive' }}
+            </span>
+          </td>
+        </ng-container>
+
+        <ng-container matColumnDef="actions">
+          <th mat-header-cell *matHeaderCellDef></th>
+          <td mat-cell *matCellDef="let s">
+            <div class="action-row">
+              <button mat-icon-button matTooltip="Edit" (click)="openDialog(s)">
+                <i-tabler name="pencil" size="16"></i-tabler>
+              </button>
+              <button mat-icon-button matTooltip="Delete" color="warn" (click)="delete(s)">
+                <i-tabler name="trash" size="16"></i-tabler>
+              </button>
+            </div>
+          </td>
+        </ng-container>
+
+        <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+        <tr mat-row *matRowDef="let row; columns: displayedColumns;"></tr>
+        <tr class="mat-row" *matNoDataRow>
+          <td class="mat-cell empty-row" [attr.colspan]="displayedColumns.length">No services configured.</td>
+        </tr>
+      </table>
+    </div>
+  }
+</div>

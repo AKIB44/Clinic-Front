@@ -1,0 +1,61 @@
+<div class="master-page">
+  <div class="page-header">
+    <div>
+      <h1 class="page-title">Clinic Profile</h1>
+      <p class="page-subtitle">Manage your clinic's information</p>
+    </div>
+  </div>
+
+  @if (loading) {
+    <div class="center-loader"><mat-spinner diameter="40"></mat-spinner></div>
+  } @else {
+    <div class="master-card profile-card">
+      <form [formGroup]="form" (ngSubmit)="save()">
+        <div class="section-title">General Information</div>
+
+        <mat-form-field appearance="outline" class="full-width">
+          <mat-label>Clinic Name</mat-label>
+          <input matInput formControlName="name">
+        </mat-form-field>
+
+        <div class="two-col">
+          <mat-form-field appearance="outline">
+            <mat-label>Phone</mat-label>
+            <input matInput formControlName="phone">
+          </mat-form-field>
+          <mat-form-field appearance="outline">
+            <mat-label>Email</mat-label>
+            <input matInput formControlName="email" type="email">
+          </mat-form-field>
+        </div>
+
+        <mat-form-field appearance="outline" class="full-width">
+          <mat-label>Address</mat-label>
+          <input matInput formControlName="address">
+        </mat-form-field>
+
+        <div class="two-col">
+          <mat-form-field appearance="outline">
+            <mat-label>City</mat-label>
+            <input matInput formControlName="city">
+          </mat-form-field>
+          <mat-form-field appearance="outline">
+            <mat-label>State</mat-label>
+            <input matInput formControlName="state">
+          </mat-form-field>
+        </div>
+
+        <mat-form-field appearance="outline" class="full-width">
+          <mat-label>Logo URL</mat-label>
+          <input matInput formControlName="logo_url" placeholder="https://...">
+        </mat-form-field>
+
+        <div class="form-actions">
+          <button mat-flat-button color="primary" type="submit" [disabled]="form.invalid || saving">
+            {{ saving ? 'Saving…' : 'Save Changes' }}
+          </button>
+        </div>
+      </form>
+    </div>
+  }
+</div>

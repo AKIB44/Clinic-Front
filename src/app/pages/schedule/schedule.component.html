@@ -1,92 +1,191 @@
-<div class="page-wrapper">
-  <div class="container-fluid">
-    <!-- Header -->
-    <div class="d-flex align-items-center justify-content-between m-b-24">
-      <div>
-        <h3 class="f-w-700 m-0">Today's Schedule</h3>
-        <span class="mat-body-2 text-muted">{{ today }}</span>
-      </div>
-      <div class="d-flex gap-2">
-        <button
-          mat-flat-button
-          [color]="chairFilter === 'all' ? 'primary' : undefined"
-          (click)="setChair('all')"
-        >All Chairs</button>
-        <button
-          mat-flat-button
-          [color]="chairFilter === '1' ? 'primary' : undefined"
-          (click)="setChair('1')"
-        >Chair 1</button>
-        <button
-          mat-flat-button
-          [color]="chairFilter === '2' ? 'primary' : undefined"
-          (click)="setChair('2')"
-        >Chair 2</button>
-      </div>
+<div class="kanban-page">
+
+  <!-- ── Header toolbar ───────────────────────────────────────────────── -->
+  <div class="board-header">
+    <h1 class="board-title">Today's Schedule</h1>
+
+    <!-- Date navigator -->
+    <div class="date-nav">
+      <button mat-icon-button (click)="prevDay()" matTooltip="Previous day">
+        <i-tabler name="chevron-left" size="18"></i-tabler>
+      </button>
+
+      <span class="date-label" (click)="picker.open()" matTooltip="Pick a date">
+        {{ dateLabel }}
+      </span>
+
+      <button mat-icon-button (click)="nextDay()" matTooltip="Next day">
+        <i-tabler name="chevron-right" size="18"></i-tabler>
+      </button>
+
+      <button mat-icon-button (click)="goToday()" matTooltip="Go to today">
+        <i-tabler name="calendar-today" size="18"></i-tabler>
+      </button>
     </div>
 
-    <!-- Loading -->
-    @if (loading) {
-      <div class="d-flex justify-content-center p-y-40">
-        <mat-spinner diameter="40"></mat-spinner>
-      </div>
-    }
+    <!-- Hidden date picker -->
+    <div class="date-picker-hidden">
+      <mat-form-field appearance="outline">
+        <input matInput [matDatepicker]="picker" [(ngModel)]="selectedDate"
+               (dateChange)="onDatePick($event.value)">
+        <mat-datepicker #picker></mat-datepicker>
+      </mat-form-field>
+    </div>
 
-    <!-- Error -->
-    @if (error && !loading) {
-      <mat-card class="cardWithShadow m-b-16">
-        <mat-card-content class="text-error p-16">{{ error }}</mat-card-content>
-      </mat-card>
-    }
+    <span class="spacer"></span>
 
-    <!-- Empty -->
-    @if (!loading && !error && filtered.length === 0) {
-      <mat-card class="cardWithShadow">
-        <mat-card-content class="d-flex flex-column align-items-center p-y-40 text-muted">
-          <i-tabler name="calendar-off" class="icon-48 m-b-12"></i-tabler>
-          <span class="f-s-16">No appointments scheduled for today</span>
-        </mat-card-content>
-      </mat-card>
-    }
+    <!-- Chair filter -->
+    <mat-button-toggle-group class="chair-toggle" [(ngModel)]="chairFilter">
+      <mat-button-toggle value="all">All Chairs</mat-button-toggle>
+      <mat-button-toggle value="1">Chair 1</mat-button-toggle>
+      <mat-button-toggle value="2">Chair 2</mat-button-toggle>
+    </mat-button-toggle-group>
+  </div>
 
-    <!-- Appointment cards -->
-    @if (!loading && filtered.length > 0) {
-      <div class="row">
-        @for (appt of filtered; track appt.id) {
-          <div class="col-12 col-md-6 col-xl-4 m-b-16">
-            <mat-card class="cardWithShadow h-100">
-              <mat-card-content class="p-16">
-                <div class="d-flex align-items-start justify-content-between m-b-12">
-                  <div>
-                    <h5 class="f-w-600 m-0">{{ appt.patient_name }}</h5>
-                    <span class="mat-body-2 text-muted">{{ appt.patient_phone }}</span>
+  <!-- ── Error banner ──────────────────────────────────────────────────── -->
+  @if (error) {
+    <div class="board-error">
+      <i-tabler name="alert-circle" size="18"></i-tabler>
+      {{ error }}
+    </div>
+  }
+
+  <!-- ── Summary strip ────────────────────────────────────────────────── -->
+  @if (!loading) {
+    <div class="summary-strip">
+      <span class="stat-chip total">
+        <i-tabler name="calendar" size="14"></i-tabler>
+        {{ totalCount }} Total
+      </span>
+      <span class="stat-chip active">
+        <i-tabler name="activity" size="14"></i-tabler>
+        {{ activeCount }} Active
+      </span>
+      <span class="stat-chip done">
+        <i-tabler name="checks" size="14"></i-tabler>
+        {{ doneCount }} Done
+      </span>
+      <span class="stat-chip pending">
+        <i-tabler name="clock" size="14"></i-tabler>
+        {{ pendingCount }} Pending
+      </span>
+    </div>
+  }
+
+  <!-- ── Loading state ─────────────────────────────────────────────────── -->
+  @if (loading) {
+    <div class="board-loading">
+      <mat-spinner diameter="40"></mat-spinner>
+      <span>Loading schedule…</span>
+    </div>
+  }
+
+  <!-- ── Board ─────────────────────────────────────────────────────────── -->
+  @if (!loading) {
+    <div class="board-scroll">
+      <div class="board-inner">
+
+        @for (col of columns; track trackByServiceId($index, col)) {
+          <div class="kanban-col">
+
+            <!-- Column header -->
+            <div class="col-header" [style.background]="col.headerBg">
+              <span class="col-dot" [style.background]="col.dotColor"></span>
+              <i-tabler [name]="col.icon" size="15"></i-tabler>
+              <span class="col-label">{{ col.label }}</span>
+              <span class="col-count">{{ columnCards(col.serviceId).length }}</span>
+            </div>
+
+            <!-- Column body -->
+            <div class="col-body">
+
+              @if (columnCards(col.serviceId).length === 0) {
+                <div class="col-empty">
+                  <i-tabler name="inbox" size="28"></i-tabler>
+                  No appointments
+                </div>
+              }
+
+              @for (appt of columnCards(col.serviceId); track trackById($index, appt)) {
+                <div class="appt-card"
+                     [class.expanded]="expandedCard === appt.id"
+                     (click)="toggleCard(appt.id)">
+
+                  <div class="card-main">
+
+                    <!-- Time & chair row -->
+                    <div class="card-time-row">
+                      <span class="card-time">
+                        <i-tabler name="clock" size="13"></i-tabler>
+                        {{ formatTime(appt.scheduled_at) }}
+                      </span>
+                      <span class="card-chair">Chair {{ appt.chair_id }}</span>
+                    </div>
+
+                    <!-- Patient name -->
+                    <div class="card-patient" [title]="appt.patient_name">
+                      {{ appt.patient_name }}
+                    </div>
+
+                    <!-- Phone -->
+                    <div class="card-phone">
+                      <i-tabler name="phone" size="12"></i-tabler>
+                      {{ appt.patient_phone }}
+                    </div>
+
+                    <!-- Status & source row -->
+                    <div class="card-service-row">
+                      <span class="status-badge s-{{ appt.status }}">
+                        {{ statusLabel[appt.status] || appt.status }}
+                      </span>
+                      <span class="card-source" [matTooltip]="appt.booking_source">
+                        <i-tabler [name]="sourceIcon[appt.booking_source] || 'dots'" size="14"></i-tabler>
+                        {{ appt.booking_source }}
+                      </span>
+                    </div>
+
                   </div>
-                  <span class="badge {{ statusBadge[appt.status] }} f-s-12">
-                    {{ appt.status | titlecase }}
-                  </span>
-                </div>
 
-                <div class="d-flex align-items-center gap-2 m-b-8">
-                  <i-tabler name="tooth" class="icon-16 text-primary"></i-tabler>
-                  <span class="f-s-14">{{ serviceLabels[appt.service_id] || appt.service_id }}</span>
-                </div>
+                  <!-- Expanded detail -->
+                  @if (expandedCard === appt.id) {
+                    <div class="card-detail">
+                      <div class="detail-row">
+                        <span class="detail-label">Patient</span>
+                        <span>{{ appt.patient_name }}</span>
+                      </div>
+                      <div class="detail-row">
+                        <span class="detail-label">Phone</span>
+                        <span>{{ appt.patient_phone }}</span>
+                      </div>
+                      <div class="detail-row">
+                        <span class="detail-label">Chair</span>
+                        <span>Chair {{ appt.chair_id }}</span>
+                      </div>
+                      <div class="detail-row">
+                        <span class="detail-label">Status</span>
+                        <span class="status-badge s-{{ appt.status }}">{{ statusLabel[appt.status] || appt.status }}</span>
+                      </div>
+                      <div class="detail-row">
+                        <span class="detail-label">Source</span>
+                        <span>{{ appt.booking_source }}</span>
+                      </div>
+                      @if (appt.notes) {
+                        <div class="detail-row">
+                          <span class="detail-label">Notes</span>
+                          <span>{{ appt.notes }}</span>
+                        </div>
+                      }
+                    </div>
+                  }
 
-                <div class="d-flex align-items-center gap-2 m-b-8">
-                  <i-tabler name="clock" class="icon-16 text-muted"></i-tabler>
-                  <span class="f-s-14">{{ formatTime(appt.scheduled_at) }}</span>
-                  <span class="text-muted f-s-13">· Chair {{ appt.chair_id }}</span>
                 </div>
-
-                @if (appt.notes) {
-                  <div class="mat-body-2 text-muted m-t-8 p-8 bg-light rounded">
-                    {{ appt.notes }}
-                  </div>
-                }
-              </mat-card-content>
-            </mat-card>
+              }
+            </div>
           </div>
         }
+
       </div>
-    }
-  </div>
+    </div>
+  }
+
 </div>
