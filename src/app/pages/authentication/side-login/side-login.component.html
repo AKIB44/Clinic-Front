@@ -1,0 +1,125 @@
+<div class="blank-layout-container justify-content-center">
+  <div class="auth-wrapper">
+    <div class="position-relative shaper-wrapper">
+      <div class="w-100 position-relative rounded bg-white auth-card">
+        <div class="auth-body">
+          <a [routerLink]="['/dashboards/dashboard1']" class="m-t-20 d-flex">
+            <img
+              src="./assets/images/logos/dark-logo.svg"
+              class="align-middle m-2"
+              alt="DentaFlow"
+            />
+          </a>
+
+          <div class="row">
+            <div class="col-lg-6">
+              <div class="align-items-center justify-content-center d-none d-lg-flex">
+                <img
+                  src="/assets/images/backgrounds/login3-bg.png"
+                  alt="login"
+                  style="max-width: 500px"
+                />
+              </div>
+            </div>
+            <div class="col-lg-6">
+              <div class="d-flex align-items-start align-items-lg-center justify-content-center">
+                <div class="row justify-content-center w-100">
+                  <div class="col-lg-11">
+                    <h4 class="f-w-700 f-s-30 m-0 m-t-20 lh-base">
+                      Welcome to DentaFlow
+                    </h4>
+                    <span class="f-s-14 d-block mat-body-1 m-t-8">
+                      Sharayu Dental Clinic — Staff Portal
+                    </span>
+
+                    <!-- Password login -->
+                    <form class="m-t-30" [formGroup]="form" (ngSubmit)="submit()">
+                      <mat-label class="mat-subtitle-2 f-s-14 f-w-600 m-b-12 d-block">
+                        Email
+                      </mat-label>
+                      <mat-form-field appearance="outline" class="w-100" color="primary">
+                        <input
+                          matInput
+                          type="email"
+                          formControlName="email"
+                          placeholder="doctor@dental.com"
+                          autocomplete="email"
+                        />
+                        @if (f['email'].touched && f['email'].invalid) {
+                        <mat-hint class="m-b-16 error-msg">
+                          @if (f['email'].errors?.['required']) {
+                            <div class="text-error">Email is required.</div>
+                          }
+                          @if (f['email'].errors?.['email']) {
+                            <div class="text-error">Enter a valid email address.</div>
+                          }
+                        </mat-hint>
+                        }
+                      </mat-form-field>
+
+                      <mat-label class="mat-subtitle-2 f-s-14 f-w-600 m-b-12 d-block">
+                        Password
+                      </mat-label>
+                      <mat-form-field appearance="outline" class="w-100" color="primary">
+                        <input
+                          matInput
+                          [type]="hidePassword ? 'password' : 'text'"
+                          formControlName="password"
+                          autocomplete="current-password"
+                        />
+                        <button
+                          mat-icon-button
+                          matSuffix
+                          type="button"
+                          (click)="hidePassword = !hidePassword"
+                          [attr.aria-label]="hidePassword ? 'Show password' : 'Hide password'"
+                        >
+                          <mat-icon>{{ hidePassword ? 'visibility_off' : 'visibility' }}</mat-icon>
+                        </button>
+                        @if (f['password'].touched && f['password'].invalid) {
+                        <mat-hint class="m-b-16 error-msg">
+                          @if (f['password'].errors?.['required']) {
+                            <div class="text-error">Password is required.</div>
+                          }
+                        </mat-hint>
+                        }
+                      </mat-form-field>
+
+                      @if (loginError) {
+                        <div class="text-error m-b-12 f-s-13">{{ loginError }}</div>
+                      }
+
+                      <button
+                        mat-flat-button
+                        color="primary"
+                        class="w-100 m-t-8"
+                        type="submit"
+                        [disabled]="isSubmitting"
+                      >
+                        {{ isSubmitting ? 'Signing in…' : 'Sign In' }}
+                      </button>
+                    </form>
+
+                    <div class="d-flex align-items-center m-t-24 gap-2">
+                      <mat-divider class="flex-grow-1"></mat-divider>
+                      <span class="mat-body-2 text-muted">or</span>
+                      <mat-divider class="flex-grow-1"></mat-divider>
+                    </div>
+
+                    <button
+                      mat-stroked-button
+                      class="w-100 m-t-16"
+                      [routerLink]="['/authentication/side-two-steps']"
+                    >
+                      Login with OTP
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

@@ -1,0 +1,268 @@
+<div class="booking-wrapper">
+
+  <!-- ── Confirmation card ─────────────────────────────────────── -->
+  @if (submitted) {
+    <div class="booking-card text-center p-y-40">
+      <i-tabler name="circle-check" class="icon-64 text-success m-b-16"></i-tabler>
+      <h3 class="f-w-700 m-b-8">Appointment Confirmed!</h3>
+      <p class="mat-body-1 text-muted m-b-4">{{ confirmedService }}</p>
+      <p class="mat-body-1 m-b-24">{{ confirmedTime }}</p>
+      <p class="mat-body-2 text-muted m-b-32">
+        A WhatsApp confirmation has been sent to your number.
+      </p>
+      <button mat-flat-button color="primary" (click)="resetAll()">
+        Book Another Appointment
+      </button>
+    </div>
+  }
+
+  <!-- ── Booking form ──────────────────────────────────────────── -->
+  @if (!submitted) {
+    <div class="booking-card">
+      <h3 class="f-w-700 m-b-4">Book an Appointment</h3>
+      <p class="mat-body-2 text-muted m-b-24">Sharayu Dental Clinic</p>
+
+      <!-- SECTION 1 — Service -->
+      <div class="section-block">
+        <h6 class="f-w-600 m-b-12">Select Treatment</h6>
+        <mat-form-field appearance="outline" class="w-100" color="primary">
+          <mat-label>Choose a treatment…</mat-label>
+          <mat-select
+            [(value)]="selectedService"
+            (selectionChange)="onServiceChange($event.value)"
+          >
+            @for (svc of services; track svc.id) {
+              <mat-option [value]="svc.id">{{ svc.label }}</mat-option>
+            }
+          </mat-select>
+        </mat-form-field>
+      </div>
+
+      <!-- SECTION 2 — Date -->
+      @if (showDate) {
+        <div class="section-block">
+          <h6 class="f-w-600 m-b-12">Select Date</h6>
+          <div class="date-strip">
+            @for (d of dates; track d.iso) {
+              <button
+                class="date-pill"
+                [class.selected]="selectedDate === d.iso"
+                [class.disabled]="d.disabled"
+                [disabled]="d.disabled"
+                (click)="onDateSelect(d.iso)"
+              >
+                <span class="day-name">{{ d.shortDay }}</span>
+                <span class="day-num">{{ d.label }}</span>
+              </button>
+            }
+          </div>
+        </div>
+      }
+
+      <!-- SECTION 3 — Slots -->
+      @if (showSlot) {
+        <div class="section-block slots-section">
+          <h6 class="f-w-600 m-b-12">Select Time</h6>
+          @if (slotsLoading) {
+            <div class="d-flex gap-2 flex-wrap">
+              @for (i of [1,2,3,4,5,6]; track i) {
+                <div class="slot-skeleton"></div>
+              }
+            </div>
+          }
+          @if (!slotsLoading && slotsError) {
+            <p class="text-error f-s-14">
+              {{ slotsError }}
+              <a href="#" (click)="$event.preventDefault(); loadSlots()" class="text-primary m-l-8">Try again</a>
+            </p>
+          }
+          @if (slotConflict) {
+            <p class="text-warning f-s-14 m-b-8">{{ slotConflict }}</p>
+          }
+          @if (!slotsLoading && !slotsError && slots.length === 0) {
+            <p class="text-muted f-s-14">No slots available. Please select another date.</p>
+          }
+          @if (!slotsLoading && slots.length > 0) {
+            <div class="d-flex gap-2 flex-wrap">
+              @for (slot of slots; track slot.time) {
+                <button
+                  class="slot-pill"
+                  [class.selected]="selectedSlot === slot.time"
+                  [class.taken]="slot.taken"
+                  [disabled]="slot.taken"
+                  (click)="onSlotSelect(slot)"
+                >
+                  {{ slot.time }}
+                </button>
+              }
+            </div>
+          }
+        </div>
+      }
+
+      <!-- SECTION 4 — Patient details -->
+      @if (showPatient && !patientSaved) {
+        <div class="section-block">
+          <h6 class="f-w-600 m-b-12">Your Details</h6>
+          @if (welcomeBack) {
+            <div class="welcome-banner m-b-16">{{ welcomeBack }}</div>
+          }
+          <form [formGroup]="patientForm" (ngSubmit)="submitPatient()">
+            <mat-form-field appearance="outline" class="w-100 m-b-8" color="primary">
+              <mat-label>Mobile Number</mat-label>
+              <input
+                matInput
+                type="tel"
+                inputmode="numeric"
+                formControlName="phone"
+                placeholder="98765 43210"
+                (blur)="onPhoneBlur()"
+                maxlength="10"
+              />
+              @if (patientForm.get('phone')?.touched && patientForm.get('phone')?.invalid) {
+                <mat-hint class="text-error">Enter a valid 10-digit mobile number.</mat-hint>
+              }
+            </mat-form-field>
+
+            <mat-form-field appearance="outline" class="w-100 m-b-8" color="primary">
+              <mat-label>Full Name</mat-label>
+              <input matInput type="text" formControlName="name" />
+              @if (patientForm.get('name')?.touched && patientForm.get('name')?.invalid) {
+                <mat-hint class="text-error">Name is required.</mat-hint>
+              }
+            </mat-form-field>
+
+            <mat-form-field appearance="outline" class="w-100 m-b-16" color="primary">
+              <mat-label>Email (optional)</mat-label>
+              <input matInput type="email" formControlName="email" />
+            </mat-form-field>
+
+            <button mat-flat-button color="primary" type="submit" class="w-100">
+              Continue
+            </button>
+          </form>
+        </div>
+      }
+
+      <!-- SECTION 5 — Summary & confirm -->
+      @if (showIntake && patientSaved) {
+        <div class="section-block">
+          <h6 class="f-w-600 m-b-16">Booking Summary</h6>
+          <div class="summary-table">
+            <div class="summary-row">
+              <span class="text-muted">Service</span>
+              <span>{{ serviceLabel }}</span>
+            </div>
+            <div class="summary-row">
+              <span class="text-muted">Date</span>
+              <span>{{ formattedDate }}</span>
+            </div>
+            <div class="summary-row">
+              <span class="text-muted">Time</span>
+              <span>{{ selectedSlot }}</span>
+            </div>
+            <div class="summary-row">
+              <span class="text-muted">Patient</span>
+              <span>{{ patientData?.name }}</span>
+            </div>
+          </div>
+
+          @if (submitError) {
+            <p class="text-error f-s-14 m-t-12">{{ submitError }}</p>
+          }
+
+          <button
+            mat-flat-button
+            color="primary"
+            class="w-100 m-t-20"
+            [disabled]="submitting"
+            (click)="submitBooking()"
+          >
+            {{ submitting ? 'Confirming…' : 'Confirm Booking' }}
+          </button>
+        </div>
+      }
+    </div>
+  }
+</div>
+
+<style>
+.booking-wrapper {
+  min-height: 100vh;
+  background: #f5f7fb;
+  display: flex;
+  justify-content: center;
+  padding: 24px 16px;
+}
+.booking-card {
+  background: #fff;
+  border-radius: 12px;
+  padding: 28px 24px;
+  width: 100%;
+  max-width: 520px;
+  box-shadow: 0 2px 12px rgba(0,0,0,0.08);
+  height: fit-content;
+}
+.section-block {
+  margin-bottom: 28px;
+  padding-bottom: 24px;
+  border-bottom: 1px solid #f0f0f0;
+}
+.section-block:last-child { border-bottom: none; }
+.date-strip {
+  display: flex;
+  gap: 8px;
+  overflow-x: auto;
+  padding-bottom: 8px;
+  scroll-snap-type: x mandatory;
+}
+.date-pill {
+  min-width: 52px;
+  height: 64px;
+  border-radius: 10px;
+  border: 2px solid #e0e0e0;
+  background: #fff;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  scroll-snap-align: start;
+  transition: all 0.15s;
+}
+.date-pill.selected { border-color: #1976d2; background: #e3f2fd; }
+.date-pill.disabled { opacity: 0.4; cursor: not-allowed; }
+.date-pill .day-name { font-size: 11px; color: #777; }
+.date-pill .day-num { font-size: 18px; font-weight: 700; }
+.slot-pill {
+  padding: 8px 16px;
+  min-height: 44px;
+  border-radius: 8px;
+  border: 2px solid #e0e0e0;
+  background: #fff;
+  cursor: pointer;
+  font-size: 14px;
+  transition: all 0.15s;
+}
+.slot-pill.selected { border-color: #1976d2; background: #e3f2fd; color: #1976d2; font-weight: 600; }
+.slot-pill.taken { background: #f5f5f5; color: #bbb; text-decoration: line-through; cursor: not-allowed; }
+.slot-skeleton {
+  width: 90px;
+  height: 44px;
+  border-radius: 8px;
+  background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+  background-size: 200%;
+  animation: shimmer 1.2s infinite;
+}
+@keyframes shimmer { 0% { background-position: 200%; } 100% { background-position: -200%; } }
+.welcome-banner {
+  background: #e8f5e9;
+  color: #2e7d32;
+  border-radius: 8px;
+  padding: 10px 14px;
+  font-size: 14px;
+  font-weight: 500;
+}
+.summary-table { display: flex; flex-direction: column; gap: 10px; }
+.summary-row { display: flex; justify-content: space-between; font-size: 14px; }
+</style>

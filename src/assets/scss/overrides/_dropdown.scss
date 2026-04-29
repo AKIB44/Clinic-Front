@@ -1,0 +1,11 @@
+body {
+  .mdc-menu-surface {
+    box-shadow: $box-shadow !important;
+    border-radius: $border-radius;
+  }
+  .bg-light-primary-hover{
+    &:hover{
+      background-color: rgba($light-primary, 50%);
+    }
+  }
+}

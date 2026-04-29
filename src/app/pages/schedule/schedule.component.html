@@ -1,0 +1,92 @@
+<div class="page-wrapper">
+  <div class="container-fluid">
+    <!-- Header -->
+    <div class="d-flex align-items-center justify-content-between m-b-24">
+      <div>
+        <h3 class="f-w-700 m-0">Today's Schedule</h3>
+        <span class="mat-body-2 text-muted">{{ today }}</span>
+      </div>
+      <div class="d-flex gap-2">
+        <button
+          mat-flat-button
+          [color]="chairFilter === 'all' ? 'primary' : undefined"
+          (click)="setChair('all')"
+        >All Chairs</button>
+        <button
+          mat-flat-button
+          [color]="chairFilter === '1' ? 'primary' : undefined"
+          (click)="setChair('1')"
+        >Chair 1</button>
+        <button
+          mat-flat-button
+          [color]="chairFilter === '2' ? 'primary' : undefined"
+          (click)="setChair('2')"
+        >Chair 2</button>
+      </div>
+    </div>
+
+    <!-- Loading -->
+    @if (loading) {
+      <div class="d-flex justify-content-center p-y-40">
+        <mat-spinner diameter="40"></mat-spinner>
+      </div>
+    }
+
+    <!-- Error -->
+    @if (error && !loading) {
+      <mat-card class="cardWithShadow m-b-16">
+        <mat-card-content class="text-error p-16">{{ error }}</mat-card-content>
+      </mat-card>
+    }
+
+    <!-- Empty -->
+    @if (!loading && !error && filtered.length === 0) {
+      <mat-card class="cardWithShadow">
+        <mat-card-content class="d-flex flex-column align-items-center p-y-40 text-muted">
+          <i-tabler name="calendar-off" class="icon-48 m-b-12"></i-tabler>
+          <span class="f-s-16">No appointments scheduled for today</span>
+        </mat-card-content>
+      </mat-card>
+    }
+
+    <!-- Appointment cards -->
+    @if (!loading && filtered.length > 0) {
+      <div class="row">
+        @for (appt of filtered; track appt.id) {
+          <div class="col-12 col-md-6 col-xl-4 m-b-16">
+            <mat-card class="cardWithShadow h-100">
+              <mat-card-content class="p-16">
+                <div class="d-flex align-items-start justify-content-between m-b-12">
+                  <div>
+                    <h5 class="f-w-600 m-0">{{ appt.patient_name }}</h5>
+                    <span class="mat-body-2 text-muted">{{ appt.patient_phone }}</span>
+                  </div>
+                  <span class="badge {{ statusBadge[appt.status] }} f-s-12">
+                    {{ appt.status | titlecase }}
+                  </span>
+                </div>
+
+                <div class="d-flex align-items-center gap-2 m-b-8">
+                  <i-tabler name="tooth" class="icon-16 text-primary"></i-tabler>
+                  <span class="f-s-14">{{ serviceLabels[appt.service_id] || appt.service_id }}</span>
+                </div>
+
+                <div class="d-flex align-items-center gap-2 m-b-8">
+                  <i-tabler name="clock" class="icon-16 text-muted"></i-tabler>
+                  <span class="f-s-14">{{ formatTime(appt.scheduled_at) }}</span>
+                  <span class="text-muted f-s-13">· Chair {{ appt.chair_id }}</span>
+                </div>
+
+                @if (appt.notes) {
+                  <div class="mat-body-2 text-muted m-t-8 p-8 bg-light rounded">
+                    {{ appt.notes }}
+                  </div>
+                }
+              </mat-card-content>
+            </mat-card>
+          </div>
+        }
+      </div>
+    }
+  </div>
+</div>

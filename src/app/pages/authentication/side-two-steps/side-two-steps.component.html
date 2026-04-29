@@ -1,0 +1,85 @@
+<div class="blank-layout-container justify-content-center">
+  <div class="auth-wrapper">
+    <div class="position-relative shaper-wrapper">
+      <div class="w-100 position-relative rounded bg-white auth-card">
+        <div class="auth-body">
+          <a [routerLink]="['/dashboards/dashboard1']" class="m-t-20 d-flex">
+            <img src="./assets/images/logos/dark-logo.svg" class="align-middle m-2" alt="DentaFlow" />
+          </a>
+
+          <div class="row">
+            <div class="col-lg-6">
+              <div class="align-items-center justify-content-center d-none d-lg-flex">
+                <img src="/assets/images/backgrounds/login3-bg.png" alt="login" style="max-width: 500px" />
+              </div>
+            </div>
+            <div class="col-lg-6">
+              <div class="d-flex align-items-start align-items-lg-center justify-content-center">
+                <div class="row justify-content-center w-100">
+                  <div class="col-lg-11">
+                    <h4 class="f-w-700 f-s-30 lh-base m-0 m-t-20">
+                      Two-Step Verification
+                    </h4>
+                    <span class="f-s-14 d-block mat-body-1 m-t-16">
+                      Enter the 6-digit OTP sent to your registered phone via WhatsApp.
+                    </span>
+
+                    <form class="m-t-30" [formGroup]="form" (ngSubmit)="submit()">
+                      <mat-label class="mat-subtitle-2 f-s-14 f-w-600 m-b-12 d-block">
+                        Security code
+                      </mat-label>
+
+                      <div class="d-flex gap-2 m-b-24">
+                        @for (i of [0,1,2,3,4,5]; track i) {
+                          <mat-form-field appearance="outline" style="width: 52px;" color="primary">
+                            <input
+                              #digitInput
+                              matInput
+                              maxlength="1"
+                              inputmode="numeric"
+                              pattern="\d"
+                              class="text-center"
+                              (input)="onDigitInput($event, i)"
+                              (keydown)="onKeydown($event, i)"
+                            />
+                          </mat-form-field>
+                        }
+                      </div>
+
+                      @if (error) {
+                        <div class="text-error m-b-12 f-s-13">{{ error }}</div>
+                      }
+
+                      <button
+                        mat-flat-button
+                        color="primary"
+                        class="w-100"
+                        type="submit"
+                        [disabled]="otp.length < 6 || isSubmitting"
+                      >
+                        {{ isSubmitting ? 'Verifying…' : 'Verify & Sign In' }}
+                      </button>
+                    </form>
+
+                    <div class="m-t-24">
+                      <span class="f-s-14">Didn't get the code?
+                        <a href="#" class="text-primary text-decoration-none f-w-500">Resend OTP</a>
+                      </span>
+                    </div>
+
+                    <div class="m-t-16">
+                      <a [routerLink]="['/authentication/login']"
+                        class="text-primary text-decoration-none f-s-14 f-w-500">
+                        ← Back to password login
+                      </a>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
