@@ -18,6 +18,7 @@ import { NgScrollbarModule } from 'ngx-scrollbar';
 import { MatMenuModule } from '@angular/material/menu';
 import { MatButtonModule } from '@angular/material/button';
 import {MatSidenavModule} from '@angular/material/sidenav';
+import { AuthService } from 'src/app/auth/auth.service';
 
 interface notifications {
   id: number;
@@ -114,9 +115,28 @@ export class HeaderComponent {
   constructor(
     private vsidenav: CoreService,
     public dialog: MatDialog,
-    private translate: TranslateService
+    private translate: TranslateService,
+    private authService: AuthService
   ) {
     translate.setDefaultLang('en');
+  }
+
+  get loggedInUserName(): string {
+    const user = this.authService.getUser();
+    const fullName = `${user?.first_name ?? ''} ${user?.last_name ?? ''}`.trim();
+    return user?.username ?? '';
+  }
+
+  get loggedInUserRole(): string {
+    const role = this.authService.getUser()?.role;
+    if (!role) return 'User';
+    if (role === 'admin') return 'Admin';
+    if (role === 'receptionist') return 'Receptionist';
+    return 'Doctor';
+  }
+
+  get loggedInUserEmail(): string {
+    return this.authService.getUser()?.email || '-';
   }
 
   openDialog() {

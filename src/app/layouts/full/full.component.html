@@ -33,8 +33,8 @@
         <div class="bg-light-primary d-flex align-items-center rounded p-24">
           <img src="/assets/images/profile/user5.jpg" class="rounded-circle" width="45" />
           <div class="m-l-16">
-            <h5 class="f-s-18 m-0 f-w-600 m-b-4">Mike</h5>
-            <span class="f-s-14">Admin</span>
+            <h5 class="f-s-18 m-0 f-w-600 m-b-4">{{ loggedInUserName }}</h5>
+            <span class="f-s-14">{{ loggedInUserRole }}</span>
           </div>
           <div class="m-l-auto">
             <a mat-icon-button [routerLink]="['/authentication/login']" class="d-flex justify-content-center">
@@ -65,8 +65,8 @@
       <div class="bg-light-primary d-flex align-items-center rounded p-16">
         <img src="/assets/images/profile/user-1.jpg" class="rounded-circle" width="40" />
         <div class="m-l-16">
-          <h5 class="mat-subtitle-2 f-w-600">Mathew</h5>
-          <span class="f-s-12">Designer</span>
+          <h5 class="mat-subtitle-2 f-w-600">{{ loggedInUserName }}</h5>
+          <span class="f-s-12">{{ loggedInUserRole }}</span>
         </div>
         <div class="m-l-auto">
           <a mat-icon-button [routerLink]="['/authentication/login']" class="d-flex justify-content-center">

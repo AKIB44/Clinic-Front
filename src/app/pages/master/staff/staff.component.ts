@@ -36,7 +36,7 @@ import { StaffUser } from '../../../models/clinic.model';
         <mat-form-field appearance="outline" class="full-width">
           <mat-label>Role</mat-label>
           <mat-select formControlName="role">
-            <mat-option value="clinic_admin">Clinic Admin</mat-option>
+            <mat-option value="admin">Admin</mat-option>
             <mat-option value="doctor">Doctor</mat-option>
             <mat-option value="receptionist">Receptionist</mat-option>
           </mat-select>
@@ -113,15 +113,13 @@ export class StaffMasterComponent implements OnInit {
   displayedColumns = ['name', 'email', 'role', 'status', 'actions'];
 
   readonly roleLabel: Record<string, string> = {
-    super_admin:  'Super Admin',
-    clinic_admin: 'Clinic Admin',
+    admin:  'Super Admin',
     doctor:       'Doctor',
     receptionist: 'Receptionist',
   };
 
   readonly roleClass: Record<string, string> = {
-    super_admin:  'role-super',
-    clinic_admin: 'role-admin',
+    admin:  'role-super',
     doctor:       'role-doctor',
     receptionist: 'role-receptionist',
   };
@@ -130,7 +128,7 @@ export class StaffMasterComponent implements OnInit {
 
   load() {
     this.loading = true;
-    this.svc.list(this.rbac.clinicId).subscribe({
+    this.svc.list().subscribe({
       next: (r) => { this.staff = r.users; this.loading = false; this.cdr.markForCheck(); },
       error: ()  => { this.loading = false; this.cdr.markForCheck(); },
     });

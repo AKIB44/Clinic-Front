@@ -6,7 +6,7 @@ import { AppRole } from './auth.models';
 export class RbacService {
   private storage = inject(AuthStorageService);
 
-  get user() { return this.storage.getUser(); }
+  get user()     { return this.storage.getUser(); }
   get role(): AppRole | undefined { return this.user?.role; }
   get clinicId(): string | undefined { return this.user?.clinic_id; }
 
@@ -14,9 +14,9 @@ export class RbacService {
     return !!this.role && roles.includes(this.role);
   }
 
-  get isSuperAdmin()    { return this.role === 'super_admin'; }
-  get isClinicAdmin()   { return this.role === 'clinic_admin'; }
-  get isDoctor()        { return this.role === 'doctor'; }
-  get isReceptionist()  { return this.role === 'receptionist'; }
-  get canManageMaster() { return this.hasAnyRole(['super_admin', 'clinic_admin']); }
+  // MVP roles: admin | doctor | receptionist
+  get isAdmin()        { return this.role === 'admin'; }
+  get isDoctor()       { return this.role === 'doctor'; }
+  get isReceptionist() { return this.role === 'receptionist'; }
+  get canManageMaster(){ return this.role === 'admin'; }
 }

@@ -93,7 +93,7 @@
     <!-- --------------------------------------------------------------- -->
     <!-- langugage Dropdown -->
     <!-- --------------------------------------------------------------- -->
-    <button [matMenuTriggerFor]="flags" mat-icon-button class="m-l-10">
+    <!-- <button [matMenuTriggerFor]="flags" mat-icon-button class="m-l-10">
       <img [src]="selectedLanguage.icon" class="rounded-circle object-cover icon-20" />
     </button>
     <mat-menu #flags="matMenu" class="cardWithShadow">
@@ -105,12 +105,12 @@
         </div>
       </button>
       }
-    </mat-menu>
+    </mat-menu> -->
 
     <!-- --------------------------------------------------------------- -->
     <!-- Messages Dropdown -->
     <!-- --------------------------------------------------------------- -->
-    <button mat-icon-button [matMenuTriggerFor]="msgMenu" aria-label="Messages">
+    <!-- <button mat-icon-button [matMenuTriggerFor]="msgMenu" aria-label="Messages">
       <i-tabler class="d-flex" name="message-2"></i-tabler>
       <div class="pulse">
         <span class="heartbit border-primary"></span>
@@ -143,7 +143,7 @@
           See All Messages
         </button>
       </div>
-    </mat-menu>
+    </mat-menu> -->
 
     <!-- --------------------------------------------------------------- -->
   <!-- Shortcuts Dropdown -->
@@ -226,8 +226,8 @@
 
         <div class="m-l-16 text-left d-none d-lg-flex">
           <div>
-            <h5 class="f-s-16">Mike Nielsen</h5>
-            <span class="f-s-14 mat-body-1">Admin</span>
+            <h5 class="f-s-16">{{ loggedInUserName }}</h5>
+            <span class="f-s-14 mat-body-1">{{ loggedInUserRole }}</span>
           </div>
         </div>
       </div>
@@ -240,11 +240,11 @@
           <div class="d-flex align-items-center p-b-24 b-b-1 m-t-16">
             <img src="/assets/images/profile/user5.jpg" class="rounded-circle" width="95" />
             <div class="m-l-16">
-              <h6 class="f-s-16 f-w-600 m-0 mat-subtitle-1">Mike Nielsen</h6>
-              <span class="f-s-14 mat-body-1 d-block m-b-4">Admin</span>
+              <h6 class="f-s-16 f-w-600 m-0 mat-subtitle-1">{{ loggedInUserName }}</h6>
+              <span class="f-s-14 mat-body-1 d-block m-b-4">{{ loggedInUserRole }}</span>
               <span class="d-flex align-items-center">
                 <i-tabler name="mail" class="icon-15 m-r-4"></i-tabler>
-                info&#64;spike.com
+                {{ loggedInUserEmail }}
               </span>
             </div>
           </div>

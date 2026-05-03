@@ -28,6 +28,11 @@ export const routes: Routes = [
         component: ScheduleComponent,
       },
       {
+        path: 'master',
+        loadChildren: () =>
+          import('./pages/master/master.routes').then((m) => m.MasterRoutes),
+      },
+      {
         path: 'starter',
         loadChildren: () =>
           import('./pages/pages.routes').then((m) => m.PagesRoutes),

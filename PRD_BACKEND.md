@@ -533,7 +533,31 @@ All DB work is in one transaction. Bull jobs are enqueued after commit.
 
 Steps 1–6 are atomic. Steps 7–10 run outside the transaction — if they fail, Bull retries automatically.
 
-### 6.2 `createAppointment()` — Public Booking Endpoint
+### 6.2 `getSlots()` — Slot Availability
+
+```
+1. Validate: date (YYYY-MM-DD), service_id, chair_id required
+2. Fetch service to get duration_minutes
+3. Generate all slots for the day:
+     clinic_open  = date + 'T09:00:00'
+     clinic_close = date + 'T19:00:00'
+     slots = []
+     cursor = clinic_open
+     WHILE cursor + duration_minutes <= clinic_close:
+       slots.push(format(cursor, 'HH:mm'))
+       cursor += duration_minutes minutes
+4. Fetch conflicting appointments:
+     SELECT scheduled_at FROM appointments
+     WHERE DATE(scheduled_at) = date
+       AND chair_id = chair_id
+       AND status NOT IN ('cancelled', 'no_show')   ← CRITICAL: cancelled/no_show free the slot
+5. takenSet = new Set(conflicting.map(a => format(a.scheduled_at, 'HH:mm')))
+6. Return: slots.map(t => ({ time: t, taken: takenSet.has(t) }))
+```
+
+**Key rule**: Only `booked`, `confirmed`, and `in_progress` appointments block a slot. A `cancelled` or `no_show` appointment at the same time makes the slot available again.
+
+### 6.4 `createAppointment()` — Public Booking Endpoint
 
 ```
 1. Zod validate request body (publicBookingSchema)
@@ -549,7 +573,7 @@ Steps 1–6 are atomic. Steps 7–10 run outside the transaction — if they fai
    → IF > 0: waQueue.add('day_before_reminder', { appointmentId }, { delay, jobId: `reminder-${id}` })
 ```
 
-### 6.3 `updateStep()` — Implant Healing Window Guard
+### 6.5 `updateStep()` — Implant Healing Window Guard
 
 ```
 1. GET treatment_case and treatment_step
@@ -566,7 +590,7 @@ Steps 1–6 are atomic. Steps 7–10 run outside the transaction — if they fai
 5. UPDATE treatment_cases SET steps_completed = steps_completed + 1 IF status='complete'
 ```
 
-### 6.4 `createRecallJobs()` — Recall Scheduling
+### 6.6 `createRecallJobs()` — Recall Scheduling
 
 ```javascript
 const RECALL_MAP = {

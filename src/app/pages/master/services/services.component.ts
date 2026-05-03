@@ -103,7 +103,7 @@ export class ServicesMasterComponent implements OnInit {
 
   load() {
     this.loading = true;
-    this.svc.list(this.rbac.clinicId).subscribe({
+    this.svc.list().subscribe({
       next: (r) => { this.services = r.services; this.loading = false; this.cdr.markForCheck(); },
       error: ()  => { this.loading = false; this.cdr.markForCheck(); },
     });

@@ -15,57 +15,64 @@ export interface Appointment {
   patient_phone: string;
   service_id: string;
   service_name: string;
-  chair_id: number;
+  chair_id: string;
   scheduled_at: string;
+  duration_minutes: number;
   status: 'booked' | 'confirmed' | 'in_progress' | 'done' | 'no_show' | 'cancelled';
   booking_source: string;
-  intake_data: Record<string, unknown> | null;
   notes: string | null;
+  created_at: string;
+  updated_at: string;
 }
 
 export interface BookingPayload {
   service_id: string;
-  chair_id: number;
+  chair_id: string;
   scheduled_at: string;
   booking_source: string;
+  notes?: string;
   patient: { name: string; phone: string; email?: string };
-  intake_data: Record<string, unknown>;
+  intake_data?: Record<string, unknown>;
 }
+
+export type AppointmentStatus = Appointment['status'];
 
 @Injectable({ providedIn: 'root' })
 export class AppointmentsService {
   private readonly http = inject(HttpClient);
   private readonly base = `${authApiConfig.baseUrl}/appointments`;
 
-  getSlots(date: string, serviceId: string, chairId = 1): Observable<{ slots: Slot[] }> {
+  // Slot availability — public, no auth needed
+  getSlots(date: string, serviceId: string, chairId: string): Observable<{ slots: Slot[] }> {
     return this.http.get<{ slots: Slot[] }>(`${this.base}/slots`, {
-      params: { date, service_id: serviceId, chair_id: String(chairId) },
+      params: { date, service_id: serviceId, chair_id: chairId },
     });
   }
 
-  getTodaySchedule(date: string): Observable<{ appointments: Appointment[] }> {
-    return this.http.get<{ appointments: Appointment[] }>(this.base, {
-      params: { date, limit: '100' },
-    });
+  // Day schedule — powers the kanban board
+  getSchedule(date: string, chairId?: string, status?: string): Observable<{ appointments: Appointment[] }> {
+    const params: Record<string, string> = { date, limit: '100' };
+    if (chairId) params['chair_id'] = chairId;
+    if (status)  params['status']   = status;
+    return this.http.get<{ appointments: Appointment[] }>(this.base, { params });
   }
 
   getDetail(id: string): Observable<{ appointment: Appointment }> {
     return this.http.get<{ appointment: Appointment }>(`${this.base}/${id}`);
   }
 
+  // Public booking — no auth required on backend
   book(payload: BookingPayload): Observable<{ appointment: Appointment }> {
     return this.http.post<{ appointment: Appointment }>(this.base, payload);
   }
 
-  close(id: string): Observable<unknown> {
-    return this.http.post(`${this.base}/${id}/complete`, {});
+  // Single unified status transition endpoint
+  updateStatus(id: string, status: AppointmentStatus): Observable<{ appointment: Appointment }> {
+    return this.http.patch<{ appointment: Appointment }>(`${this.base}/${id}/status`, { status });
   }
 
-  markNoShow(id: string): Observable<unknown> {
-    return this.http.post(`${this.base}/${id}/no-show`, {});
-  }
-
-  cancel(id: string): Observable<unknown> {
-    return this.http.post(`${this.base}/${id}/cancel`, {});
+  // Reschedule — change time or chair
+  reschedule(id: string, payload: { scheduled_at?: string; chair_id?: string; notes?: string }): Observable<{ appointment: Appointment }> {
+    return this.http.patch<{ appointment: Appointment }>(`${this.base}/${id}`, payload);
   }
 }

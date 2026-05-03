@@ -123,7 +123,11 @@ export class ClinicsComponent implements OnInit {
     this.loading = true;
     this.svc.list().subscribe({
       next: (r) => { this.clinics = r.clinics; this.loading = false; this.cdr.markForCheck(); },
-      error: () => { this.loading = false; this.cdr.markForCheck(); },
+      error: () => {
+        this.loading = false;
+        this.snack.open('Unable to load clinics. Please check API/auth and try again.', '', { duration: 4000 });
+        this.cdr.markForCheck();
+      },
     });
   }
 

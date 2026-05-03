@@ -1,22 +1,24 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule, FormBuilder, Validators, FormGroup } from '@angular/forms';
 import { MaterialModule } from '../../material.module';
 import { TablerIconsModule } from 'angular-tabler-icons';
 import { HttpErrorResponse } from '@angular/common/http';
 import { addDays, format, isSunday } from 'date-fns';
-import { AppointmentsService, Slot } from '../../services/appointments.service';
+import { forkJoin } from 'rxjs';
+import { ActivatedRoute, ParamMap } from '@angular/router';
+import { AppointmentsService, BookingPayload, Slot } from '../../services/appointments.service';
 import { PatientsService } from '../../services/patients.service';
+import { ClinicServicesService } from '../../services/clinic-services.service';
+import { ChairsService } from '../../services/chairs.service';
+import { ClinicsService } from '../../services/clinics.service';
+import { authApiConfig } from '../../auth/auth.config';
 
-const SERVICES = [
-  { id: 'SVC-01', label: 'Oral Prophylaxis (Scaling & Polishing)' },
-  { id: 'SVC-02', label: 'Restoration (Filling)' },
-  { id: 'SVC-03', label: 'Root Canal Treatment' },
-  { id: 'SVC-04', label: 'Tooth Extraction' },
-  { id: 'SVC-05', label: 'Orthodontics (Braces / Aligners)' },
-  { id: 'SVC-06', label: 'Dental Implant' },
-  { id: 'SVC-07', label: 'Paediatric Pulpectomy' },
-];
+/** UI row for mat-select: real service UUID from GET /v1/services?clinic_id= */
+export interface BookingServiceOption {
+  id: string;
+  label: string;
+}
 
 interface DateOption {
   iso: string;
@@ -32,10 +34,23 @@ interface DateOption {
   templateUrl: './booking.component.html',
 })
 export class BookingComponent implements OnInit {
-  services = SERVICES;
+  private route = inject(ActivatedRoute);
+  private clinicServices = inject(ClinicServicesService);
+  private chairsService = inject(ChairsService);
+  private clinicsService = inject(ClinicsService);
+
+  services: BookingServiceOption[] = [];
+  servicesLoading = false;
+  servicesError = '';
+  /** Blocks the whole flow: missing clinic, no chairs, etc. */
+  metaError = '';
+
+  clinicId: string | null = null;
+  /** First active chair UUID from GET /v1/chairs — required for slots + booking */
+  defaultChairId: string | null = null;
+
   dates: DateOption[] = [];
 
-  // Section state
   selectedService: string | null = null;
   selectedDate: string | null = null;
   selectedSlot: string | null = null;
@@ -63,14 +78,90 @@ export class BookingComponent implements OnInit {
   ) {}
 
   ngOnInit() {
-    const params = new URLSearchParams(window.location.search);
-    const svc = params.get('service');
-    if (svc && SERVICES.find((s) => s.id === svc)) {
-      this.selectedService = svc;
-    }
-    const ref = params.get('ref');
-    if (ref) this.bookingSource = ref;
+    this.buildDatesAndPatientForm();
+    const q = this.route.snapshot.queryParamMap;
+    this.bookingSource = q.get('ref') ?? 'direct';
 
+    const explicit = (
+      q.get('clinic') ??
+      q.get('clinic_id') ??
+      authApiConfig.publicBookingClinicId ??
+      ''
+    ).trim();
+
+    if (explicit) {
+      this.clinicId = explicit;
+      this.loadServicesAndChairs(q);
+      return;
+    }
+
+    // No ?clinic= — single-clinic MVP: resolve via GET /v1/clinic (public or tenant default)
+    this.servicesLoading = true;
+    this.metaError = '';
+    this.clinicsService.get().subscribe({
+      next: (r) => {
+        const id = r.clinic?.id?.trim();
+        if (!id) {
+          this.servicesLoading = false;
+          this.metaError =
+            'No clinic is available. Use /booking?clinic=<clinic-uuid> or contact the clinic.';
+          return;
+        }
+        this.clinicId = id;
+        this.loadServicesAndChairs(q);
+      },
+      error: () => {
+        this.servicesLoading = false;
+        this.metaError =
+          'Could not load clinic automatically (the booking API may require ?clinic=<uuid>). ' +
+          'Ask the clinic for the booking link, or set publicBookingClinicId in auth.config.ts for testing.';
+      },
+    });
+  }
+
+  /** Load treatments + chairs for {@link clinicId}. Pass query map for ?service= deep link. */
+  private loadServicesAndChairs(q: ParamMap) {
+    if (!this.clinicId) return;
+
+    this.servicesLoading = true;
+    this.servicesError = '';
+    this.metaError = '';
+
+    forkJoin({
+      services: this.clinicServices.list(this.clinicId),
+      chairs: this.chairsService.list(this.clinicId),
+    }).subscribe({
+      next: ({ services: svcRes, chairs: chairRes }) => {
+        const rawServices = svcRes.services ?? [];
+        this.services = rawServices
+          .filter((s) => s.is_active !== false)
+          .map((s) => ({ id: s.id, label: s.name }));
+
+        const chairs = chairRes.chairs ?? [];
+        const usable = chairs.filter((c) => c.is_active !== false);
+        const pick = usable[0] ?? chairs[0];
+        this.defaultChairId = pick?.id ?? null;
+
+        if (!this.defaultChairId) {
+          this.metaError = 'No chairs are configured for this clinic. Please contact the clinic.';
+        }
+
+        const svcParam = q.get('service');
+        if (svcParam && this.services.some((s) => s.id === svcParam)) {
+          this.selectedService = svcParam;
+        }
+
+        this.servicesLoading = false;
+      },
+      error: () => {
+        this.servicesError =
+          'Could not load treatments or chairs for this clinic. If you are testing locally, confirm GET /v1/services and /v1/chairs allow this clinic_id.';
+        this.servicesLoading = false;
+      },
+    });
+  }
+
+  private buildDatesAndPatientForm() {
     this.dates = Array.from({ length: 14 }, (_, i) => {
       const d = addDays(new Date(), i + 1);
       return {
@@ -88,11 +179,18 @@ export class BookingComponent implements OnInit {
     });
   }
 
-  // Section visibility
-  get showDate() { return !!this.selectedService; }
-  get showSlot() { return !!this.selectedDate; }
-  get showPatient() { return !!this.selectedSlot; }
-  get showIntake() { return !!this.patientData; }
+  get showDate() {
+    return !!this.selectedService && !!this.defaultChairId;
+  }
+  get showSlot() {
+    return !!this.selectedDate;
+  }
+  get showPatient() {
+    return !!this.selectedSlot;
+  }
+  get showIntake() {
+    return !!this.patientData;
+  }
 
   onServiceChange(svcId: string) {
     this.selectedService = svcId;
@@ -112,19 +210,21 @@ export class BookingComponent implements OnInit {
   }
 
   loadSlots() {
-    if (!this.selectedDate || !this.selectedService) return;
+    if (!this.selectedDate || !this.selectedService || !this.defaultChairId) return;
     this.slotsLoading = true;
     this.slotsError = '';
-    this.apptService.getSlots(this.selectedDate, this.selectedService).subscribe({
-      next: (r) => {
-        this.slots = r.slots ?? [];
-        this.slotsLoading = false;
-      },
-      error: () => {
-        this.slotsError = 'Failed to load slots. Please try again.';
-        this.slotsLoading = false;
-      },
-    });
+    this.apptService
+      .getSlots(this.selectedDate, this.selectedService, this.defaultChairId)
+      .subscribe({
+        next: (r) => {
+          this.slots = r.slots ?? [];
+          this.slotsLoading = false;
+        },
+        error: () => {
+          this.slotsError = 'Failed to load slots. Please try again.';
+          this.slotsLoading = false;
+        },
+      });
   }
 
   onSlotSelect(slot: Slot) {
@@ -148,7 +248,9 @@ export class BookingComponent implements OnInit {
           this.welcomeBack = '';
         }
       },
-      error: () => { /* silent */ },
+      error: () => {
+        /* silent */
+      },
     });
   }
 
@@ -166,7 +268,7 @@ export class BookingComponent implements OnInit {
   }
 
   get serviceLabel(): string {
-    return SERVICES.find((s) => s.id === this.selectedService)?.label ?? '';
+    return this.services.find((s) => s.id === this.selectedService)?.label ?? '';
   }
 
   get formattedDate(): string {
@@ -176,16 +278,51 @@ export class BookingComponent implements OnInit {
   }
 
   submitBooking() {
-    if (!this.selectedService || !this.selectedDate || !this.selectedSlot || !this.patientData) return;
+    if (
+      !this.selectedService ||
+      !this.selectedDate ||
+      !this.selectedSlot ||
+      !this.patientData ||
+      !this.defaultChairId
+    )
+      return;
+
     this.submitting = true;
     this.submitError = '';
 
-    const payload = {
-      service_id: this.selectedService,
-      chair_id: 1,
+    // Re-fetch slots to catch any race condition before hitting the booking API
+    this.apptService
+      .getSlots(this.selectedDate, this.selectedService, this.defaultChairId)
+      .subscribe({
+        next: (r) => {
+          this.slots = r.slots ?? [];
+          const fresh = this.slots.find(s => s.time === this.selectedSlot);
+
+          if (!fresh || fresh.taken) {
+            // Slot was taken between selection and submission
+            this.selectedSlot = null;
+            this.slotConflict = 'This slot was just taken. Please choose another time.';
+            this.submitting = false;
+            document.querySelector('.slots-section')?.scrollIntoView({ behavior: 'smooth' });
+            return;
+          }
+
+          this.doBook();
+        },
+        error: () => {
+          // If slot re-check fails, proceed optimistically — backend 409 will catch it
+          this.doBook();
+        },
+      });
+  }
+
+  private doBook() {
+    const payload: BookingPayload = {
+      service_id: this.selectedService!,
+      chair_id: this.defaultChairId!,
       scheduled_at: `${this.selectedDate}T${this.selectedSlot}:00`,
       booking_source: this.bookingSource,
-      patient: this.patientData,
+      patient: this.patientData!,
       intake_data: {},
     };
 
@@ -200,6 +337,7 @@ export class BookingComponent implements OnInit {
         if (err.status === 409) {
           this.selectedSlot = null;
           this.slotConflict = 'This slot was just taken. Please choose another time.';
+          this.loadSlots(); // refresh with latest availability
           document.querySelector('.slots-section')?.scrollIntoView({ behavior: 'smooth' });
         } else {
           this.submitError = 'Booking failed. Please try again or call us directly.';

@@ -200,6 +200,7 @@
   background: #fafafa;
   border-radius: 10px;
   border: 1.5px solid #f0f0f0;
+  padding: 10px 12px 10px;
   cursor: pointer;
   transition: box-shadow .15s, border-color .15s, transform .1s;
   overflow: hidden;
@@ -209,15 +210,6 @@
     border-color: #e0e0e0;
     transform: translateY(-1px);
   }
-
-  &.expanded {
-    border-color: var(--primary-light, #90caf9);
-    box-shadow: 0 4px 16px rgba(25, 118, 210, .15);
-  }
-}
-
-.card-main {
-  padding: 10px 12px 8px;
 }
 
 .card-time-row {
@@ -233,15 +225,6 @@
     display: flex;
     align-items: center;
     gap: 4px;
-  }
-
-  .card-chair {
-    font-size: .72rem;
-    background: #ede7f6;
-    color: #512da8;
-    border-radius: 8px;
-    padding: 2px 7px;
-    font-weight: 600;
   }
 }
 
@@ -312,35 +295,35 @@
   &.s-cancelled   { background: #f5f5f5; color: #757575; }
 }
 
-// ─── Card expanded detail ─────────────────────────────────────────────────────
+// ─── Card footer (status + duration) ────────────────────────────────────────
 
-.card-detail {
-  border-top: 1px solid #f0f0f0;
-  padding: 8px 12px 10px;
-  background: #fff;
-  animation: slideDown .15s ease;
-
-  @keyframes slideDown {
-    from { opacity: 0; transform: translateY(-4px); }
-    to   { opacity: 1; transform: translateY(0); }
-  }
+.card-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+  margin-top: 6px;
 }
 
-.detail-row {
+.card-duration {
+  font-size: .7rem;
+  color: #9e9e9e;
+  font-weight: 600;
+}
+
+// ─── Board empty ──────────────────────────────────────────────────────────────
+
+.board-empty {
   display: flex;
-  align-items: flex-start;
-  gap: 6px;
-  font-size: .78rem;
-  color: #555;
-  margin-bottom: 5px;
-
-  &:last-child { margin-bottom: 0; }
-
-  .detail-label {
-    font-weight: 600;
-    color: #333;
-    min-width: 52px;
-  }
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  padding: 60px 24px;
+  color: #bdbdbd;
+  font-size: .9rem;
+  text-align: center;
+  width: 100%;
 }
 
 // ─── Loading / Error states ───────────────────────────────────────────────────

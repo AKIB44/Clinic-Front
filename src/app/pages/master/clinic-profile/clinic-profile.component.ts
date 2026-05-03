@@ -7,7 +7,6 @@ import { MaterialModule } from '../../../material.module';
 import { TablerIconsModule } from 'angular-tabler-icons';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { ClinicsService } from '../../../services/clinics.service';
-import { RbacService } from '../../../auth/rbac.service';
 import { Clinic } from '../../../models/clinic.model';
 
 @Component({
@@ -20,7 +19,6 @@ import { Clinic } from '../../../models/clinic.model';
 })
 export class ClinicProfileComponent implements OnInit {
   private svc   = inject(ClinicsService);
-  private rbac  = inject(RbacService);
   private snack = inject(MatSnackBar);
   private cdr   = inject(ChangeDetectorRef);
 
@@ -39,9 +37,8 @@ export class ClinicProfileComponent implements OnInit {
   });
 
   ngOnInit() {
-    const id = this.rbac.clinicId;
-    if (!id) { this.loading = false; this.cdr.markForCheck(); return; }
-    this.svc.get(id).subscribe({
+    // Backend resolves clinic from JWT — no ID param needed
+    this.svc.get().subscribe({
       next: (r) => {
         this.clinic = r.clinic;
         this.form.patchValue(r.clinic);
@@ -53,9 +50,9 @@ export class ClinicProfileComponent implements OnInit {
   }
 
   save() {
-    if (this.form.invalid || !this.clinic) return;
+    if (this.form.invalid) return;
     this.saving = true;
-    this.svc.update(this.clinic.id, this.form.value as Partial<Clinic>).subscribe({
+    this.svc.update(this.form.value as Partial<Clinic>).subscribe({
       next: (r) => {
         this.clinic = r.clinic;
         this.saving = false;

@@ -12,6 +12,7 @@ import { NgScrollbarModule } from 'ngx-scrollbar';
 import { MatMenuModule } from '@angular/material/menu';
 import { MatButtonModule } from '@angular/material/button';
 import { navItems } from '../sidebar/sidebar-data';
+import { AuthService } from 'src/app/auth/auth.service';
 
 interface notifications {
   id: number;
@@ -106,9 +107,28 @@ export class AppHorizontalHeaderComponent {
   constructor(
     private vsidenav: CoreService,
     public dialog: MatDialog,
-    private translate: TranslateService
+    private translate: TranslateService,
+    private authService: AuthService
   ) {
     translate.setDefaultLang('en');
+  }
+
+  get loggedInUserName(): string {
+    const user = this.authService.getUser();
+    const fullName = `${user?.first_name ?? ''} ${user?.last_name ?? ''}`.trim();
+    return fullName || user?.email || 'User';
+  }
+
+  get loggedInUserRole(): string {
+    const role = this.authService.getUser()?.role;
+    if (!role) return 'User';
+    if (role === 'admin') return 'Admin';
+    if (role === 'receptionist') return 'Receptionist';
+    return 'Doctor';
+  }
+
+  get loggedInUserEmail(): string {
+    return this.authService.getUser()?.email || '-';
   }
 
   changeLanguage(lang: any): void {

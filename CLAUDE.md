@@ -6,7 +6,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## What This Is
 
-This is the **Sharayu Dental Clinic admin frontend** — an Angular 18 SPA for doctors and receptionists. It is built as `clinic2.0` and calls a separate Node.js backend at `https://api.sharayudental.com/v1` (locally: `http://localhost:3000/v1`).
+This is the **Sharayu Dental Admin frontend** — an Angular 18 SPA for doctors and receptionists. It is built as `clinic2.0` and calls a separate Node.js backend at `https://api.sharayudental.com/v1` (locally: `http://localhost:3000/v1`).
 
 This repo is **frontend only**. It never touches the database directly. The companion backend repo (`sharayu-backend/`) is hosted and deployed separately.
 

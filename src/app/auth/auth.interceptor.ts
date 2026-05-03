@@ -18,6 +18,16 @@ function addBearer(req: HttpRequest<unknown>, token: string) {
   return req.clone({ setHeaders: { Authorization: `Bearer ${token}` } });
 }
 
+/** 401 on these routes is not “expired access token” (e.g. bad password on login). */
+function isPublicAuthRequest(req: HttpRequest<unknown>): boolean {
+  const u = req.url;
+  return (
+    u.includes('/auth/login') ||
+    u.includes('/auth/refresh') ||
+    u.includes('/auth/logout')
+  );
+}
+
 export const authInterceptor: HttpInterceptorFn = (
   req: HttpRequest<unknown>,
   next: HttpHandlerFn
@@ -32,6 +42,10 @@ export const authInterceptor: HttpInterceptorFn = (
   return next(authedReq).pipe(
     catchError((err: HttpErrorResponse) => {
       if (err.status !== 401) {
+        return throwError(() => err);
+      }
+
+      if (isPublicAuthRequest(req)) {
         return throwError(() => err);
       }
 

@@ -1,13 +1,15 @@
 import { BreakpointObserver, MediaMatcher } from '@angular/cdk/layout';
-import { Component, OnInit, ViewChild, ViewEncapsulation } from '@angular/core';
+import { Component, OnInit, ViewChild, ViewEncapsulation, inject } from '@angular/core';
 import { Subscription } from 'rxjs';
 import { MatSidenav, MatSidenavContent } from '@angular/material/sidenav';
 import { CoreService } from 'src/app/services/core.service';
 import { AppSettings } from 'src/app/config';
 import { filter } from 'rxjs/operators';
 import { NavigationEnd, Router } from '@angular/router';
-import { navItems } from './vertical/sidebar/sidebar-data';
+import { navItems as allNavItems } from './vertical/sidebar/sidebar-data';
+import { RbacService } from '../../auth/rbac.service';
 import { NavService } from '../../services/nav.service';
+import { AuthService } from '../../auth/auth.service';
 import { AppNavItemComponent } from './vertical/sidebar/nav-item/nav-item.component';
 import { RouterModule } from '@angular/router';
 import { MaterialModule } from 'src/app/material.module';
@@ -63,7 +65,27 @@ interface quicklinks {
   encapsulation: ViewEncapsulation.None,
 })
 export class FullComponent implements OnInit {
-  navItems = navItems;
+  private rbac = inject(RbacService);
+  private authService = inject(AuthService);
+
+  get loggedInUserName(): string {
+    const user = this.authService.getUser();
+    const fullName = `${user?.first_name ?? ''} ${user?.last_name ?? ''}`.trim();
+    return fullName || user?.email || 'User';
+  }
+
+  get loggedInUserRole(): string {
+    const role = this.authService.getUser()?.role;
+    if (!role) return 'User';
+    if (role === 'admin') return 'Admin';
+    if (role === 'receptionist') return 'Receptionist';
+    return 'Doctor';
+  }
+
+  get navItems() {
+    const role = this.rbac.role;
+    return allNavItems.filter(item => !item.roles || (role && item.roles.includes(role)));
+  }
 
   @ViewChild('leftsidenav')
   public sidenav: MatSidenav;

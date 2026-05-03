@@ -1,9 +1,9 @@
 import { NavItem } from './nav-item/nav-item';
 
 export const navItems: NavItem[] = [
-  {
-    navCap: 'Clinic',
-  },
+
+  // ── Clinic ─────────────────────────────────────────────────────────────────
+  { navCap: 'Clinic' },
   {
     displayName: 'Dashboard',
     iconName: 'layout-dashboard',
@@ -11,52 +11,71 @@ export const navItems: NavItem[] = [
     route: '/dashboards/dashboard1',
   },
   {
-    displayName: 'Today\'s Schedule',
+    displayName: "Today's Schedule",
     iconName: 'calendar-event',
     bgcolor: 'success',
     route: '/schedule',
   },
-  {
-    navCap: 'Patients',
-  },
+
+  // ── Patients ───────────────────────────────────────────────────────────────
+  { navCap: 'Patients' },
   {
     displayName: 'Patient Search',
     iconName: 'user-search',
     bgcolor: 'accent',
     route: '/apps/contacts',
   },
-  {
-    navCap: 'Operations',
-  },
+
+  // ── Operations ─────────────────────────────────────────────────────────────
+  { navCap: 'Operations' },
   {
     displayName: 'Invoices',
     iconName: 'file-invoice',
     bgcolor: 'warning',
     route: '/apps/invoice',
   },
+
+  // ── Master — admin only ────────────────────────────────────────────────────
   {
-    displayName: 'Recalls',
-    iconName: 'bell-ringing',
-    bgcolor: 'error',
-    route: '/apps/notes',
+    navCap: 'Master',
+    roles: ['admin'],
   },
   {
-    navCap: 'Analytics',
-  },
-  {
-    displayName: 'Analytics',
-    iconName: 'chart-bar',
+    displayName: 'Clinic Profile',
+    iconName: 'building',
     bgcolor: 'primary',
-    route: '/dashboards/dashboard2',
+    route: '/master/clinic-profile',
+    roles: ['admin'],
   },
   {
-    navCap: 'Booking',
+    displayName: 'Services',
+    iconName: 'tooth',
+    bgcolor: 'success',
+    route: '/master/services',
+    roles: ['admin'],
   },
+  {
+    displayName: 'Staff & Users',
+    iconName: 'users',
+    bgcolor: 'warning',
+    route: '/master/staff',
+    roles: ['admin'],
+  },
+  {
+    displayName: 'Chairs & Rooms',
+    iconName: 'armchair',
+    bgcolor: 'accent',
+    route: '/master/chairs',
+    roles: ['admin'],
+  },
+
+  // ── Booking ────────────────────────────────────────────────────────────────
+  { navCap: 'Booking' },
   {
     displayName: 'Patient Booking Form',
     iconName: 'clipboard-plus',
     bgcolor: 'success',
     route: '/booking',
-    external: false,
   },
+
 ];

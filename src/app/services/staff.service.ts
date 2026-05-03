@@ -7,12 +7,11 @@ import { StaffUser } from '../models/clinic.model';
 @Injectable({ providedIn: 'root' })
 export class StaffService {
   private http = inject(HttpClient);
-  private base = `${authApiConfig.baseUrl}/users`;
+  private base = `${authApiConfig.baseUrl}/staff`;
 
-  list(clinicId?: string): Observable<{ users: StaffUser[] }> {
-    const params: Record<string, string> = {};
-    if (clinicId) params['clinic_id'] = clinicId;
-    return this.http.get<{ users: StaffUser[] }>(this.base, { params });
+  // Backend scopes by JWT — no clinic_id param needed
+  list(): Observable<{ users: StaffUser[] }> {
+    return this.http.get<{ users: StaffUser[] }>(this.base);
   }
 
   create(payload: Partial<StaffUser> & { password?: string }): Observable<{ user: StaffUser }> {

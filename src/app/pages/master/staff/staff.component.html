@@ -1,0 +1,71 @@
+<div class="master-page">
+  <div class="page-header">
+    <div>
+      <h1 class="page-title">Staff &amp; Users</h1>
+      <p class="page-subtitle">Manage clinic staff and access roles</p>
+    </div>
+    <button mat-flat-button color="primary" (click)="openDialog()">
+      <i-tabler name="user-plus" size="18"></i-tabler>
+      Add Staff
+    </button>
+  </div>
+
+  @if (loading) {
+    <div class="center-loader"><mat-spinner diameter="40"></mat-spinner></div>
+  } @else {
+    <div class="master-card">
+      <table mat-table [dataSource]="staff" class="master-table">
+
+        <ng-container matColumnDef="name">
+          <th mat-header-cell *matHeaderCellDef>Name</th>
+          <td mat-cell *matCellDef="let m">
+            <div class="cell-primary">{{ m.first_name }} {{ m.last_name }}</div>
+          </td>
+        </ng-container>
+
+        <ng-container matColumnDef="email">
+          <th mat-header-cell *matHeaderCellDef>Email</th>
+          <td mat-cell *matCellDef="let m">{{ m.email }}</td>
+        </ng-container>
+
+        <ng-container matColumnDef="role">
+          <th mat-header-cell *matHeaderCellDef>Role</th>
+          <td mat-cell *matCellDef="let m">
+            <span class="role-badge" [ngClass]="roleClass[m.role]">
+              {{ roleLabel[m.role] || m.role }}
+            </span>
+          </td>
+        </ng-container>
+
+        <ng-container matColumnDef="status">
+          <th mat-header-cell *matHeaderCellDef>Status</th>
+          <td mat-cell *matCellDef="let m">
+            <span class="status-chip" [class.active]="m.is_active" [class.inactive]="!m.is_active">
+              <span class="dot"></span>{{ m.is_active ? 'Active' : 'Inactive' }}
+            </span>
+          </td>
+        </ng-container>
+
+        <ng-container matColumnDef="actions">
+          <th mat-header-cell *matHeaderCellDef></th>
+          <td mat-cell *matCellDef="let m">
+            <div class="action-row">
+              <button mat-icon-button matTooltip="Edit" (click)="openDialog(m)">
+                <i-tabler name="pencil" size="16"></i-tabler>
+              </button>
+              <button mat-icon-button [matTooltip]="m.is_active ? 'Deactivate' : 'Activate'" (click)="toggle(m)">
+                <i-tabler [name]="m.is_active ? 'toggle-right' : 'toggle-left'" size="18"></i-tabler>
+              </button>
+            </div>
+          </td>
+        </ng-container>
+
+        <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+        <tr mat-row *matRowDef="let row; columns: displayedColumns;"></tr>
+        <tr class="mat-row" *matNoDataRow>
+          <td class="mat-cell empty-row" [attr.colspan]="displayedColumns.length">No staff members found.</td>
+        </tr>
+      </table>
+    </div>
+  }
+</div>

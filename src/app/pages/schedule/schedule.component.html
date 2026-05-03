@@ -34,12 +34,15 @@
 
     <span class="spacer"></span>
 
-    <!-- Chair filter -->
-    <mat-button-toggle-group class="chair-toggle" [(ngModel)]="chairFilter">
-      <mat-button-toggle value="all">All Chairs</mat-button-toggle>
-      <mat-button-toggle value="1">Chair 1</mat-button-toggle>
-      <mat-button-toggle value="2">Chair 2</mat-button-toggle>
-    </mat-button-toggle-group>
+    <!-- Chair filter — dynamic from API -->
+    @if (chairs.length > 1) {
+      <mat-button-toggle-group class="chair-toggle" [(ngModel)]="selectedChairId">
+        <mat-button-toggle value="all">All Chairs</mat-button-toggle>
+        @for (ch of chairs; track ch.id) {
+          <mat-button-toggle [value]="ch.id">{{ ch.name }}</mat-button-toggle>
+        }
+      </mat-button-toggle-group>
+    }
   </div>
 
   <!-- ── Error banner ──────────────────────────────────────────────────── -->
@@ -51,7 +54,7 @@
   }
 
   <!-- ── Summary strip ────────────────────────────────────────────────── -->
-  @if (!loading) {
+  @if (!loading && !columnsLoading) {
     <div class="summary-strip">
       <span class="stat-chip total">
         <i-tabler name="calendar" size="14"></i-tabler>
@@ -73,7 +76,7 @@
   }
 
   <!-- ── Loading state ─────────────────────────────────────────────────── -->
-  @if (loading) {
+  @if (loading || columnsLoading) {
     <div class="board-loading">
       <mat-spinner diameter="40"></mat-spinner>
       <span>Loading schedule…</span>
@@ -81,7 +84,7 @@
   }
 
   <!-- ── Board ─────────────────────────────────────────────────────────── -->
-  @if (!loading) {
+  @if (!loading && !columnsLoading) {
     <div class="board-scroll">
       <div class="board-inner">
 
@@ -107,80 +110,49 @@
               }
 
               @for (appt of columnCards(col.serviceId); track trackById($index, appt)) {
-                <div class="appt-card"
-                     [class.expanded]="expandedCard === appt.id"
-                     (click)="toggleCard(appt.id)">
+                <div class="appt-card" (click)="openDetail(appt)">
 
-                  <div class="card-main">
-
-                    <!-- Time & chair row -->
-                    <div class="card-time-row">
-                      <span class="card-time">
-                        <i-tabler name="clock" size="13"></i-tabler>
-                        {{ formatTime(appt.scheduled_at) }}
-                      </span>
-                      <span class="card-chair">Chair {{ appt.chair_id }}</span>
-                    </div>
-
-                    <!-- Patient name -->
-                    <div class="card-patient" [title]="appt.patient_name">
-                      {{ appt.patient_name }}
-                    </div>
-
-                    <!-- Phone -->
-                    <div class="card-phone">
-                      <i-tabler name="phone" size="12"></i-tabler>
-                      {{ appt.patient_phone }}
-                    </div>
-
-                    <!-- Status & source row -->
-                    <div class="card-service-row">
-                      <span class="status-badge s-{{ appt.status }}">
-                        {{ statusLabel[appt.status] || appt.status }}
-                      </span>
-                      <span class="card-source" [matTooltip]="appt.booking_source">
-                        <i-tabler [name]="sourceIcon[appt.booking_source] || 'dots'" size="14"></i-tabler>
-                        {{ appt.booking_source }}
-                      </span>
-                    </div>
-
+                  <!-- Time & source row -->
+                  <div class="card-time-row">
+                    <span class="card-time">
+                      <i-tabler name="clock" size="13"></i-tabler>
+                      {{ formatTime(appt.scheduled_at) }}
+                    </span>
+                    <span class="card-source" [matTooltip]="appt.booking_source">
+                      <i-tabler [name]="sourceIcon[appt.booking_source] || 'dots'" size="13"></i-tabler>
+                    </span>
                   </div>
 
-                  <!-- Expanded detail -->
-                  @if (expandedCard === appt.id) {
-                    <div class="card-detail">
-                      <div class="detail-row">
-                        <span class="detail-label">Patient</span>
-                        <span>{{ appt.patient_name }}</span>
-                      </div>
-                      <div class="detail-row">
-                        <span class="detail-label">Phone</span>
-                        <span>{{ appt.patient_phone }}</span>
-                      </div>
-                      <div class="detail-row">
-                        <span class="detail-label">Chair</span>
-                        <span>Chair {{ appt.chair_id }}</span>
-                      </div>
-                      <div class="detail-row">
-                        <span class="detail-label">Status</span>
-                        <span class="status-badge s-{{ appt.status }}">{{ statusLabel[appt.status] || appt.status }}</span>
-                      </div>
-                      <div class="detail-row">
-                        <span class="detail-label">Source</span>
-                        <span>{{ appt.booking_source }}</span>
-                      </div>
-                      @if (appt.notes) {
-                        <div class="detail-row">
-                          <span class="detail-label">Notes</span>
-                          <span>{{ appt.notes }}</span>
-                        </div>
-                      }
-                    </div>
-                  }
+                  <!-- Patient name -->
+                  <div class="card-patient" [title]="appt.patient_name">
+                    {{ appt.patient_name }}
+                  </div>
+
+                  <!-- Phone -->
+                  <div class="card-phone">
+                    <i-tabler name="phone" size="12"></i-tabler>
+                    {{ appt.patient_phone }}
+                  </div>
+
+                  <!-- Status badge -->
+                  <div class="card-footer">
+                    <span class="status-badge s-{{ appt.status }}">
+                      {{ statusLabel[appt.status] || appt.status }}
+                    </span>
+                    <span class="card-duration">{{ appt.duration_minutes }}m</span>
+                  </div>
 
                 </div>
               }
             </div>
+          </div>
+        }
+
+        <!-- No services configured -->
+        @if (columns.length === 0) {
+          <div class="board-empty">
+            <i-tabler name="building-hospital" size="40"></i-tabler>
+            <p>No services configured. Add services in Master → Services.</p>
           </div>
         }
 

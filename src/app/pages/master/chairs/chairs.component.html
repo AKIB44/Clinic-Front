@@ -1,0 +1,44 @@
+<div class="master-page">
+  <div class="page-header">
+    <div>
+      <h1 class="page-title">Chairs &amp; Rooms</h1>
+      <p class="page-subtitle">Manage treatment chairs in your clinic</p>
+    </div>
+    <button mat-flat-button color="primary" (click)="openDialog()">
+      <i-tabler name="plus" size="18"></i-tabler>
+      Add Chair
+    </button>
+  </div>
+
+  @if (loading) {
+    <div class="center-loader"><mat-spinner diameter="40"></mat-spinner></div>
+  } @else {
+    <div class="chairs-grid">
+      @for (chair of chairs; track chair.id) {
+        <div class="chair-card" [class.inactive]="!chair.is_active">
+          <div class="chair-icon">
+            <i-tabler name="armchair" size="36"></i-tabler>
+          </div>
+          <div class="chair-name">{{ chair.name }}</div>
+          <span class="status-chip" [class.active]="chair.is_active" [class.inactive]="!chair.is_active">
+            <span class="dot"></span>{{ chair.is_active ? 'Active' : 'Inactive' }}
+          </span>
+          <div class="chair-actions">
+            <button mat-icon-button matTooltip="Edit" (click)="openDialog(chair)">
+              <i-tabler name="pencil" size="15"></i-tabler>
+            </button>
+            <button mat-icon-button matTooltip="Delete" color="warn" (click)="delete(chair)">
+              <i-tabler name="trash" size="15"></i-tabler>
+            </button>
+          </div>
+        </div>
+      }
+      @if (chairs.length === 0) {
+        <div class="empty-chairs">
+          <i-tabler name="armchair" size="44"></i-tabler>
+          <p>No chairs configured yet.</p>
+        </div>
+      }
+    </div>
+  }
+</div>

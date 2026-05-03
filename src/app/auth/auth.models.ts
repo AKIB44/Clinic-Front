@@ -1,10 +1,12 @@
-export type AppRole = 'super_admin' | 'clinic_admin' | 'doctor' | 'receptionist';
+// MVP roles — matches backend DB constraint: admin | doctor | receptionist
+export type AppRole = 'admin' | 'doctor' | 'receptionist';
 
 export interface AuthUser {
   id: string;
   email?: string;
   first_name?: string;
   last_name?: string;
+  username?: string;
   role?: AppRole;
   clinic_id?: string;
 }

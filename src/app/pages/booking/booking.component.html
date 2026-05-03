@@ -22,14 +22,31 @@
       <h3 class="f-w-700 m-b-4">Book an Appointment</h3>
       <p class="mat-body-2 text-muted m-b-24">Sharayu Dental Clinic</p>
 
+      @if (metaError) {
+        <p class="text-error f-s-14 m-b-16">{{ metaError }}</p>
+      }
+
       <!-- SECTION 1 — Service -->
       <div class="section-block">
         <h6 class="f-w-600 m-b-12">Select Treatment</h6>
+        @if (servicesLoading) {
+          <div class="d-flex align-items-center gap-2 m-b-8">
+            <mat-spinner diameter="28"></mat-spinner>
+            <span class="text-muted f-s-14">Loading treatments…</span>
+          </div>
+        }
+        @if (servicesError) {
+          <p class="text-error f-s-14 m-b-8">{{ servicesError }}</p>
+        }
+        @if (!metaError && !servicesLoading && !servicesError && services.length === 0) {
+          <p class="text-muted f-s-14 m-b-8">No active treatments are available for this clinic yet.</p>
+        }
         <mat-form-field appearance="outline" class="w-100" color="primary">
           <mat-label>Choose a treatment…</mat-label>
           <mat-select
             [(value)]="selectedService"
             (selectionChange)="onServiceChange($event.value)"
+            [disabled]="servicesLoading || services.length === 0"
           >
             @for (svc of services; track svc.id) {
               <mat-option [value]="svc.id">{{ svc.label }}</mat-option>
