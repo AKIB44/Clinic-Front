@@ -28,6 +28,27 @@ export const routes: Routes = [
         component: ScheduleComponent,
       },
       {
+        path: 'patients/:id',
+        loadComponent: () =>
+          import('./pages/patients/patient-record/patient-record.component').then(
+            (m) => m.PatientRecordComponent
+          ),
+      },
+      {
+        path: 'rx/new',
+        loadComponent: () =>
+          import('./pages/rx/prescription-form/prescription-form.component').then(
+            (m) => m.PrescriptionFormComponent
+          ),
+      },
+      {
+        path: 'rx/:id/edit',
+        loadComponent: () =>
+          import('./pages/rx/prescription-form/prescription-form.component').then(
+            (m) => m.PrescriptionFormComponent
+          ),
+      },
+      {
         path: 'master',
         loadChildren: () =>
           import('./pages/master/master.routes').then((m) => m.MasterRoutes),

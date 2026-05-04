@@ -10,6 +10,9 @@
       <p class="mat-body-2 text-muted m-b-32">
         A WhatsApp confirmation has been sent to your number.
       </p>
+      <p class="redirect-notice m-b-16">
+        Redirecting to schedule in <strong>{{ redirectCountdown }}s</strong>…
+      </p>
       <button mat-flat-button color="primary" (click)="resetAll()">
         Book Another Appointment
       </button>
@@ -118,7 +121,7 @@
       }
 
       <!-- SECTION 4 — Patient details -->
-      @if (showPatient && !patientSaved) {
+      @if (showPatient && !patientSaved && !intakeSaved) {
         <div class="section-block">
           <h6 class="f-w-600 m-b-12">Your Details</h6>
           @if (welcomeBack) {
@@ -161,8 +164,238 @@
         </div>
       }
 
-      <!-- SECTION 5 — Summary & confirm -->
-      @if (showIntake && patientSaved) {
+      <!-- SECTION 5 — Health intake form -->
+      @if (showIntakeForm) {
+        <div class="section-block">
+          <div class="intake-header m-b-24">
+            <h6 class="f-w-600 m-b-4">Health Information</h6>
+            <p class="text-muted f-s-13">All optional — helps us prepare for your visit.</p>
+          </div>
+
+          <!-- Last dental visit -->
+          <div class="intake-q">
+            <div class="intake-q-label">Last dental visit</div>
+            <div class="pill-group">
+              @for (opt of lastVisitOptions; track opt) {
+                <button class="intake-pill" [class.selected]="isSelected('last_dental_visit', opt)"
+                        (click)="selectPill('last_dental_visit', opt)">
+                  <span class="pill-check">✓</span>{{ opt }}
+                </button>
+              }
+            </div>
+          </div>
+
+          <!-- Known allergies (multi-select) -->
+          <div class="intake-q">
+            <div class="intake-q-label">Known allergies to dental materials <span class="intake-q-sub">(select all that apply)</span></div>
+            <div class="pill-group">
+              @for (opt of allergyOptions; track opt) {
+                <button class="intake-pill" [class.selected]="isAllergySelected(opt)"
+                        (click)="toggleAllergy(opt)">
+                  <span class="pill-check">✓</span>{{ opt }}
+                </button>
+              }
+            </div>
+          </div>
+
+          <!-- Dental sensitivity -->
+          <div class="intake-q">
+            <div class="intake-q-label">Any dental sensitivity or pain?</div>
+            <div class="pill-group">
+              @for (opt of sensitivityOptions; track opt) {
+                <button class="intake-pill" [class.selected]="isSelected('dental_sensitivity', opt)"
+                        (click)="selectPill('dental_sensitivity', opt)">
+                  <span class="pill-check">✓</span>{{ opt }}
+                </button>
+              }
+            </div>
+          </div>
+
+          <!-- Blood-thinning medication -->
+          <div class="intake-q">
+            <div class="intake-q-label">Are you on blood-thinning medication?</div>
+            <div class="pill-group">
+              @for (opt of yesNoOptions; track opt) {
+                <button class="intake-pill" [class.selected]="isSelected('blood_thinning_medication', opt)"
+                        (click)="selectPill('blood_thinning_medication', opt)">
+                  <span class="pill-check">✓</span>{{ opt }}
+                </button>
+              }
+            </div>
+          </div>
+
+          <!-- ── Service-specific ──────────────────────────────────── -->
+
+          @if (showRctQuestions || showExtractionQuestions) {
+            <div class="intake-q">
+              <div class="intake-q-label">Current pain level</div>
+              <div class="pill-group">
+                @for (opt of painOptions; track opt) {
+                  <button class="intake-pill" [class.selected]="isSelected('pain_level', opt)"
+                          (click)="selectPill('pain_level', opt)">
+                    <span class="pill-check">✓</span>{{ opt }}
+                  </button>
+                }
+              </div>
+            </div>
+          }
+
+          @if (showRctQuestions) {
+            <div class="intake-q">
+              <div class="intake-q-label">Has this tooth been treated before?</div>
+              <div class="pill-group">
+                @for (opt of yesNoOptions; track opt) {
+                  <button class="intake-pill" [class.selected]="isSelected('previous_treatment', opt)"
+                          (click)="selectPill('previous_treatment', opt)">
+                    <span class="pill-check">✓</span>{{ opt }}
+                  </button>
+                }
+              </div>
+            </div>
+          }
+
+          @if (showExtractionQuestions) {
+            <div class="intake-q">
+              <div class="intake-q-label">Is it a wisdom / impacted tooth?</div>
+              <div class="pill-group">
+                @for (opt of yesNoOptions; track opt) {
+                  <button class="intake-pill" [class.selected]="isSelected('impacted_tooth', opt)"
+                          (click)="selectPill('impacted_tooth', opt)">
+                    <span class="pill-check">✓</span>{{ opt }}
+                  </button>
+                }
+              </div>
+            </div>
+          }
+
+          @if (showCleaningQuestions) {
+            <div class="intake-q">
+              <div class="intake-q-label">Do your gums bleed while brushing?</div>
+              <div class="pill-group">
+                @for (opt of gumBleedOptions; track opt) {
+                  <button class="intake-pill" [class.selected]="isSelected('gum_bleeding', opt)"
+                          (click)="selectPill('gum_bleeding', opt)">
+                    <span class="pill-check">✓</span>{{ opt }}
+                  </button>
+                }
+              </div>
+            </div>
+          }
+
+          @if (showOrthoQuestions) {
+            <div class="intake-q">
+              <div class="intake-q-label">Previous orthodontic treatment?</div>
+              <div class="pill-group">
+                @for (opt of yesNoOptions; track opt) {
+                  <button class="intake-pill" [class.selected]="isSelected('ortho_previous', opt)"
+                          (click)="selectPill('ortho_previous', opt)">
+                    <span class="pill-check">✓</span>{{ opt }}
+                  </button>
+                }
+              </div>
+            </div>
+            <div class="intake-q">
+              <div class="intake-q-label">Primary concern</div>
+              <div class="pill-group">
+                @for (opt of orthoConcernOptions; track opt) {
+                  <button class="intake-pill" [class.selected]="isSelected('ortho_concern', opt)"
+                          (click)="selectPill('ortho_concern', opt)">
+                    <span class="pill-check">✓</span>{{ opt }}
+                  </button>
+                }
+              </div>
+            </div>
+          }
+
+          @if (showImplantQuestions) {
+            <div class="intake-q">
+              <div class="intake-q-label">Are you diabetic?</div>
+              <div class="pill-group">
+                @for (opt of yesNoOptions; track opt) {
+                  <button class="intake-pill" [class.selected]="isSelected('diabetic', opt)"
+                          (click)="selectPill('diabetic', opt)">
+                    <span class="pill-check">✓</span>{{ opt }}
+                  </button>
+                }
+              </div>
+            </div>
+          }
+
+          @if (showRestorationQuestions) {
+            <div class="intake-q">
+              <div class="intake-q-label">Replacing an old filling?</div>
+              <div class="pill-group">
+                @for (opt of yesNoOptions; track opt) {
+                  <button class="intake-pill" [class.selected]="isSelected('restoration_old_filling', opt)"
+                          (click)="selectPill('restoration_old_filling', opt)">
+                    <span class="pill-check">✓</span>{{ opt }}
+                  </button>
+                }
+              </div>
+            </div>
+          }
+
+          @if (showCrownQuestions) {
+            <div class="intake-q">
+              <div class="intake-q-label">Do you grind or clench your teeth?</div>
+              <div class="pill-group">
+                @for (opt of yesNoOptions; track opt) {
+                  <button class="intake-pill" [class.selected]="isSelected('teeth_grinding', opt)"
+                          (click)="selectPill('teeth_grinding', opt)">
+                    <span class="pill-check">✓</span>{{ opt }}
+                  </button>
+                }
+              </div>
+            </div>
+          }
+
+          @if (showWhiteningQuestions) {
+            <div class="intake-q">
+              <div class="intake-q-label">Previous whitening treatment?</div>
+              <div class="pill-group">
+                @for (opt of yesNoOptions; track opt) {
+                  <button class="intake-pill" [class.selected]="isSelected('previous_whitening', opt)"
+                          (click)="selectPill('previous_whitening', opt)">
+                    <span class="pill-check">✓</span>{{ opt }}
+                  </button>
+                }
+              </div>
+            </div>
+          }
+
+          @if (showPedoQuestions) {
+            <div class="intake-q">
+              <div class="intake-q-label">Child's age (years)</div>
+              <input class="age-input" type="number" min="1" max="18" placeholder="e.g. 7"
+                     [value]="intake.child_age"
+                     (input)="intake.child_age = $any($event.target).value">
+            </div>
+            <div class="intake-q">
+              <div class="intake-q-label">Previous dental treatment anxiety?</div>
+              <div class="pill-group">
+                @for (opt of gumBleedOptions; track opt) {
+                  <button class="intake-pill" [class.selected]="isSelected('anxiety_previous', opt)"
+                          (click)="selectPill('anxiety_previous', opt)">
+                    <span class="pill-check">✓</span>{{ opt }}
+                  </button>
+                }
+              </div>
+            </div>
+          }
+
+          <div class="intake-actions m-t-20">
+            <button mat-flat-button color="primary" class="w-100 m-b-8" (click)="submitIntake()">
+              Continue
+            </button>
+            <button mat-stroked-button class="w-100 skip-btn" (click)="skipIntake()">
+              Skip for now
+            </button>
+          </div>
+        </div>
+      }
+
+      <!-- SECTION 6 — Summary & confirm -->
+      @if (showSummary) {
         <div class="section-block">
           <h6 class="f-w-600 m-b-16">Booking Summary</h6>
           <div class="summary-table">
@@ -282,4 +515,88 @@
 }
 .summary-table { display: flex; flex-direction: column; gap: 10px; }
 .summary-row { display: flex; justify-content: space-between; font-size: 14px; }
+.redirect-notice { font-size: 13px; color: #888; }
+.redirect-notice strong { color: #1976d2; }
+
+/* ── Intake pill system ── */
+.intake-q { margin-bottom: 22px; }
+.intake-q-label {
+  font-size: 13px; font-weight: 600; color: #333;
+  margin-bottom: 10px; line-height: 1.4;
+}
+.intake-q-sub { font-weight: 400; color: #999; font-size: 12px; margin-left: 4px; }
+.pill-group { display: flex; flex-wrap: wrap; gap: 8px; }
+
+.intake-pill {
+  display: inline-flex; align-items: center; gap: 0;
+  padding: 8px 16px;
+  border-radius: 24px;
+  border: 1.5px solid #e0e0e0;
+  background: #fafafa;
+  color: #555;
+  font-size: 13px;
+  cursor: pointer;
+  transition: transform 0.18s cubic-bezier(.34,1.56,.64,1),
+              background 0.15s ease,
+              border-color 0.15s ease,
+              box-shadow 0.15s ease,
+              color 0.15s ease;
+  user-select: none;
+  outline: none;
+  -webkit-tap-highlight-color: transparent;
+}
+.intake-pill:hover {
+  border-color: #1976d2;
+  color: #1976d2;
+  background: #f0f7ff;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 10px rgba(25,118,210,0.14);
+}
+.intake-pill:active {
+  transform: scale(0.94);
+  box-shadow: none;
+}
+.intake-pill.selected {
+  background: #1976d2;
+  border-color: #1976d2;
+  color: #fff;
+  transform: scale(1.04);
+  box-shadow: 0 4px 14px rgba(25,118,210,0.32);
+}
+.intake-pill.selected:hover {
+  background: #1565c0;
+  border-color: #1565c0;
+  transform: scale(1.04) translateY(-1px);
+}
+
+/* Checkmark — hidden by default, slides in when selected */
+.pill-check {
+  display: inline-block;
+  max-width: 0;
+  overflow: hidden;
+  font-weight: 700;
+  font-size: 12px;
+  transition: max-width 0.2s ease, margin-right 0.2s ease;
+  margin-right: 0;
+  white-space: nowrap;
+}
+.intake-pill.selected .pill-check {
+  max-width: 16px;
+  margin-right: 5px;
+}
+
+/* Child age input */
+.age-input {
+  padding: 10px 14px;
+  border: 1.5px solid #e0e0e0;
+  border-radius: 10px;
+  font-size: 14px;
+  width: 120px;
+  transition: border-color 0.15s;
+  outline: none;
+  background: #fafafa;
+}
+.age-input:focus { border-color: #1976d2; background: #fff; }
+
+.intake-actions .skip-btn { color: #888; border-color: #e0e0e0; }
 </style>

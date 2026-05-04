@@ -1,0 +1,52 @@
+<div class="rx-history">
+
+  @if (errorMsg()) {
+    <div class="rx-history-error">⚠ {{ errorMsg() }}</div>
+  }
+
+  @if (loading()) {
+    <div class="rx-history-loading">Loading prescriptions...</div>
+  }
+
+  @if (!loading() && !prescriptions().length) {
+    <div class="rx-history-empty">No prescriptions yet for this patient.</div>
+  }
+
+  @for (rx of prescriptions(); track rx.id) {
+    <div class="rx-item">
+      <div class="rx-item-left">
+        <div class="rx-item-no">{{ rx.prescriptionNo }}</div>
+        <div class="rx-item-diagnosis">{{ rx.diagnosis ?? 'No diagnosis recorded' }}</div>
+        <div class="rx-item-date">{{ rx.createdAt | date:'dd MMM yyyy' }}</div>
+      </div>
+
+      <div class="rx-item-right">
+        @if (rx.waSent) {
+          <span class="rx-badge wa">✓ Sent on WA</span>
+        } @else if (rx.pdfGenerated) {
+          <span class="rx-badge pdf">PDF ready</span>
+        } @else {
+          <span class="rx-badge draft">Draft</span>
+        }
+
+        @if (rx.pdfGenerated) {
+          <button class="rx-action-btn" (click)="downloadPdf(rx.id)">↓ PDF</button>
+          <button class="rx-action-btn resend"
+                  [disabled]="resendingId() === rx.id"
+                  (click)="resendWA(rx.id)">
+            {{ resendingId() === rx.id ? 'Sending...' : '↺ WA' }}
+          </button>
+        }
+      </div>
+    </div>
+  }
+
+  @if (total() > 10) {
+    <div class="rx-pagination">
+      <button [disabled]="page() === 1" (click)="changePage(page() - 1)">← Prev</button>
+      <span>Page {{ page() }}</span>
+      <button [disabled]="page() * 10 >= total()" (click)="changePage(page() + 1)">Next →</button>
+    </div>
+  }
+
+</div>

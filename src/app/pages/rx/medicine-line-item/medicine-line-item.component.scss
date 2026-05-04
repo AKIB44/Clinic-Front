@@ -1,0 +1,37 @@
+.med-item {
+  border-bottom: 1px solid #F1F5F9;
+  padding: 8px 12px;
+  &:last-of-type { border-bottom: none; }
+
+  &-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 5px;
+  }
+
+  &-fields {
+    display: grid;
+    grid-template-columns: 2fr 2fr 1.5fr 1.5fr;
+    gap: 6px;
+  }
+}
+
+.med-name     { flex: 1; font-size: 12px; font-weight: 600; color: #1E293B; }
+.med-strength { font-size: 10.5px; color: #64748B; font-weight: 400; margin-left: 4px; }
+.med-remove   {
+  background: none; border: none; color: #EF4444; font-size: 16px;
+  cursor: pointer; padding: 0 4px; opacity: 0.6;
+  &:hover { opacity: 1; }
+}
+
+.med-field {
+  label {
+    display: block; font-size: 9.5px; color: #94A3B8; margin-bottom: 2px;
+  }
+  input {
+    width: 100%; padding: 4px 7px; border: 1px solid #E2E8F0;
+    border-radius: 5px; font-size: 11px; color: #1E293B;
+    &:focus { border-color: #12A07C; outline: none; }
+  }
+}

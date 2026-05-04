@@ -1,0 +1,118 @@
+<div class="patient-record-page">
+  <a class="back-link" routerLink="/schedule">
+    <i-tabler name="arrow-left" size="16"></i-tabler>
+    Schedule
+  </a>
+
+  @if (loading()) {
+    <div class="patient-loading">
+      <mat-spinner diameter="36"></mat-spinner>
+      <span>Loading patient record...</span>
+    </div>
+  }
+
+  @if (!loading() && errorMsg()) {
+    <div class="patient-error">
+      <i-tabler name="alert-circle" size="18"></i-tabler>
+      {{ errorMsg() }}
+    </div>
+  }
+
+  @if (!loading() && patient(); as p) {
+    <section class="patient-header">
+      <div class="avatar">{{ initials() }}</div>
+      <div class="patient-title">
+        <h1>{{ p.name }}</h1>
+        <div class="patient-meta">
+          <span>
+            <i-tabler name="phone" size="15"></i-tabler>
+            {{ p.phone }}
+          </span>
+          @if (p.email) {
+            <span>
+              <i-tabler name="mail" size="15"></i-tabler>
+              {{ p.email }}
+            </span>
+          }
+          @if (p.dob) {
+            <span>
+              <i-tabler name="calendar" size="15"></i-tabler>
+              {{ p.dob | date:'dd MMM yyyy' }}
+            </span>
+          }
+        </div>
+      </div>
+    </section>
+
+    <nav class="pt-tabs" aria-label="Patient record sections">
+      <button
+        type="button"
+        class="pt-tab"
+        [class.on]="activeTab() === 'overview'"
+        (click)="activeTab.set('overview')">
+        Overview
+      </button>
+      <button
+        type="button"
+        class="pt-tab"
+        [class.on]="activeTab() === 'prescriptions'"
+        (click)="activeTab.set('prescriptions')">
+        Prescriptions
+      </button>
+    </nav>
+
+    @if (activeTab() === 'overview') {
+      <section class="overview-grid">
+        <div class="info-panel">
+          <h2>Clinical Snapshot</h2>
+          <dl>
+            <div>
+              <dt>Patient type</dt>
+              <dd>{{ p.is_paediatric ? 'Paediatric' : 'Adult' }}</dd>
+            </div>
+            <div>
+              <dt>Allergies</dt>
+              <dd>{{ p.allergies || 'None recorded' }}</dd>
+            </div>
+            <div>
+              <dt>Blood thinner</dt>
+              <dd>{{ p.blood_thinner ? 'Yes' : 'No' }}</dd>
+            </div>
+          </dl>
+        </div>
+
+        <div class="info-panel">
+          <h2>Medical History</h2>
+          <p>{{ p.medical_history || 'No medical history recorded.' }}</p>
+        </div>
+
+        @if (p.is_paediatric || p.parent_name || p.parent_phone) {
+          <div class="info-panel">
+            <h2>Guardian</h2>
+            <dl>
+              <div>
+                <dt>Name</dt>
+                <dd>{{ p.parent_name || 'Not recorded' }}</dd>
+              </div>
+              <div>
+                <dt>Phone</dt>
+                <dd>{{ p.parent_phone || 'Not recorded' }}</dd>
+              </div>
+            </dl>
+          </div>
+        }
+
+        <div class="info-panel">
+          <h2>Notes</h2>
+          <p>{{ p.notes || 'No notes recorded.' }}</p>
+        </div>
+      </section>
+    }
+
+    @if (activeTab() === 'prescriptions') {
+      <section class="history-panel">
+        <app-rx-history-tab [patientId]="p.id"></app-rx-history-tab>
+      </section>
+    }
+  }
+</div>

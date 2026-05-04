@@ -1,0 +1,22 @@
+<div class="proc-picker">
+  <button class="proc-picker-trigger" (click)="toggleOpen()">
+    + Add procedure
+  </button>
+
+  @if (open() && available().length) {
+    <ul class="proc-picker-list">
+      @for (proc of available(); track proc.id) {
+        <li class="proc-picker-item" (click)="select(proc)">
+          @if (proc.procedureStep) {
+            <span class="proc-step-badge">Step {{ proc.procedureStep }}</span>
+          }
+          {{ proc.procedureName }}
+        </li>
+      }
+    </ul>
+  }
+
+  @if (open() && !available().length) {
+    <div class="proc-picker-empty">All procedures already added</div>
+  }
+</div>
