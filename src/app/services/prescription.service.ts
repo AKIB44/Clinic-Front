@@ -4,7 +4,7 @@ import { firstValueFrom, interval, switchMap, takeWhile, lastValueFrom } from 'r
 import { authApiConfig } from '../auth/auth.config';
 import { CreateRxPayload, RxSummary } from '../pages/rx/rx.interfaces';
 
-interface CreateResult { id: number; prescriptionNo: string; }
+interface CreateResult { id: number; prescription_no: string; }
 interface PdfUrlResult { url: string | null; }
 
 @Injectable({ providedIn: 'root' })

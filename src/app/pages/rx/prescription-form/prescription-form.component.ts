@@ -9,13 +9,12 @@ import { RxMasterService } from '../../../services/rx-master.service';
 import { PrescriptionService } from '../../../services/prescription.service';
 import {
   MedFormItem, ProcFormItem, RxMedicine, RxProcedure,
-  LineItemPayload,
+  LineItemPayload, PrescriptionContext,
 } from '../rx.interfaces';
 import { MedicineSearchComponent } from '../medicine-search/medicine-search.component';
-import { MedicineLineItemComponent } from '../medicine-line-item/medicine-line-item.component';
+import { MedicineLineItemComponent, FieldChangeEvent } from '../medicine-line-item/medicine-line-item.component';
 import { ProcedurePickerComponent } from '../procedure-picker/procedure-picker.component';
 import { PrescriptionPreviewComponent } from '../prescription-preview/prescription-preview.component';
-import { FieldChangeEvent } from '../medicine-line-item/medicine-line-item.component';
 
 @Component({
   selector: 'app-prescription-form',
@@ -38,17 +37,11 @@ export class PrescriptionFormComponent implements OnInit {
   private rxSvc  = inject(PrescriptionService);
   private fb     = inject(FormBuilder);
 
-  context!: {
-    appointmentId:    number | string;
-    patientId:        number | string;
-    svcId:            string;
-    patientName:      string;
-    appointmentLabel: string;
-  };
+  context!: PrescriptionContext;
 
-  loading    = signal(true);
-  saving     = signal(false);
-  generating = signal(false);
+  loading     = signal(true);
+  saving      = signal(false);
+  generating  = signal(false);
   showPreview = signal(false);
 
   savedId    = signal<number | null>(null);
@@ -69,9 +62,9 @@ export class PrescriptionFormComponent implements OnInit {
 
   readonly itemsPayload = computed<LineItemPayload[]>(() => [
     ...this.medicines().map((m, i) => ({
-      itemType:     'medicine' as const,
-      refId:        m.id,
-      sortOrder:    i + 1,
+      item_type:    'medicine' as const,
+      ref_id:       m.id,
+      sort_order:   i + 1,
       dosage:       m.dosage       || undefined,
       frequency:    m.frequency    || undefined,
       duration:     m.duration     || undefined,
@@ -79,27 +72,27 @@ export class PrescriptionFormComponent implements OnInit {
       instructions: m.instructions || undefined,
     })),
     ...this.procedures().map((p, i) => ({
-      itemType:        'procedure' as const,
-      refId:           p.id,
-      sortOrder:       this.medicines().length + i + 1,
-      procedureStatus: p.status,
-      instructions:    p.defaultNotes || undefined,
+      item_type:        'procedure' as const,
+      ref_id:           p.id,
+      sort_order:       this.medicines().length + i + 1,
+      procedure_status: p.status,
+      instructions:     p.default_notes || undefined,
     })),
   ]);
 
   ngOnInit(): void {
     const qp = this.route.snapshot.queryParams;
     this.context = {
-      appointmentId:    qp['appointmentId'],
-      patientId:        qp['patientId'],
-      svcId:             qp['svcId'],
-      patientName:       qp['patientName'],
-      appointmentLabel:  qp['label'],
+      appointment_id:    qp['appointment_id'],
+      patient_id:        qp['patient_id'],
+      svc_id:            qp['svc_id'],
+      patient_name:      qp['patient_name'],
+      appointment_label: qp['label'],
     };
 
     this.form = this.fb.group({
       diagnosis:     ['', [Validators.maxLength(500)]],
-      clinicalNotes: ['', [Validators.maxLength(5000)]],
+      clinical_notes: ['', [Validators.maxLength(5000)]],
     });
 
     this._loadDefaults();
@@ -109,13 +102,13 @@ export class PrescriptionFormComponent implements OnInit {
     this.loading.set(true);
     this.errorMsg.set(null);
     try {
-      const defaults = await this.master.getDefaults(this.context.svcId);
+      const defaults = await this.master.getDefaults(this.context.svc_id);
 
       this.medicines.set(defaults.medicines.map(m => ({
         ...m,
-        dosage:       m.defaultDose || '',
+        dosage:       m.default_dose || '',
         frequency:    '',
-        duration:     m.defaultDays ? `${m.defaultDays} days` : '',
+        duration:     m.default_days ? `${m.default_days} days` : '',
         quantity:     '',
         instructions: '',
       })));
@@ -137,17 +130,18 @@ export class PrescriptionFormComponent implements OnInit {
     this.errorMsg.set(null);
     try {
       const payload = {
-        patientId:     this.context.patientId,
-        appointmentId: this.context.appointmentId,
-        ...this.form.value,
-        items: this.itemsPayload(),
+        patient_id:     this.context.patient_id,
+        appointment_id: this.context.appointment_id,
+        diagnosis:      this.form.value.diagnosis,
+        clinical_notes: this.form.value.clinical_notes,
+        items:          this.itemsPayload(),
       };
       if (this.savedId()) {
         await this.rxSvc.update(this.savedId()!, payload);
       } else {
         const res = await this.rxSvc.create(payload);
         this.savedId.set(res.id);
-        this.savedRxNo.set(res.prescriptionNo);
+        this.savedRxNo.set(res.prescription_no);
       }
       return true;
     } catch (e: any) {
@@ -162,9 +156,9 @@ export class PrescriptionFormComponent implements OnInit {
     if (this.medicines().some(m => m.id === med.id)) return;
     this.medicines.update(list => [...list, {
       ...med,
-      dosage:       med.defaultDose || '',
+      dosage:       med.default_dose || '',
       frequency:    '',
-      duration:     med.defaultDays ? `${med.defaultDays} days` : '',
+      duration:     med.default_days ? `${med.default_days} days` : '',
       quantity:     '',
       instructions: '',
     }]);

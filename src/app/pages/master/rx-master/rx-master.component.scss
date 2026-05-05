@@ -1,0 +1,194 @@
+.rx-master-page {
+  padding: 24px;
+  max-width: 1200px;
+}
+
+.page-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  margin-bottom: 20px;
+}
+.page-title    { font-size: 20px; font-weight: 700; color: #1E293B; margin: 0 0 4px; }
+.page-subtitle { font-size: 13px; color: #64748B; margin: 0; }
+
+// ── Toolbar ──────────────────────────────────────────────────────────────────
+
+.toolbar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 16px;
+  flex-wrap: wrap;
+}
+
+.tab-group {
+  display: flex;
+  gap: 4px;
+  background: #F1F5F9;
+  padding: 4px;
+  border-radius: 10px;
+}
+
+.tab-btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 14px;
+  border: none;
+  border-radius: 7px;
+  background: transparent;
+  font-size: 13px;
+  font-weight: 500;
+  color: #64748B;
+  cursor: pointer;
+  transition: all .15s ease;
+
+  &.active {
+    background: #fff;
+    color: #0D7A5F;
+    box-shadow: 0 1px 4px rgba(0, 0, 0, .08);
+  }
+}
+
+.tab-count {
+  background: #E2E8F0;
+  color: #475569;
+  font-size: 10px;
+  font-weight: 700;
+  padding: 1px 6px;
+  border-radius: 100px;
+
+  .active & {
+    background: #C6F6E9;
+    color: #0D7A5F;
+  }
+}
+
+.toolbar-right {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-left: auto;
+}
+
+.search-box {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: #fff;
+  border: 1.5px solid #E2E8F0;
+  border-radius: 8px;
+  padding: 6px 12px;
+  min-width: 220px;
+
+  &:focus-within { border-color: #0D7A5F; }
+}
+.search-icon  { color: #94A3B8; flex-shrink: 0; }
+.search-input {
+  border: none;
+  outline: none;
+  font-size: 13px;
+  color: #1E293B;
+  background: transparent;
+  width: 100%;
+  &::placeholder { color: #94A3B8; }
+}
+
+// ── Loading ──────────────────────────────────────────────────────────────────
+
+.loading-state {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 32px;
+  color: #64748B;
+  font-size: 13px;
+}
+
+// ── Card / Table ─────────────────────────────────────────────────────────────
+
+.card {
+  background: #fff;
+  border: 1px solid #E2E8F0;
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.rx-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+
+  th {
+    background: #F8FAFC;
+    color: #475569;
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: .4px;
+    padding: 10px 14px;
+    text-align: left;
+    border-bottom: 1px solid #E2E8F0;
+  }
+
+  td {
+    padding: 10px 14px;
+    border-bottom: 1px solid #F1F5F9;
+    vertical-align: middle;
+    color: #334155;
+  }
+
+  tr:last-child td { border-bottom: none; }
+  tr:hover td { background: #FAFBFD; }
+}
+
+.name-cell  { font-weight: 600; color: #1E293B; }
+.sub-cell   { color: #64748B; font-size: 12px; }
+.mono-cell  { font-family: 'DM Mono', monospace; font-size: 11.5px; color: #0D7A5F; }
+.center-cell { text-align: center; color: #64748B; }
+.notes-cell { color: #64748B; font-size: 11.5px; max-width: 240px; }
+.action-cell { text-align: right; width: 48px; }
+.empty-cell {
+  text-align: center;
+  color: #94A3B8;
+  font-style: italic;
+  padding: 32px !important;
+}
+
+// ── Badges ───────────────────────────────────────────────────────────────────
+
+.cat-badge {
+  font-size: 10px;
+  font-weight: 600;
+  padding: 3px 8px;
+  border-radius: 100px;
+  display: inline-block;
+
+  &.cat-antibiotic  { background: #FEF3C7; color: #92400E; }
+  &.cat-analgesic   { background: #FEE2E2; color: #991B1B; }
+  &.cat-ppi         { background: #E0E7FF; color: #3730A3; }
+  &.cat-antiseptic  { background: #D1FAE5; color: #065F46; }
+  &.cat-topical     { background: #F0FDF4; color: #166534; }
+  &.cat-vitamin     { background: #FFF7ED; color: #9A3412; }
+  &.cat-other       { background: #F1F5F9; color: #475569; }
+}
+
+.svc-badge {
+  font-size: 10px;
+  font-weight: 700;
+  font-family: 'DM Mono', monospace;
+  background: #EBF9F6;
+  color: #0D7A5F;
+  padding: 2px 7px;
+  border-radius: 4px;
+}
+
+.step-badge {
+  font-size: 10px;
+  font-weight: 600;
+  background: #EEF2FF;
+  color: #3730A3;
+  padding: 2px 6px;
+  border-radius: 4px;
+}

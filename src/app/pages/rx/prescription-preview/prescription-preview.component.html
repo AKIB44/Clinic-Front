@@ -21,7 +21,7 @@
     @for (m of medicines; track m.id; let i = $index) {
       <div class="rx-med-item">
         <span class="rx-med-num">{{ i + 1 }}.</span>
-        <span class="rx-med-name">{{ m.genericName }} {{ m.strength }}</span>
+        <span class="rx-med-name">{{ m.generic_name }} {{ m.strength }}</span>
         @if (m.dosage) {
           <span class="rx-med-dose">{{ m.dosage }}</span>
         }
@@ -37,7 +37,7 @@
       <div class="rx-proc-title">Procedures:</div>
       @for (p of procedures; track p.id; let i = $index) {
         <div class="rx-proc-item">
-          {{ i + 1 }}. {{ p.procedureName }}
+          {{ i + 1 }}. {{ p.procedure_name }}
           <span class="proc-status-tag" [class]="p.status">{{ p.status }}</span>
         </div>
       }

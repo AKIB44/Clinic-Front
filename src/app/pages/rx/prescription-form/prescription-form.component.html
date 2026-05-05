@@ -10,9 +10,9 @@
     <div class="rx-form-header">
       <div class="rx-form-title">
         New Prescription
-        <span class="rx-label">{{ context.patientName }}</span>
-        <span class="rx-sep">.</span>
-        <span class="rx-label">{{ context.appointmentLabel }}</span>
+        <span class="rx-label">{{ context.patient_name }}</span>
+        <span class="rx-sep">·</span>
+        <span class="rx-label">{{ context.appointment_label }}</span>
       </div>
       @if (savedRxNo()) {
         <div class="rx-no">{{ savedRxNo() }}</div>
@@ -45,16 +45,16 @@
 
       <div class="rx-field">
         <label>Procedure</label>
-        <input [value]="context.appointmentLabel" disabled>
+        <input [value]="context.appointment_label" disabled>
       </div>
 
       <div class="rx-field full">
         <label>Clinical notes</label>
         <textarea
-          formControlName="clinicalNotes"
+          formControlName="clinical_notes"
           rows="3"
           placeholder="Patient instructions, precautions, follow-up notes"></textarea>
-        @if (form.get('clinicalNotes')?.invalid && form.get('clinicalNotes')?.touched) {
+        @if (form.get('clinical_notes')?.invalid && form.get('clinical_notes')?.touched) {
           <div class="field-error">Maximum 5000 characters</div>
         }
       </div>
@@ -89,9 +89,9 @@
         @for (proc of procedures(); track proc.id) {
           <div class="proc-item">
             <div class="proc-main">
-              <span class="proc-name">{{ proc.procedureName }}</span>
-              @if (proc.procedureStep) {
-                <span class="proc-step">Step {{ proc.procedureStep }}</span>
+              <span class="proc-name">{{ proc.procedure_name }}</span>
+              @if (proc.procedure_step) {
+                <span class="proc-step">Step {{ proc.procedure_step }}</span>
               }
             </div>
             <div class="proc-status">
@@ -118,7 +118,7 @@
         }
 
         <app-procedure-picker
-          [svcId]="context.svcId"
+          [svcId]="context.svc_id"
           [excludeIds]="excludedProcedureIds"
           (procedureSelected)="addProcedure($event)">
         </app-procedure-picker>
@@ -145,8 +145,8 @@
         [medicines]="medicines()"
         [procedures]="procedures()"
         [diagnosis]="form.value.diagnosis"
-        [clinicalNotes]="form.value.clinicalNotes"
-        [patientName]="context.patientName"
+        [clinicalNotes]="form.value.clinical_notes"
+        [patientName]="context.patient_name"
         [rxNo]="savedRxNo()">
       </app-prescription-preview>
     }

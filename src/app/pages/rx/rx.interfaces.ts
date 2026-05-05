@@ -1,23 +1,23 @@
 export interface RxMedicine {
-  id:          number;
-  genericName: string;
-  brandName:   string | null;
-  category:    string;
-  dosageForm:  string;
-  strength:    string;
-  defaultDose: string | null;
-  defaultDays: number | null;
-  notes:       string | null;
+  id:           number;
+  generic_name: string;
+  brand_name:   string | null;
+  category:     string;
+  dosage_form:  string;
+  strength:     string;
+  default_dose: string | null;
+  default_days: number | null;
+  notes:        string | null;
 }
 
 export interface RxProcedure {
-  id:            number;
-  procedureCode: string;
-  procedureName: string;
-  svcId:         string;
-  procedureStep: number | null;
-  defaultNotes:  string | null;
-  followupDays:  number | null;
+  id:             number;
+  procedure_code: string;
+  procedure_name: string;
+  svc_id:         string;
+  procedure_step: number | null;
+  default_notes:  string | null;
+  followup_days:  number | null;
 }
 
 export interface RxDefaults {
@@ -40,41 +40,41 @@ export interface ProcFormItem extends RxProcedure {
 }
 
 export interface LineItemPayload {
-  itemType:         'medicine' | 'procedure';
-  refId:            number;
-  sortOrder:        number;
+  item_type:        'medicine' | 'procedure';
+  ref_id:           number;
+  sort_order:       number;
   dosage?:          string;
   frequency?:       string;
   duration?:        string;
   quantity?:        string;
-  procedureStatus?: ProcedureStatus;
+  procedure_status?: ProcedureStatus;
   instructions?:    string;
 }
 
 export interface CreateRxPayload {
-  patientId:      number | string;
-  appointmentId:  number | string;
+  patient_id:     number | string;
+  appointment_id: number | string;
   diagnosis?:     string;
-  clinicalNotes?: string;
-  validDays?:     number;
+  clinical_notes?: string;
+  valid_days?:    number;
   refillable?:    boolean;
   items:          LineItemPayload[];
 }
 
 export interface RxSummary {
-  id:             number;
-  prescriptionNo: string;
-  diagnosis:      string | null;
-  pdfGenerated:   boolean;
-  waSent:         boolean;
-  createdAt:      string;
-  validDays:      number;
+  id:              number;
+  prescription_no: string;
+  diagnosis:       string | null;
+  pdf_generated:   boolean;
+  wa_sent:         boolean;
+  created_at:      string;
+  valid_days:      number;
 }
 
 export interface PrescriptionContext {
-  appointmentId:    number | string;
-  patientId:        number | string;
-  svcId:            string;
-  patientName:      string;
-  appointmentLabel: string;
+  appointment_id:    number | string;
+  patient_id:        number | string;
+  svc_id:            string;
+  patient_name:      string;
+  appointment_label: string;
 }

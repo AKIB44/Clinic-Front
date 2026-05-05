@@ -23,4 +23,9 @@ export const MasterRoutes: Routes = [
     loadComponent: () => import('./chairs/chairs.component').then(m => m.ChairsMasterComponent),
     canActivate: [roleGuard(['admin'])],
   },
+  {
+    path: 'rx-master',
+    loadComponent: () => import('./rx-master/rx-master.component').then(m => m.RxMasterComponent),
+    canActivate: [roleGuard(['admin'])],
+  },
 ];

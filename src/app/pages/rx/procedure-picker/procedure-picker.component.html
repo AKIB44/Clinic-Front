@@ -7,10 +7,10 @@
     <ul class="proc-picker-list">
       @for (proc of available(); track proc.id) {
         <li class="proc-picker-item" (click)="select(proc)">
-          @if (proc.procedureStep) {
-            <span class="proc-step-badge">Step {{ proc.procedureStep }}</span>
+          @if (proc.procedure_step) {
+            <span class="proc-step-badge">Step {{ proc.procedure_step }}</span>
           }
-          {{ proc.procedureName }}
+          {{ proc.procedure_name }}
         </li>
       }
     </ul>

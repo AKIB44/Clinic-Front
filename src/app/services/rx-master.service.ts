@@ -15,11 +15,13 @@ export class RxMasterService {
   async getDefaults(svcId: string): Promise<RxDefaults> {
     if (this._defCache.has(svcId)) return this._defCache.get(svcId)!;
     const response = await firstValueFrom(
-      this.http.get<{ data: RxDefaults } | RxDefaults>(
-        `${this.base}/master/defaults`, { params: { svc_id: svcId } }
-      )
+      this.http.get<any>(`${this.base}/master/defaults`, { params: { svc_id: svcId } })
     );
-    const data = this.normalizeDefaults(response);
+    const raw = response?.data ?? response;
+    const data: RxDefaults = {
+      medicines:  this._normMeds(raw?.medicines  ?? []),
+      procedures: this._normProcs(raw?.procedures ?? []),
+    };
     this._defCache.set(svcId, data);
     return data;
   }
@@ -33,19 +35,15 @@ export class RxMasterService {
     if (category) params = params.set('category', category);
 
     const response = await firstValueFrom(
-      this.http.get<{ data: RxMedicine[] } | RxMedicine[]>(
-        `${this.base}/master/medicines`,
-        { params }
-      )
+      this.http.get<any>(`${this.base}/master/medicines`, { params })
     );
-    const data = this.normalizeMedicines(response);
+    const data = this._normMeds(response?.data ?? response ?? []);
     if (!search) this._medCache.set(key, data);
     return data;
   }
 
   async getProcedures(svcId: string): Promise<RxProcedure[]> {
-    const defaults = await this.getDefaults(svcId);
-    return defaults.procedures;
+    return (await this.getDefaults(svcId)).procedures;
   }
 
   clearCache(): void {
@@ -53,47 +51,29 @@ export class RxMasterService {
     this._medCache.clear();
   }
 
-  private unwrap<T>(response: { data: T } | T): T {
-    return response && typeof response === 'object' && 'data' in response
-      ? (response as { data: T }).data
-      : response as T;
-  }
-
-  private normalizeDefaults(response: { data: RxDefaults } | RxDefaults): RxDefaults {
-    const data = this.unwrap(response);
-    return {
-      medicines: this.normalizeMedicineList(data?.medicines ?? []),
-      procedures: this.normalizeProcedureList(data?.procedures ?? []),
-    };
-  }
-
-  private normalizeMedicines(response: { data: RxMedicine[] } | RxMedicine[]): RxMedicine[] {
-    return this.normalizeMedicineList(this.unwrap(response) ?? []);
-  }
-
-  private normalizeMedicineList(rows: any[]): RxMedicine[] {
-    return rows.map((row) => ({
-      id: row.id,
-      genericName: row.genericName ?? row.generic_name ?? '',
-      brandName: row.brandName ?? row.brand_name ?? null,
-      category: row.category ?? '',
-      dosageForm: row.dosageForm ?? row.dosage_form ?? '',
-      strength: row.strength ?? '',
-      defaultDose: row.defaultDose ?? row.default_dose ?? null,
-      defaultDays: row.defaultDays ?? row.default_days ?? null,
-      notes: row.notes ?? null,
+  private _normMeds(rows: any[]): RxMedicine[] {
+    return rows.map(r => ({
+      id:           r.id,
+      generic_name: r.generic_name  ?? r.genericName  ?? '',
+      brand_name:   r.brand_name    ?? r.brandName    ?? null,
+      category:     r.category      ?? '',
+      dosage_form:  r.dosage_form   ?? r.dosageForm   ?? '',
+      strength:     r.strength      ?? '',
+      default_dose: r.default_dose  ?? r.defaultDose  ?? null,
+      default_days: r.default_days  ?? r.defaultDays  ?? null,
+      notes:        r.notes         ?? null,
     }));
   }
 
-  private normalizeProcedureList(rows: any[]): RxProcedure[] {
-    return rows.map((row) => ({
-      id: row.id,
-      procedureCode: row.procedureCode ?? row.procedure_code ?? '',
-      procedureName: row.procedureName ?? row.procedure_name ?? '',
-      svcId: row.svcId ?? row.svc_id ?? '',
-      procedureStep: row.procedureStep ?? row.procedure_step ?? null,
-      defaultNotes: row.defaultNotes ?? row.default_notes ?? null,
-      followupDays: row.followupDays ?? row.followup_days ?? null,
+  private _normProcs(rows: any[]): RxProcedure[] {
+    return rows.map(r => ({
+      id:             r.id,
+      procedure_code: r.procedure_code ?? r.procedureCode ?? '',
+      procedure_name: r.procedure_name ?? r.procedureName ?? '',
+      svc_id:         r.svc_id         ?? r.svcId         ?? '',
+      procedure_step: r.procedure_step ?? r.procedureStep ?? null,
+      default_notes:  r.default_notes  ?? r.defaultNotes  ?? null,
+      followup_days:  r.followup_days  ?? r.followupDays  ?? null,
     }));
   }
 }

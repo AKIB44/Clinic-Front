@@ -236,11 +236,11 @@ export class AppointmentDetailDialog {
     this.dialogRef.close();
     this.router.navigate(['/rx/new'], {
       queryParams: {
-        appointmentId: this.data.id,
-        patientId:     this.data.patient_id,
-        svcId:         this.data.service_id,
-        patientName:   this.data.patient_name,
-        label:         this.data.service_name,
+        appointment_id: this.data.id,
+        patient_id:     this.data.patient_id,
+        svc_id:         this.data.service_id,
+        patient_name:   this.data.patient_name,
+        label:          this.data.service_name,
       },
     });
   }

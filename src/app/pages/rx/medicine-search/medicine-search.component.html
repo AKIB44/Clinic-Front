@@ -37,11 +37,11 @@
               [class.highlighted]="highlighted() === i"
               (mouseenter)="highlighted.set(i)"
               (mousedown)="select(med)">
-              <span class="med-pill">{{ med.dosageForm || 'Rx' }}</span>
+              <span class="med-pill">{{ med.dosage_form || 'Rx' }}</span>
               <span class="result-copy">
-                <span class="result-name">{{ med.genericName }}</span>
-                @if (med.brandName) {
-                  <span class="result-brand">{{ med.brandName }}</span>
+                <span class="result-name">{{ med.generic_name }}</span>
+                @if (med.brand_name) {
+                  <span class="result-brand">{{ med.brand_name }}</span>
                 }
               </span>
               <span class="result-meta">{{ med.strength || 'Dose TBD' }}</span>

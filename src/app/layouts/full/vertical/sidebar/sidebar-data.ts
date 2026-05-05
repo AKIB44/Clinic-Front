@@ -29,6 +29,12 @@ export const navItems: NavItem[] = [
   // ── Operations ─────────────────────────────────────────────────────────────
   { navCap: 'Operations' },
   {
+    displayName: 'Prescriptions',
+    iconName: 'pill',
+    bgcolor: 'success',
+    route: '/rx/new',
+  },
+  {
     displayName: 'Invoices',
     iconName: 'file-invoice',
     bgcolor: 'warning',
@@ -66,6 +72,13 @@ export const navItems: NavItem[] = [
     iconName: 'armchair',
     bgcolor: 'accent',
     route: '/master/chairs',
+    roles: ['admin'],
+  },
+  {
+    displayName: 'Rx Master Data',
+    iconName: 'pill',
+    bgcolor: 'success',
+    route: '/master/rx-master',
     roles: ['admin'],
   },
 
