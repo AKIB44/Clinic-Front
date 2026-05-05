@@ -1,0 +1,154 @@
+@if (loading()) {
+  <div class="rx-loading">
+    <span class="spinner"></span>
+    Loading prescription defaults...
+  </div>
+}
+
+@if (!loading()) {
+  <div class="rx-form">
+    <div class="rx-form-header">
+      <div class="rx-form-title">
+        New Prescription
+        <span class="rx-label">{{ context.patient_name }}</span>
+        <span class="rx-sep">·</span>
+        <span class="rx-label">{{ context.appointment_label }}</span>
+      </div>
+      @if (savedRxNo()) {
+        <div class="rx-no">{{ savedRxNo() }}</div>
+      }
+    </div>
+
+    @if (successMsg()) {
+      <div class="rx-banner success">
+        {{ successMsg() }}
+        @if (pdfUrl()) {
+          <a [href]="pdfUrl()" target="_blank" rel="noopener">View PDF</a>
+        }
+      </div>
+    }
+
+    @if (errorMsg()) {
+      <div class="rx-banner error">{{ errorMsg() }}</div>
+    }
+
+    <div class="rx-fields" [formGroup]="form">
+      <div class="rx-field">
+        <label>Diagnosis</label>
+        <input
+          formControlName="diagnosis"
+          placeholder="e.g. Irreversible pulpitis, tooth 36">
+        @if (form.get('diagnosis')?.invalid && form.get('diagnosis')?.touched) {
+          <div class="field-error">Maximum 500 characters</div>
+        }
+      </div>
+
+      <div class="rx-field">
+        <label>Procedure</label>
+        <input [value]="context.appointment_label" disabled>
+      </div>
+
+      <div class="rx-field full">
+        <label>Clinical notes</label>
+        <textarea
+          formControlName="clinical_notes"
+          rows="3"
+          placeholder="Patient instructions, precautions, follow-up notes"></textarea>
+        @if (form.get('clinical_notes')?.invalid && form.get('clinical_notes')?.touched) {
+          <div class="field-error">Maximum 5000 characters</div>
+        }
+      </div>
+    </div>
+
+    <div class="rx-columns">
+      <section class="rx-col">
+        <div class="rx-col-header">
+          <span>Medicines</span>
+          <span class="rx-col-count">{{ medicines().length }}</span>
+        </div>
+
+        @for (med of medicines(); track med.id) {
+          <app-medicine-line-item
+            [item]="med"
+            (fieldChange)="updateMedicineField(med.id, $event)"
+            (remove)="removeMedicine(med.id)">
+          </app-medicine-line-item>
+        }
+
+        <app-medicine-search
+          (medicineSelected)="addMedicine($event)">
+        </app-medicine-search>
+      </section>
+
+      <section class="rx-col">
+        <div class="rx-col-header">
+          <span>Procedures</span>
+          <span class="rx-col-count">{{ procedures().length }}</span>
+        </div>
+
+        @for (proc of procedures(); track proc.id) {
+          <div class="proc-item">
+            <div class="proc-main">
+              <span class="proc-name">{{ proc.procedure_name }}</span>
+              @if (proc.procedure_step) {
+                <span class="proc-step">Step {{ proc.procedure_step }}</span>
+              }
+            </div>
+            <div class="proc-status">
+              <button
+                type="button"
+                [class.on]="proc.status === 'planned'"
+                (click)="setProcedureStatus(proc.id, 'planned')">
+                Planned
+              </button>
+              <button
+                type="button"
+                [class.on]="proc.status === 'done'"
+                (click)="setProcedureStatus(proc.id, 'done')">
+                Done
+              </button>
+              <button
+                type="button"
+                [class.on]="proc.status === 'skipped'"
+                (click)="setProcedureStatus(proc.id, 'skipped')">
+                Skipped
+              </button>
+            </div>
+          </div>
+        }
+
+        <app-procedure-picker
+          [svcId]="context.svc_id"
+          [excludeIds]="excludedProcedureIds"
+          (procedureSelected)="addProcedure($event)">
+        </app-procedure-picker>
+      </section>
+    </div>
+
+    <div class="rx-actions">
+      <button type="button" class="secondary" [disabled]="saving()" (click)="saveDraft()">
+        {{ saving() ? 'Saving...' : 'Save draft' }}
+      </button>
+      <button type="button" class="secondary" (click)="togglePreview()">
+        {{ showPreview() ? 'Hide preview' : 'Preview' }}
+      </button>
+      <button type="button" class="primary" [disabled]="saving() || generating()" (click)="generatePdf()">
+        {{ generating() ? 'Generating...' : 'Generate PDF' }}
+      </button>
+      <button type="button" class="primary wa" [disabled]="saving() || generating() || waSent()" (click)="saveAndSendWA()">
+        {{ waSent() ? 'Sent' : 'Save and send WA' }}
+      </button>
+    </div>
+
+    @if (showPreview()) {
+      <app-prescription-preview
+        [medicines]="medicines()"
+        [procedures]="procedures()"
+        [diagnosis]="form.value.diagnosis"
+        [clinicalNotes]="form.value.clinical_notes"
+        [patientName]="context.patient_name"
+        [rxNo]="savedRxNo()">
+      </app-prescription-preview>
+    }
+  </div>
+}

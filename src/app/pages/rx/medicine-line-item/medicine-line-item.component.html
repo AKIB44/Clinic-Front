@@ -1,0 +1,36 @@
+<div class="med-item">
+  <div class="med-item-header">
+    <div class="med-name">
+      {{ item.generic_name }}
+      <span class="med-strength">{{ item.strength }}</span>
+    </div>
+    <button class="med-remove" (click)="remove.emit()" aria-label="Remove">×</button>
+  </div>
+
+  <div class="med-item-fields">
+    <div class="med-field">
+      <label>Dosage</label>
+      <input [value]="item.dosage"
+             placeholder="e.g. 1-0-1"
+             (input)="onField('dosage', $event)">
+    </div>
+    <div class="med-field">
+      <label>Frequency</label>
+      <input [value]="item.frequency"
+             placeholder="e.g. After food"
+             (input)="onField('frequency', $event)">
+    </div>
+    <div class="med-field">
+      <label>Duration</label>
+      <input [value]="item.duration"
+             placeholder="e.g. 5 days"
+             (input)="onField('duration', $event)">
+    </div>
+    <div class="med-field">
+      <label>Qty</label>
+      <input [value]="item.quantity"
+             placeholder="e.g. 10 tabs"
+             (input)="onField('quantity', $event)">
+    </div>
+  </div>
+</div>

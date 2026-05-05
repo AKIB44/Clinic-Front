@@ -1,0 +1,158 @@
+<div class="rx-master-page">
+
+  <!-- Page Header -->
+  <div class="page-header">
+    <div class="page-header-left">
+      <h1 class="page-title">Rx Master Data</h1>
+      <p class="page-subtitle">Manage medicines and procedures available for prescriptions at this clinic</p>
+    </div>
+  </div>
+
+  <!-- Tabs + Search + Action -->
+  <div class="toolbar">
+    <div class="tab-group">
+      <button class="tab-btn" [class.active]="activeTab() === 'medicines'"
+              (click)="activeTab.set('medicines'); searchQuery = ''">
+        <i-tabler name="pill" size="16"></i-tabler>
+        Medicines
+        <span class="tab-count">{{ medicines().length }}</span>
+      </button>
+      <button class="tab-btn" [class.active]="activeTab() === 'procedures'"
+              (click)="activeTab.set('procedures'); searchQuery = ''">
+        <i-tabler name="stethoscope" size="16"></i-tabler>
+        Procedures
+        <span class="tab-count">{{ procedures().length }}</span>
+      </button>
+    </div>
+
+    <div class="toolbar-right">
+      <div class="search-box">
+        <i-tabler name="search" size="16" class="search-icon"></i-tabler>
+        <input [(ngModel)]="searchQuery"
+               placeholder="{{ activeTab() === 'medicines' ? 'Search medicines…' : 'Search procedures…' }}"
+               class="search-input">
+      </div>
+
+      @if (activeTab() === 'medicines') {
+        <button mat-flat-button color="primary" (click)="openAddMedicine()">
+          <i-tabler name="plus" size="16"></i-tabler>
+          Add Medicine
+        </button>
+      } @else {
+        <button mat-flat-button color="primary" (click)="openAddProcedure()">
+          <i-tabler name="plus" size="16"></i-tabler>
+          Add Procedure
+        </button>
+      }
+    </div>
+  </div>
+
+  <!-- Loading -->
+  @if (loading()) {
+    <div class="loading-state">
+      <mat-spinner diameter="32"></mat-spinner>
+      <span>Loading Rx master data…</span>
+    </div>
+  }
+
+  <!-- Medicines Table -->
+  @if (!loading() && activeTab() === 'medicines') {
+    <div class="card">
+      <table class="rx-table">
+        <thead>
+          <tr>
+            <th>Generic Name</th>
+            <th>Brand</th>
+            <th>Category</th>
+            <th>Form</th>
+            <th>Strength</th>
+            <th>Default Dose</th>
+            <th>Days</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (med of filteredMedicines; track med.id) {
+            <tr>
+              <td class="name-cell">{{ med.generic_name }}</td>
+              <td class="sub-cell">{{ med.brand_name || '—' }}</td>
+              <td>
+                <span class="cat-badge cat-{{ med.category }}">{{ categoryLabel(med.category) }}</span>
+              </td>
+              <td class="sub-cell">{{ med.dosage_form }}</td>
+              <td class="mono-cell">{{ med.strength }}</td>
+              <td class="sub-cell">{{ med.default_dose || '—' }}</td>
+              <td class="center-cell">{{ med.default_days ?? '—' }}</td>
+              <td class="action-cell">
+                <button mat-icon-button (click)="openEditMedicine(med)" matTooltip="Edit">
+                  <i-tabler name="pencil" size="16"></i-tabler>
+                </button>
+              </td>
+            </tr>
+          } @empty {
+            <tr>
+              <td colspan="8" class="empty-cell">
+                {{ searchQuery ? 'No medicines match "' + searchQuery + '"' : 'No medicines added yet' }}
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  }
+
+  <!-- Procedures Table -->
+  @if (!loading() && activeTab() === 'procedures') {
+    <div class="card">
+      <table class="rx-table">
+        <thead>
+          <tr>
+            <th>Code</th>
+            <th>Procedure Name</th>
+            <th>Service</th>
+            <th>Step</th>
+            <th>Follow-up</th>
+            <th>Default Notes</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (proc of filteredProcedures; track proc.id) {
+            <tr>
+              <td class="mono-cell">{{ proc.procedure_code }}</td>
+              <td class="name-cell">{{ proc.procedure_name }}</td>
+              <td>
+                <span class="svc-badge">{{ proc.svc_id }}</span>
+              </td>
+              <td class="center-cell">
+                @if (proc.procedure_step) {
+                  <span class="step-badge">Step {{ proc.procedure_step }}</span>
+                } @else {
+                  <span class="sub-cell">—</span>
+                }
+              </td>
+              <td class="center-cell">
+                {{ proc.followup_days ? proc.followup_days + 'd' : '—' }}
+              </td>
+              <td class="notes-cell" [title]="proc.default_notes ?? ''">
+                {{ proc.default_notes ? (proc.default_notes.length > 60 ? proc.default_notes.slice(0, 60) + '…' : proc.default_notes) : '—' }}
+              </td>
+              <td class="action-cell">
+                <button mat-icon-button (click)="openEditProcedure(proc)" matTooltip="Edit">
+                  <i-tabler name="pencil" size="16"></i-tabler>
+                </button>
+              </td>
+            </tr>
+          } @empty {
+            <tr>
+              <td colspan="7" class="empty-cell">
+                {{ searchQuery ? 'No procedures match "' + searchQuery + '"' : 'No procedures added yet' }}
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  }
+
+</div>

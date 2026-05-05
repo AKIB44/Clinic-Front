@@ -6,6 +6,7 @@ import { FormsModule } from '@angular/forms';
 import { MaterialModule } from '../../material.module';
 import { TablerIconsModule } from 'angular-tabler-icons';
 import { MatDialog, MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
+import { Router } from '@angular/router';
 import { interval, Subject, forkJoin } from 'rxjs';
 import { startWith, switchMap, takeUntil } from 'rxjs/operators';
 import { format, addDays, subDays, isToday, parseISO } from 'date-fns';
@@ -166,6 +167,14 @@ const STATUS_ACTIONS: Record<AppointmentStatus, Array<{ label: string; next: App
       </mat-dialog-content>
 
       <mat-dialog-actions align="end">
+        <button mat-stroked-button (click)="openPatientRecord()">
+          <i-tabler name="user-circle" size="16"></i-tabler>
+          Patient Record
+        </button>
+        <button mat-stroked-button (click)="openPrescription()">
+          <i-tabler name="prescription" size="16"></i-tabler>
+          Prescription
+        </button>
         <button mat-stroked-button mat-dialog-close>Close</button>
       </mat-dialog-actions>
     </div>
@@ -200,6 +209,7 @@ export class AppointmentDetailDialog {
   dialogRef       = inject(MatDialogRef<AppointmentDetailDialog>);
   data            = inject<Appointment>(MAT_DIALOG_DATA);
   private apptSvc = inject(AppointmentsService);
+  private router  = inject(Router);
 
   statusLabel = STATUS_LABEL;
   sourceIcon  = BOOKING_SOURCE_ICON;
@@ -220,6 +230,24 @@ export class AppointmentDetailDialog {
       next:  () => { this.updating = false; this.dialogRef.close('reload'); },
       error: () => { this.updating = false; this.actionError = 'Failed to update. Please try again.'; },
     });
+  }
+
+  openPrescription() {
+    this.dialogRef.close();
+    this.router.navigate(['/rx/new'], {
+      queryParams: {
+        appointment_id: this.data.id,
+        patient_id:     this.data.patient_id,
+        svc_id:         this.data.service_id,
+        patient_name:   this.data.patient_name,
+        label:          this.data.service_name,
+      },
+    });
+  }
+
+  openPatientRecord() {
+    this.dialogRef.close();
+    this.router.navigate(['/patients', this.data.patient_id]);
   }
 }
 

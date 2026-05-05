@@ -43,7 +43,7 @@ export class AuthService {
 
   getRedirectPath(): string {
     const user = this.getUser();
-    if (user?.role === 'admin')        return '/master/clinic-profile';
+    if (user?.role === 'admin')        return '/schedule';
     if (user?.role === 'receptionist') return '/schedule';
     return '/schedule'; // doctor
   }

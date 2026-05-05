@@ -1,0 +1,58 @@
+<div class="med-search">
+  <div class="med-search-control" [class.active]="panelOpen()" [class.busy]="searching()">
+    <span class="search-icon">+</span>
+    <input
+      class="med-search-input"
+      type="text"
+      autocomplete="off"
+      spellcheck="false"
+      [value]="query()"
+      placeholder="Search and add medicine"
+      (input)="onInput($event)"
+      (keydown)="onKeydown($event)"
+      (focus)="onFocus()"
+      (blur)="onBlur()">
+
+    @if (searching()) {
+      <span class="search-spinner" aria-label="Searching"></span>
+    }
+  </div>
+
+  @if (panelOpen()) {
+    <div class="search-panel">
+      @if (searching()) {
+        <div class="search-loading">
+          <span></span>
+          <span></span>
+          <span></span>
+        </div>
+      } @else if (errorMsg()) {
+        <div class="search-message error">{{ errorMsg() }}</div>
+      } @else if (results().length) {
+        <ul class="search-results" role="listbox">
+          @for (med of results(); track med.id; let i = $index) {
+            <li
+              class="search-result-item"
+              role="option"
+              [class.highlighted]="highlighted() === i"
+              (mouseenter)="highlighted.set(i)"
+              (mousedown)="select(med)">
+              <span class="med-pill">{{ med.dosage_form || 'Rx' }}</span>
+              <span class="result-copy">
+                <span class="result-name">{{ med.generic_name }}</span>
+                @if (med.brand_name) {
+                  <span class="result-brand">{{ med.brand_name }}</span>
+                }
+              </span>
+              <span class="result-meta">{{ med.strength || 'Dose TBD' }}</span>
+            </li>
+          }
+        </ul>
+      } @else if (canSearch()) {
+        <div class="search-message">No medicines found for "{{ query() }}"</div>
+      } @else {
+        <div class="search-message">Type at least 2 characters to search medicines.</div>
+      }
+    </div>
+  }
+</div>

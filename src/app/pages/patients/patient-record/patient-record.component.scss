@@ -1,0 +1,183 @@
+.patient-record-page {
+  max-width: 1120px;
+  margin: 0 auto;
+  padding: 18px;
+}
+
+.back-link {
+  align-items: center;
+  color: #52606d;
+  display: inline-flex;
+  font-size: 13px;
+  gap: 6px;
+  margin-bottom: 12px;
+  text-decoration: none;
+
+  &:hover {
+    color: #0d7a5f;
+  }
+}
+
+.patient-loading,
+.patient-error {
+  align-items: center;
+  border-radius: 8px;
+  display: flex;
+  gap: 10px;
+  padding: 18px;
+}
+
+.patient-loading {
+  color: #64748b;
+}
+
+.patient-error {
+  background: #fee2e2;
+  color: #b42318;
+}
+
+.patient-header {
+  align-items: center;
+  background: #fff;
+  border: 1px solid #e6edf5;
+  border-radius: 8px;
+  display: flex;
+  gap: 14px;
+  padding: 16px;
+}
+
+.avatar {
+  align-items: center;
+  background: #e6f7f1;
+  border-radius: 50%;
+  color: #0d7a5f;
+  display: flex;
+  flex: 0 0 52px;
+  font-size: 17px;
+  font-weight: 800;
+  height: 52px;
+  justify-content: center;
+  width: 52px;
+}
+
+.patient-title {
+  min-width: 0;
+
+  h1 {
+    color: #102a43;
+    font-size: 24px;
+    line-height: 1.2;
+    margin: 0 0 7px;
+  }
+}
+
+.patient-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px 16px;
+
+  span {
+    align-items: center;
+    color: #52606d;
+    display: inline-flex;
+    font-size: 13px;
+    gap: 5px;
+  }
+}
+
+.pt-tabs {
+  border-bottom: 1px solid #d9e2ec;
+  display: flex;
+  gap: 4px;
+  margin-top: 16px;
+}
+
+.pt-tab {
+  background: transparent;
+  border: 0;
+  border-bottom: 2px solid transparent;
+  color: #52606d;
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 700;
+  padding: 10px 12px;
+
+  &.on {
+    border-bottom-color: #0d7a5f;
+    color: #0d7a5f;
+  }
+}
+
+.overview-grid {
+  display: grid;
+  gap: 12px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  margin-top: 14px;
+}
+
+.info-panel,
+.history-panel {
+  background: #fff;
+  border: 1px solid #e6edf5;
+  border-radius: 8px;
+}
+
+.info-panel {
+  padding: 14px;
+
+  h2 {
+    color: #102a43;
+    font-size: 14px;
+    margin: 0 0 10px;
+  }
+
+  p {
+    color: #52606d;
+    font-size: 13px;
+    line-height: 1.55;
+    margin: 0;
+  }
+
+  dl {
+    display: grid;
+    gap: 10px;
+    margin: 0;
+  }
+
+  div {
+    display: grid;
+    gap: 2px;
+  }
+
+  dt {
+    color: #829ab1;
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+  }
+
+  dd {
+    color: #334e68;
+    font-size: 13px;
+    margin: 0;
+  }
+}
+
+.history-panel {
+  margin-top: 14px;
+  overflow: hidden;
+}
+
+@media (max-width: 780px) {
+  .patient-record-page {
+    padding: 12px;
+  }
+
+  .patient-header {
+    align-items: flex-start;
+  }
+
+  .overview-grid {
+    grid-template-columns: 1fr;
+  }
+}
