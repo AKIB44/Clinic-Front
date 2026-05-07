@@ -40,23 +40,23 @@ export interface ProcFormItem extends RxProcedure {
 }
 
 export interface LineItemPayload {
-  item_type:        'medicine' | 'procedure';
-  ref_id:           number;
-  sort_order:       number;
+  itemType:         'medicine' | 'procedure';
+  refId:            number;
+  sortOrder:        number;
   dosage?:          string;
   frequency?:       string;
   duration?:        string;
   quantity?:        string;
-  procedure_status?: ProcedureStatus;
+  procedureStatus?: ProcedureStatus;
   instructions?:    string;
 }
 
 export interface CreateRxPayload {
-  patient_id:     number | string;
-  appointment_id: number | string;
+  patientId:      number | string;
+  appointmentId:  number | string;
   diagnosis?:     string;
-  clinical_notes?: string;
-  valid_days?:    number;
+  clinicalNotes?: string;
+  validDays?:     number;
   refillable?:    boolean;
   items:          LineItemPayload[];
 }

@@ -6,10 +6,50 @@
     </div>
   </div>
 
-  @if (loading) {
+  @if (loading()) {
     <div class="center-loader"><mat-spinner diameter="40"></mat-spinner></div>
   } @else {
     <div class="master-card profile-card">
+
+      <!-- Logo Section -->
+      <div class="section-title">Clinic Logo</div>
+      <div class="logo-section">
+        <div class="logo-preview-wrap">
+          @if (logoUrl()) {
+            <img [src]="logoUrl()!" alt="Clinic logo" class="logo-preview">
+          } @else {
+            <div class="logo-placeholder">
+              <i-tabler name="building-hospital" size="40"></i-tabler>
+              <span>No logo uploaded</span>
+            </div>
+          }
+        </div>
+
+        <div class="logo-actions">
+          <button mat-stroked-button (click)="fileInput.click()" [disabled]="logoUploading()">
+            <i-tabler name="upload" size="16"></i-tabler>
+            {{ logoUrl() ? 'Replace Logo' : 'Upload Logo' }}
+          </button>
+          @if (logoUrl()) {
+            <button mat-stroked-button color="warn" (click)="removeLogo()" [disabled]="logoRemoving()">
+              <i-tabler name="trash" size="16"></i-tabler>
+              {{ logoRemoving() ? 'Removing…' : 'Remove' }}
+            </button>
+          }
+          <input #fileInput type="file" accept="image/jpeg,image/png,image/webp" class="hidden-input" (change)="onFileSelected($event)">
+          @if (logoUploading()) {
+            <span class="logo-status">Uploading…</span>
+          }
+          @if (logoError()) {
+            <span class="logo-error">{{ logoError() }}</span>
+          }
+        </div>
+        <p class="logo-hint">JPEG, PNG or WebP · max 2 MB · shown on prescriptions</p>
+      </div>
+
+      <mat-divider class="section-divider"></mat-divider>
+
+      <!-- Profile Form -->
       <form [formGroup]="form" (ngSubmit)="save()">
         <div class="section-title">General Information</div>
 
@@ -45,14 +85,9 @@
           </mat-form-field>
         </div>
 
-        <mat-form-field appearance="outline" class="full-width">
-          <mat-label>Logo URL</mat-label>
-          <input matInput formControlName="logo_url" placeholder="https://...">
-        </mat-form-field>
-
         <div class="form-actions">
-          <button mat-flat-button color="primary" type="submit" [disabled]="form.invalid || saving">
-            {{ saving ? 'Saving…' : 'Save Changes' }}
+          <button mat-flat-button color="primary" type="submit" [disabled]="form.invalid || saving()">
+            {{ saving() ? 'Saving…' : 'Save Changes' }}
           </button>
         </div>
       </form>

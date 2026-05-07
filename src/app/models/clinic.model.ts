@@ -8,7 +8,8 @@ export interface Clinic {
   state?: string;
   phone: string;
   email: string;
-  logo_url?: string;
+  logo_s3_key?: string | null;
+  logo_url?: string | null;
   is_active: boolean;
   created_at?: string;
 }
@@ -37,6 +38,7 @@ export interface StaffUser {
   last_name: string;
   email: string;
   role: AppRole;
+  designation?: string | null;
   is_active: boolean;
   created_at?: string;
 }

@@ -6,7 +6,7 @@ import { ReactiveFormsModule, FormGroup, FormControl, Validators } from '@angula
 import { MaterialModule } from '../../../material.module';
 import { TablerIconsModule } from 'angular-tabler-icons';
 import { MatDialog, MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
-import { MatSnackBar } from '@angular/material/snack-bar';
+import { ToastService } from '../../../services/toast.service';
 import { ClinicsService } from '../../../services/clinics.service';
 import { Clinic } from '../../../models/clinic.model';
 
@@ -110,7 +110,7 @@ export class ClinicFormDialog {
 export class ClinicsComponent implements OnInit {
   private svc    = inject(ClinicsService);
   private dialog = inject(MatDialog);
-  private snack  = inject(MatSnackBar);
+  private toast  = inject(ToastService);
   private cdr    = inject(ChangeDetectorRef);
 
   clinics: Clinic[] = [];
@@ -125,7 +125,7 @@ export class ClinicsComponent implements OnInit {
       next: (r) => { this.clinics = r.clinics; this.loading = false; this.cdr.markForCheck(); },
       error: () => {
         this.loading = false;
-        this.snack.open('Unable to load clinics. Please check API/auth and try again.', '', { duration: 4000 });
+        this.toast.error('Unable to load clinics. Please check API/auth and try again.');
         this.cdr.markForCheck();
       },
     });
@@ -135,7 +135,7 @@ export class ClinicsComponent implements OnInit {
     const ref = this.dialog.open(ClinicFormDialog, { data: clinic ?? null, width: '560px' });
     ref.afterClosed().subscribe(result => {
       if (result) {
-        this.snack.open(clinic ? 'Clinic updated' : 'Clinic created', '', { duration: 3000 });
+        this.toast.success(clinic ? 'Clinic updated' : 'Clinic created');
         this.load();
       }
     });

@@ -2,3 +2,21 @@
 
 html, body { height: 100%; }
 body { margin: 0; font-family: Roboto, "Helvetica Neue", sans-serif; }
+
+/* Toast / Snackbar styles */
+.toast-success .mdc-snackbar__surface {
+  background-color: #2e7d32 !important;
+  color: #fff !important;
+}
+.toast-error .mdc-snackbar__surface {
+  background-color: #c62828 !important;
+  color: #fff !important;
+}
+.toast-success .mdc-snackbar__label,
+.toast-error .mdc-snackbar__label {
+  color: #fff !important;
+}
+.toast-success .mat-mdc-snack-bar-action,
+.toast-error .mat-mdc-snack-bar-action {
+  color: rgba(255,255,255,.85) !important;
+}

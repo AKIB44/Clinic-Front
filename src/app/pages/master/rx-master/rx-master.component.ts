@@ -7,7 +7,7 @@ import { FormsModule } from '@angular/forms';
 import { MaterialModule } from '../../../material.module';
 import { TablerIconsModule } from 'angular-tabler-icons';
 import { MatDialog, MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
-import { MatSnackBar } from '@angular/material/snack-bar';
+import { ToastService } from '../../../services/toast.service';
 import { HttpClient } from '@angular/common/http';
 import { firstValueFrom } from 'rxjs';
 import { authApiConfig } from '../../../auth/auth.config';
@@ -221,7 +221,7 @@ export class RxProcedureDialog {
 export class RxMasterComponent implements OnInit {
   private http    = inject(HttpClient);
   private dialog  = inject(MatDialog);
-  private snack   = inject(MatSnackBar);
+  private toast   = inject(ToastService);
   private cdr     = inject(ChangeDetectorRef);
   private base    = `${authApiConfig.baseUrl}/rx`;
 
@@ -243,7 +243,7 @@ export class RxMasterComponent implements OnInit {
       this.medicines.set(meds.data ?? meds ?? []);
       this.procedures.set(procs.data ?? procs ?? []);
     } catch {
-      this.snack.open('Failed to load Rx master data', 'Dismiss', { duration: 3000 });
+      this.toast.error('Failed to load Rx master data');
     } finally {
       this.loading.set(false);
       this.cdr.markForCheck();
@@ -276,7 +276,7 @@ export class RxMasterComponent implements OnInit {
         if (result) {
           this.medicines.update(list => [...list, result]);
           this.cdr.markForCheck();
-          this.snack.open('Medicine added', '', { duration: 2000 });
+          this.toast.success('Medicine added');
         }
       });
   }
@@ -287,7 +287,7 @@ export class RxMasterComponent implements OnInit {
         if (result) {
           this.medicines.update(list => list.map(m => m.id === med.id ? { ...m, ...result } : m));
           this.cdr.markForCheck();
-          this.snack.open('Medicine updated', '', { duration: 2000 });
+          this.toast.success('Medicine updated');
         }
       });
   }
@@ -298,7 +298,7 @@ export class RxMasterComponent implements OnInit {
         if (result) {
           this.procedures.update(list => [...list, result]);
           this.cdr.markForCheck();
-          this.snack.open('Procedure added', '', { duration: 2000 });
+          this.toast.success('Procedure added');
         }
       });
   }
@@ -309,7 +309,7 @@ export class RxMasterComponent implements OnInit {
         if (result) {
           this.procedures.update(list => list.map(p => p.id === proc.id ? { ...p, ...result } : p));
           this.cdr.markForCheck();
-          this.snack.open('Procedure updated', '', { duration: 2000 });
+          this.toast.success('Procedure updated');
         }
       });
   }

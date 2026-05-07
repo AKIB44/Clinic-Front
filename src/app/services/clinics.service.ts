@@ -17,4 +17,14 @@ export class ClinicsService {
   update(payload: Partial<Clinic>): Observable<{ clinic: Clinic }> {
     return this.http.put<{ clinic: Clinic }>(this.base, payload);
   }
+
+  uploadLogo(file: File): Observable<{ logo_url: string; logo_s3_key: string }> {
+    const form = new FormData();
+    form.append('logo', file);
+    return this.http.post<{ logo_url: string; logo_s3_key: string }>(`${this.base}/logo`, form);
+  }
+
+  removeLogo(): Observable<void> {
+    return this.http.delete<void>(`${this.base}/logo`);
+  }
 }

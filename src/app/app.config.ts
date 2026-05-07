@@ -14,8 +14,8 @@ import {
   withComponentInputBinding,
   withInMemoryScrolling,
 } from '@angular/router';
-import { provideAnimationsAsync } from '@angular/platform-browser/animations/async';
-import { provideClientHydration } from '@angular/platform-browser';
+import { provideAnimations } from '@angular/platform-browser/animations';
+import { MAT_SNACK_BAR_DEFAULT_OPTIONS } from '@angular/material/snack-bar';
 import { TranslateLoader, TranslateModule } from '@ngx-translate/core';
 import { TranslateHttpLoader } from '@ngx-translate/http-loader';
 import { authInterceptor } from './auth/auth.interceptor';
@@ -52,8 +52,15 @@ export const appConfig: ApplicationConfig = {
       withComponentInputBinding()
     ),
     provideHttpClient(withInterceptors([authInterceptor])),
-    provideClientHydration(),
-    provideAnimationsAsync(),
+    provideAnimations(),
+    {
+      provide: MAT_SNACK_BAR_DEFAULT_OPTIONS,
+      useValue: {
+        duration: 3500,
+        horizontalPosition: 'right',
+        verticalPosition: 'top',
+      },
+    },
     importProvidersFrom(
       FormsModule,
       ReactiveFormsModule,

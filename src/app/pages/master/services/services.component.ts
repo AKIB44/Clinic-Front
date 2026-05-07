@@ -6,7 +6,7 @@ import { ReactiveFormsModule, FormGroup, FormControl, Validators } from '@angula
 import { MaterialModule } from '../../../material.module';
 import { TablerIconsModule } from 'angular-tabler-icons';
 import { MatDialog, MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
-import { MatSnackBar } from '@angular/material/snack-bar';
+import { ToastService } from '../../../services/toast.service';
 import { ClinicServicesService } from '../../../services/clinic-services.service';
 import { RbacService } from '../../../auth/rbac.service';
 import { ClinicService } from '../../../models/clinic.model';
@@ -92,7 +92,7 @@ export class ServicesMasterComponent implements OnInit {
   private svc    = inject(ClinicServicesService);
   private rbac   = inject(RbacService);
   private dialog = inject(MatDialog);
-  private snack  = inject(MatSnackBar);
+  private toast  = inject(ToastService);
   private cdr    = inject(ChangeDetectorRef);
 
   services: ClinicService[] = [];
@@ -113,7 +113,7 @@ export class ServicesMasterComponent implements OnInit {
     const ref = this.dialog.open(ServiceFormDialog, { data: service ?? null, width: '520px' });
     ref.afterClosed().subscribe(result => {
       if (result) {
-        this.snack.open(service ? 'Service updated' : 'Service added', '', { duration: 3000 });
+        this.toast.success(service ? 'Service updated' : 'Service added');
         this.load();
       }
     });
@@ -121,7 +121,7 @@ export class ServicesMasterComponent implements OnInit {
 
   delete(service: ClinicService) {
     this.svc.delete(service.id).subscribe(() => {
-      this.snack.open('Service removed', '', { duration: 3000 });
+      this.toast.success('Service removed');
       this.load();
     });
   }

@@ -6,7 +6,7 @@ import { ReactiveFormsModule, FormGroup, FormControl, Validators } from '@angula
 import { MaterialModule } from '../../../material.module';
 import { TablerIconsModule } from 'angular-tabler-icons';
 import { MatDialog, MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
-import { MatSnackBar } from '@angular/material/snack-bar';
+import { ToastService } from '../../../services/toast.service';
 import { ChairsService } from '../../../services/chairs.service';
 import { RbacService } from '../../../auth/rbac.service';
 import { Chair } from '../../../models/clinic.model';
@@ -74,7 +74,7 @@ export class ChairsMasterComponent implements OnInit {
   private svc    = inject(ChairsService);
   private rbac   = inject(RbacService);
   private dialog = inject(MatDialog);
-  private snack  = inject(MatSnackBar);
+  private toast  = inject(ToastService);
   private cdr    = inject(ChangeDetectorRef);
 
   chairs: Chair[] = [];
@@ -94,7 +94,7 @@ export class ChairsMasterComponent implements OnInit {
     const ref = this.dialog.open(ChairFormDialog, { data: chair ?? null, width: '420px' });
     ref.afterClosed().subscribe(result => {
       if (result) {
-        this.snack.open(chair ? 'Chair updated' : 'Chair added', '', { duration: 3000 });
+        this.toast.success(chair ? 'Chair updated' : 'Chair added');
         this.load();
       }
     });
@@ -102,7 +102,7 @@ export class ChairsMasterComponent implements OnInit {
 
   delete(chair: Chair) {
     this.svc.delete(chair.id).subscribe(() => {
-      this.snack.open('Chair removed', '', { duration: 3000 });
+      this.toast.success('Chair removed');
       this.load();
     });
   }

@@ -6,7 +6,7 @@ import { ReactiveFormsModule, FormGroup, FormControl, Validators } from '@angula
 import { MaterialModule } from '../../../material.module';
 import { TablerIconsModule } from 'angular-tabler-icons';
 import { MatDialog, MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
-import { MatSnackBar } from '@angular/material/snack-bar';
+import { ToastService } from '../../../services/toast.service';
 import { StaffService } from '../../../services/staff.service';
 import { RbacService } from '../../../auth/rbac.service';
 import { StaffUser } from '../../../models/clinic.model';
@@ -41,6 +41,11 @@ import { StaffUser } from '../../../models/clinic.model';
             <mat-option value="receptionist">Receptionist</mat-option>
           </mat-select>
         </mat-form-field>
+        <mat-form-field appearance="outline" class="full-width">
+          <mat-label>Designation</mat-label>
+          <input matInput formControlName="designation" placeholder="e.g. BDS, MDS - Orthodontics">
+          <mat-hint>Printed below the doctor's name on prescriptions</mat-hint>
+        </mat-form-field>
         @if (!data?.id) {
           <mat-form-field appearance="outline" class="full-width">
             <mat-label>Temporary Password</mat-label>
@@ -70,12 +75,13 @@ export class StaffFormDialog {
 
   saving = false;
   form = new FormGroup({
-    first_name: new FormControl(this.data?.first_name ?? '', [Validators.required]),
-    last_name:  new FormControl(this.data?.last_name  ?? '', [Validators.required]),
-    email:      new FormControl(this.data?.email      ?? '', [Validators.required, Validators.email]),
-    role:       new FormControl(this.data?.role       ?? '', [Validators.required]),
-    password:   new FormControl(''),
-    is_active:  new FormControl(this.data?.is_active  ?? true),
+    first_name:  new FormControl(this.data?.first_name  ?? '', [Validators.required]),
+    last_name:   new FormControl(this.data?.last_name   ?? '', [Validators.required]),
+    email:       new FormControl(this.data?.email       ?? '', [Validators.required, Validators.email]),
+    role:        new FormControl(this.data?.role        ?? '', [Validators.required]),
+    designation: new FormControl(this.data?.designation ?? '', [Validators.maxLength(100)]),
+    password:    new FormControl(''),
+    is_active:   new FormControl(this.data?.is_active   ?? true),
   });
 
   save() {
@@ -105,12 +111,12 @@ export class StaffMasterComponent implements OnInit {
   private svc    = inject(StaffService);
   private rbac   = inject(RbacService);
   private dialog = inject(MatDialog);
-  private snack  = inject(MatSnackBar);
+  private toast  = inject(ToastService);
   private cdr    = inject(ChangeDetectorRef);
 
   staff: StaffUser[] = [];
   loading = true;
-  displayedColumns = ['name', 'email', 'role', 'status', 'actions'];
+  displayedColumns = ['name', 'email', 'role', 'designation', 'status', 'actions'];
 
   readonly roleLabel: Record<string, string> = {
     admin:  'Super Admin',
@@ -138,7 +144,7 @@ export class StaffMasterComponent implements OnInit {
     const ref = this.dialog.open(StaffFormDialog, { data: member ?? null, width: '520px' });
     ref.afterClosed().subscribe(result => {
       if (result) {
-        this.snack.open(member ? 'Staff updated' : 'Staff member added', '', { duration: 3000 });
+        this.toast.success(member ? 'Staff updated' : 'Staff member added');
         this.load();
       }
     });

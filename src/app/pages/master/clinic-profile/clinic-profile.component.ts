@@ -1,13 +1,16 @@
 import {
-  Component, OnInit, ChangeDetectionStrategy, ChangeDetectorRef, inject
+  Component, OnInit, ChangeDetectionStrategy, inject, signal,
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule, FormGroup, FormControl, Validators } from '@angular/forms';
 import { MaterialModule } from '../../../material.module';
 import { TablerIconsModule } from 'angular-tabler-icons';
-import { MatSnackBar } from '@angular/material/snack-bar';
+import { ToastService } from '../../../services/toast.service';
 import { ClinicsService } from '../../../services/clinics.service';
 import { Clinic } from '../../../models/clinic.model';
+
+const ACCEPTED_TYPES = ['image/jpeg', 'image/png', 'image/webp'];
+const MAX_BYTES = 2 * 1024 * 1024;
 
 @Component({
   selector: 'app-clinic-profile',
@@ -19,47 +22,88 @@ import { Clinic } from '../../../models/clinic.model';
 })
 export class ClinicProfileComponent implements OnInit {
   private svc   = inject(ClinicsService);
-  private snack = inject(MatSnackBar);
-  private cdr   = inject(ChangeDetectorRef);
+  private toast = inject(ToastService);
 
-  loading = true;
-  saving  = false;
-  clinic: Clinic | null = null;
+  loading      = signal(true);
+  saving       = signal(false);
+  logoUploading = signal(false);
+  logoRemoving  = signal(false);
+  logoUrl       = signal<string | null>(null);
+  logoError     = signal<string | null>(null);
 
   form = new FormGroup({
-    name:     new FormControl('', [Validators.required]),
-    phone:    new FormControl('', [Validators.required]),
-    email:    new FormControl('', [Validators.required, Validators.email]),
-    address:  new FormControl('', [Validators.required]),
-    city:     new FormControl('', [Validators.required]),
-    state:    new FormControl(''),
-    logo_url: new FormControl(''),
+    name:    new FormControl('', [Validators.required]),
+    phone:   new FormControl('', [Validators.required]),
+    email:   new FormControl('', [Validators.required, Validators.email]),
+    address: new FormControl('', [Validators.required]),
+    city:    new FormControl('', [Validators.required]),
+    state:   new FormControl(''),
   });
 
   ngOnInit() {
-    // Backend resolves clinic from JWT — no ID param needed
     this.svc.get().subscribe({
       next: (r) => {
-        this.clinic = r.clinic;
         this.form.patchValue(r.clinic);
-        this.loading = false;
-        this.cdr.markForCheck();
+        this.logoUrl.set(r.clinic.logo_url ?? null);
+        this.loading.set(false);
       },
-      error: () => { this.loading = false; this.cdr.markForCheck(); },
+      error: () => this.loading.set(false),
     });
   }
 
   save() {
     if (this.form.invalid) return;
-    this.saving = true;
+    this.saving.set(true);
     this.svc.update(this.form.value as Partial<Clinic>).subscribe({
-      next: (r) => {
-        this.clinic = r.clinic;
-        this.saving = false;
-        this.snack.open('Clinic profile updated', '', { duration: 3000 });
-        this.cdr.markForCheck();
+      next: () => {
+        this.saving.set(false);
+        this.toast.success('Clinic profile updated');
       },
-      error: () => { this.saving = false; this.cdr.markForCheck(); },
+      error: () => { this.saving.set(false); this.toast.error('Save failed. Please try again.'); },
+    });
+  }
+
+  onFileSelected(event: Event) {
+    const input = event.target as HTMLInputElement;
+    const file = input.files?.[0];
+    input.value = '';
+    if (!file) return;
+
+    if (!ACCEPTED_TYPES.includes(file.type)) {
+      this.logoError.set('Only JPEG, PNG, or WebP images are accepted.');
+      return;
+    }
+    if (file.size > MAX_BYTES) {
+      this.logoError.set('Image must be under 2 MB.');
+      return;
+    }
+
+    this.logoError.set(null);
+    this.logoUploading.set(true);
+    this.svc.uploadLogo(file).subscribe({
+      next: (r) => {
+        this.logoUrl.set(r.logo_url);
+        this.logoUploading.set(false);
+        this.toast.success('Logo uploaded');
+      },
+      error: (e) => {
+        const msg = e?.error?.error ?? 'Upload failed. Please try again.';
+        this.logoError.set(msg);
+        this.toast.error(msg);
+        this.logoUploading.set(false);
+      },
+    });
+  }
+
+  removeLogo() {
+    this.logoRemoving.set(true);
+    this.svc.removeLogo().subscribe({
+      next: () => {
+        this.logoUrl.set(null);
+        this.logoRemoving.set(false);
+        this.toast.success('Logo removed');
+      },
+      error: () => this.logoRemoving.set(false),
     });
   }
 }
