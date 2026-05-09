@@ -15,15 +15,17 @@ export const navItems: NavItem[] = [
     iconName: 'calendar-event',
     bgcolor: 'success',
     route: '/schedule',
+    permissions: ['appointment.view'],
   },
 
   // ── Patients ───────────────────────────────────────────────────────────────
-  { navCap: 'Patients' },
+  { navCap: 'Patients', permissions: ['patient.view'] },
   {
     displayName: 'Patient Search',
     iconName: 'user-search',
     bgcolor: 'accent',
     route: '/apps/contacts',
+    permissions: ['patient.view'],
   },
 
   // ── Operations ─────────────────────────────────────────────────────────────
@@ -33,6 +35,7 @@ export const navItems: NavItem[] = [
     iconName: 'pill',
     bgcolor: 'success',
     route: '/rx/new',
+    permissions: ['prescription.create'],
   },
   {
     displayName: 'Invoices',
@@ -41,10 +44,11 @@ export const navItems: NavItem[] = [
     route: '/apps/invoice',
   },
 
-  // ── Master — admin only ────────────────────────────────────────────────────
+  // ── Master — permission-gated (roles kept as fallback during migration) ─────
   {
     navCap: 'Master',
     roles: ['admin'],
+    permissions: ['clinic.settings', 'staff.manage'],
   },
   {
     displayName: 'Clinic Profile',
@@ -52,6 +56,7 @@ export const navItems: NavItem[] = [
     bgcolor: 'primary',
     route: '/master/clinic-profile',
     roles: ['admin'],
+    permissions: ['clinic.settings'],
   },
   {
     displayName: 'Services',
@@ -59,13 +64,23 @@ export const navItems: NavItem[] = [
     bgcolor: 'success',
     route: '/master/services',
     roles: ['admin'],
+    permissions: ['clinic.settings'],
   },
   {
-    displayName: 'Staff & Users',
+    displayName: 'User Management',
     iconName: 'users',
     bgcolor: 'warning',
     route: '/master/staff',
     roles: ['admin'],
+    permissions: ['staff.manage'],
+  },
+  {
+    displayName: 'RBAC Management',
+    iconName: 'shield-lock',
+    bgcolor: 'error',
+    route: '/master/rbac',
+    roles: ['admin'],
+    permissions: ['staff.manage'],
   },
   {
     displayName: 'Chairs & Rooms',
@@ -73,6 +88,7 @@ export const navItems: NavItem[] = [
     bgcolor: 'accent',
     route: '/master/chairs',
     roles: ['admin'],
+    permissions: ['clinic.settings'],
   },
   {
     displayName: 'Rx Master Data',
@@ -80,15 +96,25 @@ export const navItems: NavItem[] = [
     bgcolor: 'success',
     route: '/master/rx-master',
     roles: ['admin'],
+    permissions: ['clinic.settings'],
+  },
+  {
+    displayName: 'Activity Log',
+    iconName: 'history',
+    bgcolor: 'accent',
+    route: '/master/activity-log',
+    roles: ['admin'],
+    permissions: ['audit.view'],
   },
 
   // ── Booking ────────────────────────────────────────────────────────────────
   { navCap: 'Booking' },
   {
-    displayName: 'Patient Booking Form',
-    iconName: 'clipboard-plus',
+    displayName: 'New Appointment',
+    iconName: 'calendar-plus',
     bgcolor: 'success',
     route: '/booking',
+    permissions: ['appointment.create'],
   },
 
 ];

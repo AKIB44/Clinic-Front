@@ -64,47 +64,41 @@
     @if (activeTab() === 'overview') {
       <section class="overview-grid">
         <div class="info-panel">
-          <h2>Clinical Snapshot</h2>
+          <h2>Demographics</h2>
           <dl>
-            <div>
-              <dt>Patient type</dt>
-              <dd>{{ p.is_paediatric ? 'Paediatric' : 'Adult' }}</dd>
-            </div>
-            <div>
-              <dt>Allergies</dt>
-              <dd>{{ p.allergies || 'None recorded' }}</dd>
-            </div>
-            <div>
-              <dt>Blood thinner</dt>
-              <dd>{{ p.blood_thinner ? 'Yes' : 'No' }}</dd>
-            </div>
+            @if (p.age) {
+              <div>
+                <dt>Age</dt>
+                <dd>{{ p.age }} yrs</dd>
+              </div>
+            }
+            @if (p.gender) {
+              <div>
+                <dt>Sex</dt>
+                <dd>{{ p.gender | titlecase }}</dd>
+              </div>
+            }
+            @if (p.dob) {
+              <div>
+                <dt>Date of Birth</dt>
+                <dd>{{ p.dob | date:'dd MMM yyyy' }}</dd>
+              </div>
+            }
+            @if (p.address) {
+              <div>
+                <dt>Address</dt>
+                <dd>{{ p.address }}</dd>
+              </div>
+            }
+            @if (!p.age && !p.gender && !p.dob && !p.address) {
+              <div><dt>—</dt><dd>No demographics recorded</dd></div>
+            }
           </dl>
         </div>
 
         <div class="info-panel">
-          <h2>Medical History</h2>
-          <p>{{ p.medical_history || 'No medical history recorded.' }}</p>
-        </div>
-
-        @if (p.is_paediatric || p.parent_name || p.parent_phone) {
-          <div class="info-panel">
-            <h2>Guardian</h2>
-            <dl>
-              <div>
-                <dt>Name</dt>
-                <dd>{{ p.parent_name || 'Not recorded' }}</dd>
-              </div>
-              <div>
-                <dt>Phone</dt>
-                <dd>{{ p.parent_phone || 'Not recorded' }}</dd>
-              </div>
-            </dl>
-          </div>
-        }
-
-        <div class="info-panel">
-          <h2>Notes</h2>
-          <p>{{ p.notes || 'No notes recorded.' }}</p>
+          <h2>Clinical History</h2>
+          <p>{{ p.clinical_history || 'No clinical history recorded.' }}</p>
         </div>
       </section>
     }

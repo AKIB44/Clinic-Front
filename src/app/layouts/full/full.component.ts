@@ -8,6 +8,7 @@ import { filter } from 'rxjs/operators';
 import { NavigationEnd, Router } from '@angular/router';
 import { navItems as allNavItems } from './vertical/sidebar/sidebar-data';
 import { RbacService } from '../../auth/rbac.service';
+import { PermissionService } from '../../core/rbac/permission.service';
 import { NavService } from '../../services/nav.service';
 import { AuthService } from '../../auth/auth.service';
 import { AppNavItemComponent } from './vertical/sidebar/nav-item/nav-item.component';
@@ -22,6 +23,7 @@ import { AppHorizontalHeaderComponent } from './horizontal/header/header.compone
 import { AppHorizontalSidebarComponent } from './horizontal/sidebar/sidebar.component';
 import { AppBreadcrumbComponent } from './shared/breadcrumb/breadcrumb.component';
 import { CustomizerComponent } from './shared/customizer/customizer.component';
+import { BreakGlassBannerComponent } from './shared/break-glass-banner/break-glass-banner.component';
 
 const MOBILE_VIEW = 'screen and (max-width: 768px)';
 const TABLET_VIEW = 'screen and (min-width: 769px) and (max-width: 1024px)';
@@ -59,14 +61,16 @@ interface quicklinks {
     AppHorizontalSidebarComponent,
     AppBreadcrumbComponent,
     CustomizerComponent,
+    BreakGlassBannerComponent,
   ],
   templateUrl: './full.component.html',
   styleUrls: [],
   encapsulation: ViewEncapsulation.None,
 })
 export class FullComponent implements OnInit {
-  private rbac = inject(RbacService);
+  private rbac        = inject(RbacService);
   private authService = inject(AuthService);
+  private permissions = inject(PermissionService);
 
   get loggedInUserName(): string {
     const user = this.authService.getUser();
@@ -84,7 +88,18 @@ export class FullComponent implements OnInit {
 
   get navItems() {
     const role = this.rbac.role;
-    return allNavItems.filter(item => !item.roles || (role && item.roles.includes(role)));
+    const loaded = this.permissions.loaded();
+    const perms  = this.permissions.perms();
+    // Use permissions only when the backend has returned a non-empty set.
+    // An empty set means migrations haven't run — fall back to role check.
+    const permsReady = loaded && Object.keys(perms).length > 0;
+
+    return allNavItems.filter(item => {
+      const roleOk = !item.roles || !role || item.roles.includes(role);
+      if (!item.permissions || !permsReady) return roleOk;
+      // Role is always a valid fallback even when permissions are partially seeded.
+      return item.permissions.some(c => c in perms) || roleOk;
+    });
   }
 
   @ViewChild('leftsidenav')

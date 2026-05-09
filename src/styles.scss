@@ -20,3 +20,13 @@ body { margin: 0; font-family: Roboto, "Helvetica Neue", sans-serif; }
 .toast-error .mat-mdc-snack-bar-action {
   color: rgba(255,255,255,.85) !important;
 }
+
+/* Activity detail dialog — remove default mat-dialog padding */
+.activity-detail-panel .mat-mdc-dialog-container .mdc-dialog__surface {
+  border-radius: 12px !important;
+  overflow: hidden;
+  padding: 0 !important;
+}
+.activity-detail-panel .mat-mdc-dialog-container {
+  padding: 0 !important;
+}

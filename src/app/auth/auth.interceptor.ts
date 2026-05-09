@@ -14,17 +14,35 @@ import { Router } from '@angular/router';
 let isRefreshing = false;
 const refreshDone$ = new BehaviorSubject<string | null>(null);
 
-function addBearer(req: HttpRequest<unknown>, token: string) {
-  return req.clone({ setHeaders: { Authorization: `Bearer ${token}` } });
+function addAuthHeaders(req: HttpRequest<unknown>, token: string, clinicId: string | null) {
+  const headers: Record<string, string> = { Authorization: `Bearer ${token}` };
+  if (clinicId) headers['X-Clinic-Id'] = clinicId;
+  return req.clone({ setHeaders: headers });
 }
 
-/** 401 on these routes is not “expired access token” (e.g. bad password on login). */
 function isPublicAuthRequest(req: HttpRequest<unknown>): boolean {
   const u = req.url;
-  return (
-    u.includes('/auth/login') ||
-    u.includes('/auth/refresh') ||
-    u.includes('/auth/logout')
+  return u.includes('/auth/login') || u.includes('/auth/refresh') || u.includes('/auth/logout');
+}
+
+// Retry the request with a known-good token. If the retry itself fails with
+// 401/403, treat it as a permissions problem (not a session problem) and
+// navigate to the forbidden page instead of clearing the session.
+function retryWithToken(
+  req: HttpRequest<unknown>,
+  next: HttpHandlerFn,
+  token: string,
+  clinicId: string | null,
+  router: Router,
+) {
+  return next(addAuthHeaders(req, token, clinicId)).pipe(
+    catchError((retryErr: HttpErrorResponse) => {
+      if (retryErr.status === 401 || retryErr.status === 403) {
+        router.navigate(['/authentication/forbidden']);
+        return EMPTY;
+      }
+      return throwError(() => retryErr);
+    })
   );
 }
 
@@ -32,21 +50,45 @@ export const authInterceptor: HttpInterceptorFn = (
   req: HttpRequest<unknown>,
   next: HttpHandlerFn
 ) => {
-  const storage = inject(AuthStorageService);
+  const storage     = inject(AuthStorageService);
   const authService = inject(AuthService);
-  const router = inject(Router);
+  const router      = inject(Router);
 
-  const token = storage.getAccessToken();
-  const authedReq = token ? addBearer(req, token) : req;
+  const token    = storage.getAccessToken();
+  const clinicId = authService.getActiveClinicId();
+  const authedReq = token ? addAuthHeaders(req, token, clinicId) : req;
+
+  // Capture the token sent so we can detect post-refresh races in catchError.
+  const sentToken = token;
 
   return next(authedReq).pipe(
     catchError((err: HttpErrorResponse) => {
-      if (err.status !== 401) {
-        return throwError(() => err);
+      // Pass non-401 errors through (components handle 4xx/5xx themselves).
+      // Exception: 403 → forbidden page immediately; no retry needed.
+      if (err.status === 403) {
+        router.navigate(['/authentication/forbidden']);
+        return EMPTY;
+      }
+      if (err.status !== 401) return throwError(() => err);
+      if (isPublicAuthRequest(req)) return throwError(() => err);
+
+      // Step-up required for sensitive permission
+      if (err.error?.error === 'step_up_required') {
+        router.navigate(['/authentication/step-up'], {
+          queryParams: { returnUrl: router.url },
+        });
+        return EMPTY;
       }
 
-      if (isPublicAuthRequest(req)) {
-        return throwError(() => err);
+      // token_stale: role_version was bumped (role/permission change).
+      // A refresh issues a new token with the updated rv — fall through to
+      // the normal refresh flow below instead of hard-logging out.
+
+      // Another concurrent request already refreshed the token — just retry
+      // with the current (already-refreshed) token; no second refresh needed.
+      const currentToken = storage.getAccessToken();
+      if (currentToken && currentToken !== sentToken) {
+        return retryWithToken(req, next, currentToken, clinicId, router);
       }
 
       const refreshToken = storage.getRefreshToken();
@@ -60,7 +102,7 @@ export const authInterceptor: HttpInterceptorFn = (
         return refreshDone$.pipe(
           filter((t): t is string => t !== null),
           take(1),
-          switchMap((newToken) => next(addBearer(req, newToken)))
+          switchMap((newToken) => retryWithToken(req, next, newToken, clinicId, router))
         );
       }
 
@@ -70,16 +112,16 @@ export const authInterceptor: HttpInterceptorFn = (
       return authService.refresh(refreshToken).pipe(
         switchMap((res) => {
           refreshDone$.next(res.access_token);
-          return next(addBearer(req, res.access_token));
+          return retryWithToken(req, next, res.access_token, clinicId, router);
         }),
         catchError((refreshErr) => {
+          // Only errors from authService.refresh() itself reach here.
+          // A failed retry is caught inside retryWithToken, not here.
           storage.clearSession();
           router.navigate(['/authentication/login']);
           return throwError(() => refreshErr);
         }),
-        finalize(() => {
-          isRefreshing = false;
-        })
+        finalize(() => { isRefreshing = false; })
       );
     })
   );

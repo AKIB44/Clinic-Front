@@ -2,16 +2,10 @@ import { Routes } from '@angular/router';
 import { authGuard } from './auth/auth.guard';
 import { BlankComponent } from './layouts/blank/blank.component';
 import { FullComponent } from './layouts/full/full.component';
-import { BookingComponent } from './pages/booking/booking.component';
 import { ScheduleComponent } from './pages/schedule/schedule.component';
+import { permissionGuard, anyPermissionGuard } from './core/rbac/permission.guard';
 
 export const routes: Routes = [
-  // Public booking form — no auth required
-  {
-    path: 'booking',
-    component: BookingComponent,
-  },
-
   // Admin — all routes behind authGuard
   {
     path: '',
@@ -28,7 +22,16 @@ export const routes: Routes = [
         component: ScheduleComponent,
       },
       {
+        path: 'booking',
+        canActivate: [permissionGuard('appointment.create')],
+        loadComponent: () =>
+          import('./pages/booking/booking.component').then(
+            (m) => m.BookingComponent
+          ),
+      },
+      {
         path: 'patients/:id',
+        canActivate: [permissionGuard('patient.view')],
         loadComponent: () =>
           import('./pages/patients/patient-record/patient-record.component').then(
             (m) => m.PatientRecordComponent
@@ -36,6 +39,7 @@ export const routes: Routes = [
       },
       {
         path: 'rx/new',
+        canActivate: [permissionGuard('prescription.create')],
         loadComponent: () =>
           import('./pages/rx/prescription-form/prescription-form.component').then(
             (m) => m.PrescriptionFormComponent
@@ -43,6 +47,7 @@ export const routes: Routes = [
       },
       {
         path: 'rx/:id/edit',
+        canActivate: [permissionGuard('prescription.create')],
         loadComponent: () =>
           import('./pages/rx/prescription-form/prescription-form.component').then(
             (m) => m.PrescriptionFormComponent
@@ -50,6 +55,7 @@ export const routes: Routes = [
       },
       {
         path: 'master',
+        canActivate: [anyPermissionGuard('clinic.settings', 'staff.manage')],
         loadChildren: () =>
           import('./pages/master/master.routes').then((m) => m.MasterRoutes),
       },

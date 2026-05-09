@@ -1,0 +1,198 @@
+.master-page {
+  padding: 24px;
+}
+
+// ── Header ──────────────────────────────────────────────────────────────────
+.page-header {
+  margin-bottom: 24px;
+}
+.page-title {
+  font-size: 22px;
+  font-weight: 700;
+  margin: 0 0 4px;
+  color: #0f172a;
+}
+.page-subtitle {
+  font-size: 13px;
+  color: #94a3b8;
+  margin: 0;
+}
+
+// ── Filters ─────────────────────────────────────────────────────────────────
+.filters-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  align-items: center;
+  margin-bottom: 20px;
+
+  .search-field { flex: 2; min-width: 220px; }
+  .filter-field { flex: 1; min-width: 140px; }
+  .date-field   { flex: 1; min-width: 130px; }
+}
+.prefix-icon {
+  font-size: 18px;
+  color: #94a3b8;
+  margin-right: 4px;
+}
+.apply-btn {
+  height: 56px;
+  padding: 0 20px;
+  gap: 6px;
+  white-space: nowrap;
+}
+
+// ── Loading ──────────────────────────────────────────────────────────────────
+.center-loader {
+  display: flex;
+  justify-content: center;
+  padding: 64px 0;
+}
+
+// ── Table card ───────────────────────────────────────────────────────────────
+.master-card {
+  background: #fff;
+  border-radius: 12px;
+  box-shadow: 0 1px 3px rgba(0,0,0,.06), 0 4px 16px rgba(0,0,0,.04);
+  overflow: hidden;
+}
+.master-table {
+  width: 100%;
+  min-width: 820px;
+}
+
+// Row hover
+.log-row {
+  cursor: pointer;
+  transition: background 120ms ease;
+
+  &:hover { background: #f8fafc; }
+}
+
+// ── User cell ────────────────────────────────────────────────────────────────
+.user-cell {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.user-avatar {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #6366f1, #8b5cf6);
+  color: #fff;
+  font-size: 13px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+.user-name  { font-weight: 600; font-size: 13px; color: #0f172a; }
+.user-email { font-size: 11px; color: #94a3b8; }
+
+// ── Action cell ──────────────────────────────────────────────────────────────
+.action-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.action-label {
+  font-weight: 600;
+  font-size: 13px;
+  color: #1e293b;
+}
+.action-details {
+  font-size: 11.5px;
+  color: #475569;
+  margin-top: 4px;
+  line-height: 1.6;
+  max-width: 360px;
+}
+
+// ── Method badge ─────────────────────────────────────────────────────────────
+.method-badge {
+  display: inline-flex;
+  align-items: center;
+  font-size: 10px;
+  font-weight: 800;
+  padding: 2px 7px;
+  border-radius: 5px;
+  letter-spacing: .06em;
+  flex-shrink: 0;
+
+  &.method-get    { background: #dcfce7; color: #15803d; }
+  &.method-post   { background: #dbeafe; color: #1d4ed8; }
+  &.method-put    { background: #ffedd5; color: #c2410c; }
+  &.method-patch  { background: #f3e8ff; color: #7e22ce; }
+  &.method-delete { background: #fee2e2; color: #b91c1c; }
+}
+
+// ── Entity chip ──────────────────────────────────────────────────────────────
+.entity-chip {
+  display: inline-flex;
+  align-items: center;
+  font-size: 11px;
+  font-weight: 600;
+  padding: 3px 10px;
+  border-radius: 20px;
+  background: #e0e7ff;
+  color: #3730a3;
+}
+
+// ── Status cell ──────────────────────────────────────────────────────────────
+.status-cell {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-weight: 700;
+  font-size: 13px;
+  padding: 3px 10px;
+  border-radius: 20px;
+
+  &.status-ok   { background: #dcfce7; color: #15803d; }
+  &.status-warn { background: #fef9c3; color: #a16207; }
+  &.status-err  { background: #fee2e2; color: #b91c1c; }
+}
+.status-icon { font-size: 14px; width: 14px; height: 14px; }
+.status-code { font-size: 12px; }
+
+// ── Duration ─────────────────────────────────────────────────────────────────
+.duration-pill {
+  display: inline-block;
+  font-size: 12px;
+  font-weight: 600;
+  padding: 2px 8px;
+  border-radius: 12px;
+  background: #f1f5f9;
+  color: #475569;
+
+  &.fast { background: #dcfce7; color: #15803d; }
+  &.slow { background: #fee2e2; color: #b91c1c; }
+}
+
+// ── View button ──────────────────────────────────────────────────────────────
+.view-btn {
+  opacity: 0;
+  transition: opacity 120ms ease, color 120ms ease;
+  color: #94a3b8;
+
+  &:hover { color: #6366f1; }
+}
+.log-row:hover .view-btn { opacity: 1; }
+
+// ── Misc ─────────────────────────────────────────────────────────────────────
+.muted { color: #cbd5e1; }
+
+.empty-row { text-align: center; }
+.empty-state {
+  padding: 64px 0;
+  color: #cbd5e1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+}
+.empty-icon { font-size: 48px; width: 48px; height: 48px; }
+
+mat-paginator { margin-top: 8px; }

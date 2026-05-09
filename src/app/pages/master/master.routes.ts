@@ -1,31 +1,40 @@
 import { Routes } from '@angular/router';
-import { roleGuard } from '../../auth/role.guard';
+import { permissionGuard } from '../../core/rbac/permission.guard';
 
-// All master routes require 'admin' role
 export const MasterRoutes: Routes = [
   {
     path: 'clinic-profile',
     loadComponent: () => import('./clinic-profile/clinic-profile.component').then(m => m.ClinicProfileComponent),
-    canActivate: [roleGuard(['admin'])],
+    canActivate: [permissionGuard('clinic.settings')],
   },
   {
     path: 'services',
     loadComponent: () => import('./services/services.component').then(m => m.ServicesMasterComponent),
-    canActivate: [roleGuard(['admin'])],
+    canActivate: [permissionGuard('clinic.settings')],
   },
   {
     path: 'staff',
     loadComponent: () => import('./staff/staff.component').then(m => m.StaffMasterComponent),
-    canActivate: [roleGuard(['admin'])],
+    canActivate: [permissionGuard('staff.manage')],
   },
   {
     path: 'chairs',
     loadComponent: () => import('./chairs/chairs.component').then(m => m.ChairsMasterComponent),
-    canActivate: [roleGuard(['admin'])],
+    canActivate: [permissionGuard('clinic.settings')],
   },
   {
     path: 'rx-master',
     loadComponent: () => import('./rx-master/rx-master.component').then(m => m.RxMasterComponent),
-    canActivate: [roleGuard(['admin'])],
+    canActivate: [permissionGuard('clinic.settings')],
+  },
+  {
+    path: 'rbac',
+    loadComponent: () => import('./rbac-management/rbac-management.component').then(m => m.RbacManagementComponent),
+    canActivate: [permissionGuard('staff.manage')],
+  },
+  {
+    path: 'activity-log',
+    loadComponent: () => import('./activity-log/activity-log.component').then(m => m.ActivityLogComponent),
+    canActivate: [permissionGuard('audit.view')],
   },
 ];

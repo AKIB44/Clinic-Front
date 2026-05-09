@@ -1,76 +1,148 @@
 <div class="master-page">
+
+  <!-- Page Header -->
   <div class="page-header">
     <div>
-      <h1 class="page-title">Staff &amp; Users</h1>
-      <p class="page-subtitle">Manage clinic staff and access roles</p>
+      <h1 class="page-title">User Management</h1>
+      <p class="page-subtitle">Manage clinic users, roles and permissions</p>
     </div>
-    <button mat-flat-button color="primary" (click)="openDialog()">
+    <button mat-flat-button color="primary" (click)="openAddDialog()">
       <i-tabler name="user-plus" size="18"></i-tabler>
-      Add Staff
+      Add User
     </button>
   </div>
 
+  <!-- Filters Row -->
+  <div class="filters-row">
+    <mat-form-field appearance="outline" class="search-field">
+      <mat-label>Search by name or email</mat-label>
+      <i-tabler name="search" matPrefix size="18" style="margin-right:6px;color:#9e9e9e"></i-tabler>
+      <input matInput [(ngModel)]="searchQuery" (ngModelChange)="applyFilter()" placeholder="Type to filter…">
+      <button *ngIf="searchQuery" mat-icon-button matSuffix (click)="searchQuery=''; applyFilter()">
+        <i-tabler name="x" size="16"></i-tabler>
+      </button>
+    </mat-form-field>
+
+    <mat-form-field appearance="outline" class="role-filter-field">
+      <mat-label>Filter by role</mat-label>
+      <mat-select [(ngModel)]="roleFilter" (ngModelChange)="applyFilter()">
+        <mat-option value="">All Roles</mat-option>
+        <mat-option *ngFor="let r of availableRoles" [value]="r">{{ roleLabels[r] || r }}</mat-option>
+      </mat-select>
+    </mat-form-field>
+  </div>
+
+  <!-- Loading -->
   @if (loading) {
     <div class="center-loader"><mat-spinner diameter="40"></mat-spinner></div>
   } @else {
-    <div class="master-card">
-      <table mat-table [dataSource]="staff" class="master-table">
 
-        <ng-container matColumnDef="name">
-          <th mat-header-cell *matHeaderCellDef>Name</th>
-          <td mat-cell *matCellDef="let m">
-            <div class="cell-primary">{{ m.first_name }} {{ m.last_name }}</div>
+    <!-- Table -->
+    <div class="master-card">
+      <table mat-table [dataSource]="filteredUsers" class="master-table">
+
+        <!-- User Column: Avatar + Name + Email -->
+        <ng-container matColumnDef="user">
+          <th mat-header-cell *matHeaderCellDef>User</th>
+          <td mat-cell *matCellDef="let u">
+            <div class="user-cell">
+              <div class="user-avatar" [ngClass]="roleColors[u.role_code] || 'role-default'">
+                {{ getInitials(u) }}
+              </div>
+              <div class="user-info">
+                <div class="user-name">{{ u.first_name }} {{ u.last_name }}</div>
+                <div class="user-email">{{ u.email }}</div>
+              </div>
+            </div>
           </td>
         </ng-container>
 
-        <ng-container matColumnDef="email">
-          <th mat-header-cell *matHeaderCellDef>Email</th>
-          <td mat-cell *matCellDef="let m">{{ m.email }}</td>
-        </ng-container>
-
+        <!-- Role Column -->
         <ng-container matColumnDef="role">
           <th mat-header-cell *matHeaderCellDef>Role</th>
-          <td mat-cell *matCellDef="let m">
-            <span class="role-badge" [ngClass]="roleClass[m.role]">
-              {{ roleLabel[m.role] || m.role }}
+          <td mat-cell *matCellDef="let u">
+            <span *ngIf="u.role_code; else noRole"
+                  class="role-chip" [ngClass]="roleColors[u.role_code] || 'role-default'">
+              {{ roleLabels[u.role_code] || u.role_name || u.role_code }}
             </span>
+            <ng-template #noRole><span class="role-chip role-default">No Role</span></ng-template>
           </td>
         </ng-container>
 
+        <!-- Designation Column -->
         <ng-container matColumnDef="designation">
           <th mat-header-cell *matHeaderCellDef>Designation</th>
-          <td mat-cell *matCellDef="let m" class="designation-cell">{{ m.designation || '—' }}</td>
+          <td mat-cell *matCellDef="let u" class="designation-cell">
+            {{ u.designation || '—' }}
+          </td>
         </ng-container>
 
+        <!-- Overrides Column -->
+        <ng-container matColumnDef="overrides">
+          <th mat-header-cell *matHeaderCellDef>Overrides</th>
+          <td mat-cell *matCellDef="let u">
+            <span *ngIf="u.override_count > 0" class="override-badge">{{ u.override_count }}</span>
+            <span *ngIf="!u.override_count" class="no-override">—</span>
+          </td>
+        </ng-container>
+
+        <!-- Status Column -->
         <ng-container matColumnDef="status">
           <th mat-header-cell *matHeaderCellDef>Status</th>
-          <td mat-cell *matCellDef="let m">
-            <span class="status-chip" [class.active]="m.is_active" [class.inactive]="!m.is_active">
-              <span class="dot"></span>{{ m.is_active ? 'Active' : 'Inactive' }}
+          <td mat-cell *matCellDef="let u">
+            <span class="status-chip" [class.active]="u.is_active" [class.inactive]="!u.is_active">
+              <span class="dot"></span>{{ u.is_active ? 'Active' : 'Inactive' }}
             </span>
           </td>
         </ng-container>
 
+        <!-- Actions Column -->
         <ng-container matColumnDef="actions">
           <th mat-header-cell *matHeaderCellDef></th>
-          <td mat-cell *matCellDef="let m">
-            <div class="action-row">
-              <button mat-icon-button matTooltip="Edit" (click)="openDialog(m)">
-                <i-tabler name="pencil" size="16"></i-tabler>
-              </button>
-              <button mat-icon-button [matTooltip]="m.is_active ? 'Deactivate' : 'Activate'" (click)="toggle(m)">
-                <i-tabler [name]="m.is_active ? 'toggle-right' : 'toggle-left'" size="18"></i-tabler>
-              </button>
-            </div>
+          <td mat-cell *matCellDef="let u">
+            <button mat-icon-button [matMenuTriggerFor]="actionMenu" [matMenuTriggerData]="{ user: u }">
+              <i-tabler name="dots-vertical" size="18"></i-tabler>
+            </button>
           </td>
         </ng-container>
 
         <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
         <tr mat-row *matRowDef="let row; columns: displayedColumns;"></tr>
+
+        <!-- Empty State -->
         <tr class="mat-row" *matNoDataRow>
-          <td class="mat-cell empty-row" [attr.colspan]="displayedColumns.length">No staff members found.</td>
+          <td class="mat-cell empty-row" [attr.colspan]="displayedColumns.length">
+            <div class="empty-state">
+              <i-tabler name="users-off" size="40" style="color:#bdbdbd"></i-tabler>
+              <p>No users found.</p>
+            </div>
+          </td>
         </tr>
       </table>
     </div>
+
   }
 </div>
+
+<!-- Shared Actions Menu (rendered once, receives user via matMenuTriggerData) -->
+<mat-menu #actionMenu="matMenu">
+  <ng-template matMenuContent let-u="user">
+    <button mat-menu-item (click)="openEditDialog(u)">
+      <i-tabler name="pencil" size="16"></i-tabler>
+      <span>Edit</span>
+    </button>
+    <button mat-menu-item (click)="openPermissionsDialog(u)">
+      <i-tabler name="shield" size="16"></i-tabler>
+      <span>Manage Permissions</span>
+    </button>
+    <mat-divider></mat-divider>
+    <button mat-menu-item (click)="toggleActive(u)">
+      <i-tabler [name]="u.is_active ? 'toggle-left' : 'toggle-right'" size="16"></i-tabler>
+      <span>{{ u.is_active ? 'Deactivate' : 'Activate' }}</span>
+    </button>
+    <button mat-menu-item class="delete-item" (click)="openDeleteDialog(u)">
+      <i-tabler name="trash" size="16"></i-tabler>
+      <span>Delete</span>
+    </button>
+  </ng-template>
+</mat-menu>

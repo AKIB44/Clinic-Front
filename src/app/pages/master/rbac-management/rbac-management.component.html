@@ -1,0 +1,213 @@
+<div class="rbac-management p-24">
+
+  <!-- Header -->
+  <div class="d-flex align-items-center m-b-24">
+    <div>
+      <h3 class="mat-h3 m-0">RBAC Management</h3>
+      <p class="mat-body-1 text-muted m-0">Assign roles and manage permissions per user</p>
+    </div>
+    <button mat-raised-button color="primary" class="m-l-auto" (click)="refresh()">
+      <mat-icon>refresh</mat-icon> Refresh
+    </button>
+  </div>
+
+  <mat-tab-group animationDuration="200ms">
+
+    <!-- ═══════════════════ Tab 1: User Roles ════════════════════════════════ -->
+    <mat-tab label="User Roles">
+      <div class="tab-content m-t-16">
+
+        <!-- Loading spinner -->
+        <div *ngIf="loadingUsers" class="loading-overlay">
+          <mat-spinner diameter="48"></mat-spinner>
+        </div>
+
+        <mat-card *ngIf="!loadingUsers">
+          <mat-card-content class="p-0">
+            <table mat-table [dataSource]="users" class="w-100">
+
+              <!-- User column -->
+              <ng-container matColumnDef="user">
+                <th mat-header-cell *matHeaderCellDef>User</th>
+                <td mat-cell *matCellDef="let u">
+                  <div class="user-info">
+                    <span class="user-name">{{ u.first_name }} {{ u.last_name }}</span>
+                    <span class="user-email mat-caption text-muted">{{ u.email }}</span>
+                  </div>
+                  <span *ngIf="!u.is_active" class="inactive-badge">Inactive</span>
+                </td>
+              </ng-container>
+
+              <!-- Role column -->
+              <ng-container matColumnDef="role">
+                <th mat-header-cell *matHeaderCellDef>Role</th>
+                <td mat-cell *matCellDef="let u">
+                  <ng-container *ngIf="changingRoleUserId !== u.id; else roleSelect">
+                    <span class="role-chip" [ngClass]="getRoleChipClass(u)">
+                      {{ getRoleDisplayName(u) }}
+                    </span>
+                  </ng-container>
+                  <ng-template #roleSelect>
+                    <mat-form-field appearance="outline" class="role-select">
+                      <mat-select [(ngModel)]="selectedRoleId" [ngModelOptions]="{standalone: true}">
+                        <mat-option *ngFor="let r of roles" [value]="r.id">{{ r.name }}</mat-option>
+                      </mat-select>
+                    </mat-form-field>
+                  </ng-template>
+                </td>
+              </ng-container>
+
+              <!-- Override count column -->
+              <ng-container matColumnDef="overrides">
+                <th mat-header-cell *matHeaderCellDef>Overrides</th>
+                <td mat-cell *matCellDef="let u">
+                  <span *ngIf="+u.override_count > 0" class="override-badge">
+                    {{ u.override_count }} override{{ +u.override_count !== 1 ? 's' : '' }}
+                  </span>
+                  <span *ngIf="+u.override_count === 0" class="text-muted">—</span>
+                </td>
+              </ng-container>
+
+              <!-- Actions column -->
+              <ng-container matColumnDef="actions">
+                <th mat-header-cell *matHeaderCellDef>Actions</th>
+                <td mat-cell *matCellDef="let u">
+                  <ng-container *ngIf="changingRoleUserId !== u.id; else saveCancel">
+                    <button mat-stroked-button color="primary" class="m-r-8"
+                            (click)="startChangeRole(u)">
+                      <mat-icon>manage_accounts</mat-icon> Change Role
+                    </button>
+                    <button mat-stroked-button color="accent"
+                            (click)="selectUserForOverrides(u)">
+                      <mat-icon>tune</mat-icon> Permissions
+                    </button>
+                  </ng-container>
+                  <ng-template #saveCancel>
+                    <button mat-raised-button color="primary" class="m-r-8"
+                            [disabled]="savingRole || !selectedRoleId"
+                            (click)="confirmChangeRole(u)">
+                      <mat-spinner *ngIf="savingRole" diameter="16" class="inline-spinner"></mat-spinner>
+                      <span *ngIf="!savingRole">Save</span>
+                    </button>
+                    <button mat-stroked-button (click)="cancelChangeRole()">Cancel</button>
+                  </ng-template>
+                </td>
+              </ng-container>
+
+              <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+              <tr mat-row *matRowDef="let row; columns: displayedColumns;"
+                  [class.inactive-row]="!row.is_active"></tr>
+            </table>
+          </mat-card-content>
+        </mat-card>
+      </div>
+    </mat-tab>
+
+    <!-- ═══════════════════ Tab 2: Permission Overrides ══════════════════════ -->
+    <mat-tab label="Permission Overrides">
+      <div class="tab-content m-t-16">
+
+        <!-- User selector -->
+        <mat-card class="m-b-16">
+          <mat-card-content>
+            <mat-form-field appearance="outline" class="full-width">
+              <mat-label>Select User</mat-label>
+              <mat-select [value]="selectedUser?.id"
+                          (selectionChange)="selectUserForOverrides($any($event.value))">
+                <mat-option *ngFor="let u of users" [value]="u">
+                  {{ u.first_name }} {{ u.last_name }}
+                  <span class="text-muted"> — {{ getRoleDisplayName(u) }}</span>
+                </mat-option>
+              </mat-select>
+            </mat-form-field>
+          </mat-card-content>
+        </mat-card>
+
+        <!-- Prompt when no user selected -->
+        <div *ngIf="!selectedUser" class="empty-state">
+          <mat-icon>person_search</mat-icon>
+          <p>Select a user above to view and manage their permission overrides.</p>
+        </div>
+
+        <!-- Loading spinner -->
+        <div *ngIf="selectedUser && loadingPerms" class="loading-overlay">
+          <mat-spinner diameter="48"></mat-spinner>
+        </div>
+
+        <!-- Permission matrix -->
+        <ng-container *ngIf="selectedUser && !loadingPerms && permResult">
+          <div class="user-perms-header m-b-12">
+            <span class="mat-body-1">
+              Permissions for <strong>{{ selectedUser.first_name }} {{ selectedUser.last_name }}</strong>
+              — role: <span class="role-chip" [ngClass]="getRoleChipClass(selectedUser)">{{ getRoleDisplayName(selectedUser) }}</span>
+            </span>
+          </div>
+
+          <mat-card *ngFor="let group of moduleGroups" class="m-b-12">
+            <mat-card-header>
+              <mat-card-title class="module-title">{{ group.module | titlecase }}</mat-card-title>
+            </mat-card-header>
+            <mat-card-content class="p-0">
+              <table class="perm-table w-100">
+                <thead>
+                  <tr>
+                    <th class="perm-col-name">Permission</th>
+                    <th class="perm-col-desc">Description</th>
+                    <th class="perm-col-status">Status</th>
+                    <th class="perm-col-actions">Override</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr *ngFor="let row of group.rows" class="perm-row">
+                    <td>
+                      <code class="perm-code">{{ row.def.code }}</code>
+                      <span *ngIf="row.def.is_sensitive" class="sensitive-badge"
+                            matTooltip="Sensitive permission">!</span>
+                    </td>
+                    <td class="perm-desc">{{ row.def.description || row.def.action }}</td>
+                    <td>
+                      <ng-container [ngSwitch]="getEffectiveStatus(row)">
+                        <span *ngSwitchCase="'from-role'"  class="status-chip chip-from-role">From Role</span>
+                        <span *ngSwitchCase="'allow'"      class="status-chip chip-allow">
+                          Allow
+                          <button mat-icon-button class="chip-del-btn"
+                                  matTooltip="Remove override"
+                                  (click)="removeOverride(row.override!.id)">
+                            <mat-icon>close</mat-icon>
+                          </button>
+                        </span>
+                        <span *ngSwitchCase="'deny'"       class="status-chip chip-deny">
+                          Deny
+                          <button mat-icon-button class="chip-del-btn"
+                                  matTooltip="Remove override"
+                                  (click)="removeOverride(row.override!.id)">
+                            <mat-icon>close</mat-icon>
+                          </button>
+                        </span>
+                        <span *ngSwitchCase="'no-access'"  class="status-chip chip-no-access">No Access</span>
+                      </ng-container>
+                    </td>
+                    <td class="perm-actions">
+                      <button mat-stroked-button color="primary" class="override-btn allow-btn m-r-4"
+                              matTooltip="Grant this permission"
+                              (click)="setOverride(row.def.code, 'allow')">
+                        Allow
+                      </button>
+                      <button mat-stroked-button color="warn" class="override-btn deny-btn"
+                              matTooltip="Deny this permission"
+                              (click)="setOverride(row.def.code, 'deny')">
+                        Deny
+                      </button>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </mat-card-content>
+          </mat-card>
+        </ng-container>
+
+      </div>
+    </mat-tab>
+
+  </mat-tab-group>
+</div>

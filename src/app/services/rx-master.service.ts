@@ -42,8 +42,13 @@ export class RxMasterService {
     return data;
   }
 
-  async getProcedures(svcId: string): Promise<RxProcedure[]> {
-    return (await this.getDefaults(svcId)).procedures;
+  async getProcedures(svcId?: string): Promise<RxProcedure[]> {
+    let params = new HttpParams();
+    if (svcId) params = params.set('svc_id', svcId);
+    const response = await firstValueFrom(
+      this.http.get<any>(`${this.base}/master/procedures`, { params })
+    );
+    return this._normProcs(response?.data ?? response ?? []);
   }
 
   clearCache(): void {

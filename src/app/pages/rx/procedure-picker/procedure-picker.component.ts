@@ -15,7 +15,6 @@ import { RxProcedure } from '../rx.interfaces';
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class ProcedurePickerComponent implements OnInit, OnChanges {
-  @Input()  svcId!:     string;
   @Input()  excludeIds: number[] = [];
   @Output() procedureSelected = new EventEmitter<RxProcedure>();
 
@@ -26,7 +25,7 @@ export class ProcedurePickerComponent implements OnInit, OnChanges {
   open      = signal(false);
 
   async ngOnInit(): Promise<void> {
-    const procs = await this.master.getProcedures(this.svcId);
+    const procs = await this.master.getProcedures();
     this.all.set(procs);
     this._updateAvailable();
   }

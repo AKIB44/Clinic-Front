@@ -21,6 +21,7 @@ export interface Appointment {
   status: 'booked' | 'confirmed' | 'in_progress' | 'done' | 'no_show' | 'cancelled';
   booking_source: string;
   notes: string | null;
+  cancel_reason: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -31,7 +32,7 @@ export interface BookingPayload {
   scheduled_at: string;
   booking_source: string;
   notes?: string;
-  patient: { name: string; phone: string; email?: string };
+  patient: { name: string; phone: string; email?: string; age?: number; gender?: string; address?: string; clinical_history?: string };
   intake_data?: Record<string, unknown>;
 }
 
@@ -67,8 +68,10 @@ export class AppointmentsService {
   }
 
   // Single unified status transition endpoint
-  updateStatus(id: string, status: AppointmentStatus): Observable<{ appointment: Appointment }> {
-    return this.http.patch<{ appointment: Appointment }>(`${this.base}/${id}/status`, { status });
+  updateStatus(id: string, status: AppointmentStatus, cancelReason?: string): Observable<{ appointment: Appointment }> {
+    const body: Record<string, string> = { status };
+    if (cancelReason) body['cancel_reason'] = cancelReason;
+    return this.http.patch<{ appointment: Appointment }>(`${this.base}/${id}/status`, body);
   }
 
   // Reschedule — change time or chair

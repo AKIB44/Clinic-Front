@@ -56,6 +56,17 @@ export const AuthenticationRoutes: Routes = [
         path: 'side-two-steps',
         component: AppSideTwoStepsComponent,
       },
+      // ── RBAC pages ──────────────────────────────────────────────────────
+      {
+        path: 'forbidden',
+        loadComponent: () =>
+          import('./forbidden/forbidden.component').then(m => m.ForbiddenComponent),
+      },
+      {
+        path: 'step-up',
+        loadComponent: () =>
+          import('./step-up/step-up.component').then(m => m.StepUpComponent),
+      },
     ],
   },
 ];

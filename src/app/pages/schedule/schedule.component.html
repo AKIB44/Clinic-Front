@@ -53,25 +53,33 @@
     </div>
   }
 
-  <!-- ── Summary strip ────────────────────────────────────────────────── -->
+  <!-- ── Summary strip (click = filter columns; counts = full day + chair, excluding cancelled) ─ -->
   @if (!loading && !columnsLoading) {
-    <div class="summary-strip">
-      <span class="stat-chip total">
+    <div class="summary-strip" role="toolbar" aria-label="Filter appointments by status">
+      <button type="button" class="stat-chip total"
+              [class.stat-chip-selected]="statFilter === 'all'"
+              (click)="setStatFilter('all')">
         <i-tabler name="calendar" size="14"></i-tabler>
         {{ totalCount }} Total
-      </span>
-      <span class="stat-chip active">
+      </button>
+      <button type="button" class="stat-chip active"
+              [class.stat-chip-selected]="statFilter === 'active'"
+              (click)="setStatFilter('active')">
         <i-tabler name="activity" size="14"></i-tabler>
         {{ activeCount }} Active
-      </span>
-      <span class="stat-chip done">
+      </button>
+      <button type="button" class="stat-chip done"
+              [class.stat-chip-selected]="statFilter === 'done'"
+              (click)="setStatFilter('done')">
         <i-tabler name="checks" size="14"></i-tabler>
         {{ doneCount }} Done
-      </span>
-      <span class="stat-chip pending">
+      </button>
+      <button type="button" class="stat-chip pending"
+              [class.stat-chip-selected]="statFilter === 'pending'"
+              (click)="setStatFilter('pending')">
         <i-tabler name="clock" size="14"></i-tabler>
         {{ pendingCount }} Pending
-      </span>
+      </button>
     </div>
   }
 
@@ -97,6 +105,9 @@
               <i-tabler [name]="col.icon" size="15"></i-tabler>
               <span class="col-label">{{ col.label }}</span>
               <span class="col-count">{{ columnCards(col.serviceId).length }}</span>
+              @if (overflowCount(col.serviceId) > 0) {
+                <span class="col-overflow">+{{ overflowCount(col.serviceId) }} more</span>
+              }
             </div>
 
             <!-- Column body -->

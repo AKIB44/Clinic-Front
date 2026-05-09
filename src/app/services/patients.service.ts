@@ -9,13 +9,10 @@ export interface Patient {
   phone: string;
   email?: string;
   dob?: string;
-  is_paediatric: boolean;
-  parent_name?: string;
-  parent_phone?: string;
-  allergies?: string;
-  blood_thinner?: boolean;
-  medical_history?: string;
-  notes?: string;
+  gender?: 'male' | 'female' | 'other';
+  address?: string;
+  age?: number;
+  clinical_history?: string;
 }
 
 @Injectable({ providedIn: 'root' })

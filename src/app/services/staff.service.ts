@@ -25,4 +25,8 @@ export class StaffService {
   toggle(id: string, is_active: boolean): Observable<unknown> {
     return this.http.patch(`${this.base}/${id}`, { is_active });
   }
+
+  deleteUser(id: string): Observable<void> {
+    return this.http.delete<void>(`${this.base}/${id}`);
+  }
 }

@@ -221,6 +221,21 @@
   </mat-menu>
 
   <!-- --------------------------------------------------------------- -->
+  <!-- Clinic Switcher -->
+  <!-- --------------------------------------------------------------- -->
+  <app-clinic-switcher></app-clinic-switcher>
+
+  <!-- --------------------------------------------------------------- -->
+  <!-- Break-Glass Trigger -->
+  <!-- --------------------------------------------------------------- -->
+  @if(!bgService.isActive()) {
+  <button mat-icon-button (click)="openBreakGlass()" aria-label="Break-Glass Access"
+    title="Emergency Break-Glass Access" class="d-flex justify-content-center">
+    <mat-icon style="color:#b71c1c">emergency</mat-icon>
+  </button>
+  }
+
+  <!-- --------------------------------------------------------------- -->
   <!-- profile Dropdown -->
   <!-- --------------------------------------------------------------- -->
   <button mat-fab extended color="inherit" [matMenuTriggerFor]="profileMenu" aria-label="Notifications">
@@ -274,7 +289,7 @@
       </div>
 
       <div class="p-y-12 p-x-32">
-        <button [routerLink]="['/authentication/login']" mat-flat-button color="primary" class="w-100">
+        <button (click)="logout()" mat-flat-button color="primary" class="w-100">
           Logout
         </button>
       </div>

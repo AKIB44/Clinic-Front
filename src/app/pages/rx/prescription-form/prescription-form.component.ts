@@ -62,9 +62,9 @@ export class PrescriptionFormComponent implements OnInit {
 
   readonly itemsPayload = computed<LineItemPayload[]>(() => [
     ...this.medicines().map((m, i) => ({
-      itemType:     'medicine' as const,
-      refId:        m.id,
-      sortOrder:    i + 1,
+      item_type:  'medicine' as const,
+      ref_id:     m.id,
+      sort_order: i + 1,
       dosage:       m.dosage       || undefined,
       frequency:    m.frequency    || undefined,
       duration:     m.duration     || undefined,
@@ -72,11 +72,11 @@ export class PrescriptionFormComponent implements OnInit {
       instructions: m.instructions || undefined,
     })),
     ...this.procedures().map((p, i) => ({
-      itemType:        'procedure' as const,
-      refId:           p.id,
-      sortOrder:       this.medicines().length + i + 1,
-      procedureStatus: p.status,
-      instructions:    p.default_notes || undefined,
+      item_type:        'procedure' as const,
+      ref_id:           p.id,
+      sort_order:       this.medicines().length + i + 1,
+      procedure_status: p.status,
+      instructions:     p.default_notes || undefined,
     })),
   ]);
 
@@ -113,10 +113,8 @@ export class PrescriptionFormComponent implements OnInit {
         instructions: '',
       })));
 
-      this.procedures.set(defaults.procedures.map(p => ({
-        ...p,
-        status: 'planned' as const,
-      })));
+      // Procedures start empty — doctor selects which ones were performed today.
+      // Pre-filling all svc_id procedures would leave nothing available in the picker.
     } catch {
       this.errorMsg.set('Failed to load prescription defaults. Please refresh.');
     } finally {
@@ -130,11 +128,11 @@ export class PrescriptionFormComponent implements OnInit {
     this.errorMsg.set(null);
     try {
       const payload = {
-        patientId:     this.context.patient_id,
-        appointmentId: this.context.appointment_id,
-        diagnosis:     this.form.value.diagnosis,
-        clinicalNotes: this.form.value.clinical_notes,
-        items:         this.itemsPayload(),
+        patient_id:     this.context.patient_id,
+        appointment_id: this.context.appointment_id,
+        diagnosis:      this.form.value.diagnosis,
+        clinical_notes: this.form.value.clinical_notes,
+        items:          this.itemsPayload(),
       };
       if (this.savedId()) {
         await this.rxSvc.update(this.savedId()!, payload);

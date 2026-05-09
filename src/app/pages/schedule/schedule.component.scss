@@ -1,3 +1,12 @@
+// Host fills the routed outlet area so the board (and card styles) get real height in flex layouts.
+:host {
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 auto;
+  min-height: 0;
+  height: 100%;
+}
+
 // ─── Board wrapper ────────────────────────────────────────────────────────────
 
 .kanban-page {
@@ -85,6 +94,25 @@
     font-size: .82rem;
     font-weight: 600;
     white-space: nowrap;
+    border: 2px solid transparent;
+    cursor: pointer;
+    font-family: inherit;
+    transition: transform .12s ease, box-shadow .12s ease, border-color .12s ease, filter .12s ease;
+
+    &:hover {
+      filter: brightness(0.97);
+      transform: translateY(-1px);
+    }
+
+    &:focus-visible {
+      outline: 2px solid var(--primary, #1976d2);
+      outline-offset: 2px;
+    }
+
+    &.stat-chip-selected {
+      box-shadow: 0 2px 8px rgba(0, 0, 0, .12);
+      border-color: rgba(0, 0, 0, .18);
+    }
 
     &.total    { background: #e3f2fd; color: #1565c0; }
     &.active   { background: #fff8e1; color: #e65100; }
@@ -115,9 +143,8 @@
   display: flex;
   gap: 14px;
   min-width: max-content;
-  height: calc(100vh - 260px);
-  min-height: 400px;
   align-items: flex-start;
+  padding-bottom: 12px;
 }
 
 // ─── Kanban column ────────────────────────────────────────────────────────────
@@ -125,12 +152,12 @@
 .kanban-col {
   width: 280px;
   flex-shrink: 0;
+  min-height: 0;
   display: flex;
   flex-direction: column;
   border-radius: 14px;
-  overflow: hidden;
+  // no overflow:hidden here — it would clip the inner col-body scroll
   box-shadow: 0 2px 8px rgba(0,0,0,.07);
-  height: 100%;
 
   .col-header {
     display: flex;
@@ -138,6 +165,7 @@
     gap: 8px;
     padding: 12px 14px;
     border-radius: 14px 14px 0 0;
+    flex-shrink: 0;
 
     .col-dot {
       width: 9px;
@@ -150,6 +178,10 @@
       font-weight: 700;
       font-size: .88rem;
       flex: 1;
+      min-width: 0;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
     }
 
     .col-count {
@@ -158,23 +190,46 @@
       padding: 2px 8px;
       font-size: .76rem;
       font-weight: 700;
+      flex-shrink: 0;
+    }
+
+    .col-overflow {
+      font-size: .7rem;
+      font-weight: 700;
+      color: rgba(0,0,0,.5);
+      background: rgba(0,0,0,.08);
+      border-radius: 10px;
+      padding: 2px 7px;
+      flex-shrink: 0;
+      white-space: nowrap;
     }
   }
 
   .col-body {
-    flex: 1 1 auto;
+    // Show ~4 full cards; additional bookings scroll vertically inside the column.
+    --schedule-card-gap: 10px;
+    --schedule-card-slot: 94px; // approximate row height per card + gap share
+    max-height: calc(4 * var(--schedule-card-slot) + 3 * var(--schedule-card-gap) + 24px);
+    min-height: 0;
     overflow-y: auto;
+    overflow-x: hidden;
     padding: 10px 10px 14px;
     background: #fff;
     border-radius: 0 0 14px 14px;
     display: flex;
     flex-direction: column;
-    gap: 10px;
+    gap: var(--schedule-card-gap);
 
+    // Visible scrollbar so user knows content is scrollable
     scrollbar-width: thin;
-    scrollbar-color: #e0e0e0 transparent;
-    &::-webkit-scrollbar { width: 4px; }
-    &::-webkit-scrollbar-thumb { background: #e0e0e0; border-radius: 4px; }
+    scrollbar-color: #c8d3e0 transparent;
+    &::-webkit-scrollbar       { width: 5px; }
+    &::-webkit-scrollbar-track { background: transparent; }
+    &::-webkit-scrollbar-thumb {
+      background: #c8d3e0;
+      border-radius: 4px;
+      &:hover { background: #a0b0c0; }
+    }
   }
 }
 
@@ -197,6 +252,7 @@
 // ─── Appointment card ─────────────────────────────────────────────────────────
 
 .appt-card {
+  flex-shrink: 0;
   background: #fafafa;
   border-radius: 10px;
   border: 1.5px solid #f0f0f0;
@@ -385,10 +441,6 @@
     width: 240px;
   }
 
-  .board-inner {
-    height: calc(100vh - 280px);
-  }
-
   .summary-strip .stat-chip {
     padding: 5px 10px;
     font-size: .76rem;
@@ -398,5 +450,4 @@
 @media (max-width: 480px) {
   .kanban-page { padding: 8px; }
   .kanban-col { width: 220px; }
-  .board-inner { height: calc(100vh - 300px); }
 }

@@ -2,6 +2,7 @@ import {
   ApplicationConfig,
   provideZoneChangeDetection,
   importProvidersFrom,
+  APP_INITIALIZER,
 } from '@angular/core';
 import {
   HttpClient,
@@ -19,6 +20,7 @@ import { MAT_SNACK_BAR_DEFAULT_OPTIONS } from '@angular/material/snack-bar';
 import { TranslateLoader, TranslateModule } from '@ngx-translate/core';
 import { TranslateHttpLoader } from '@ngx-translate/http-loader';
 import { authInterceptor } from './auth/auth.interceptor';
+import { AuthService } from './auth/auth.service';
 
 // icons
 import { TablerIconsModule } from 'angular-tabler-icons';
@@ -52,6 +54,12 @@ export const appConfig: ApplicationConfig = {
       withComponentInputBinding()
     ),
     provideHttpClient(withInterceptors([authInterceptor])),
+    {
+      provide: APP_INITIALIZER,
+      useFactory: (auth: AuthService) => () => auth.initPermissions(),
+      deps: [AuthService],
+      multi: true,
+    },
     provideAnimations(),
     {
       provide: MAT_SNACK_BAR_DEFAULT_OPTIONS,

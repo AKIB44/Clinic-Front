@@ -3,83 +3,161 @@
     <div class="position-relative shaper-wrapper">
       <div class="w-100 position-relative rounded bg-white auth-card">
         <div class="auth-body">
+
           <a [routerLink]="['/dashboards/dashboard1']" class="m-t-20 d-flex">
-            <img src="./assets/images/logos/dark-logo.svg" class="align-middle m-2" alt="DentaFlow" />
+            <img src="./assets/images/logos/dflogo.png" class="align-middle m-2" alt="DentaFlow" />
           </a>
 
           <div class="row">
+            <!-- Illustration -->
             <div class="col-lg-6">
               <div class="align-items-center justify-content-center d-none d-lg-flex">
-                <img src="/assets/images/backgrounds/login3-bg.png" alt="login" style="max-width: 500px" />
+                <img src="/assets/images/backgrounds/login3-bg.png" alt="OTP login"
+                     style="max-width: 500px" />
               </div>
             </div>
+
+            <!-- Form -->
             <div class="col-lg-6">
               <div class="d-flex align-items-start align-items-lg-center justify-content-center">
                 <div class="row justify-content-center w-100">
                   <div class="col-lg-11">
-                    <h4 class="f-w-700 f-s-30 lh-base m-0 m-t-20">
-                      Two-Step Verification
-                    </h4>
-                    <span class="f-s-14 d-block mat-body-1 m-t-16">
-                      Enter the 6-digit OTP sent to your registered phone via WhatsApp.
-                    </span>
 
-                    <form class="m-t-30" [formGroup]="form" (ngSubmit)="submit()">
-                      <mat-label class="mat-subtitle-2 f-s-14 f-w-600 m-b-12 d-block">
-                        Security code
-                      </mat-label>
+                    <!-- ── STEP 1: Phone number ──────────────────────────── -->
+                    @if (step() === 'phone') {
+                      <h4 class="f-w-700 f-s-30 lh-base m-0 m-t-20">Login with OTP</h4>
+                      <p class="f-s-14 mat-body-1 m-t-8 m-b-0">
+                        Enter your registered mobile number. We'll send a 6-digit OTP via SMS.
+                      </p>
 
-                      <div class="d-flex gap-2 m-b-24">
-                        @for (i of [0,1,2,3,4,5]; track i) {
-                          <mat-form-field appearance="outline" style="width: 52px;" color="primary">
-                            <input
-                              #digitInput
-                              matInput
-                              maxlength="1"
-                              inputmode="numeric"
-                              pattern="\d"
-                              class="text-center"
-                              (input)="onDigitInput($event, i)"
-                              (keydown)="onKeydown($event, i)"
-                            />
-                          </mat-form-field>
+                      <form class="m-t-30" [formGroup]="phoneForm" (ngSubmit)="requestOtp()">
+                        <mat-label class="mat-subtitle-2 f-s-14 f-w-600 m-b-12 d-block">
+                          Mobile Number
+                        </mat-label>
+                        <mat-form-field appearance="outline" class="w-100" color="primary">
+                          <mat-icon matPrefix>phone</mat-icon>
+                          <input matInput type="tel" inputmode="numeric" formControlName="phone"
+                                 placeholder="98765 43210" maxlength="10" autocomplete="tel">
+                          @if (phoneForm.get('phone')?.touched && phoneForm.get('phone')?.hasError('required')) {
+                            <mat-error>Mobile number is required.</mat-error>
+                          }
+                          @if (phoneForm.get('phone')?.touched && phoneForm.get('phone')?.hasError('pattern')) {
+                            <mat-error>Enter a valid 10-digit Indian mobile number.</mat-error>
+                          }
+                        </mat-form-field>
+
+                        @if (sendError) {
+                          <div class="otp-alert otp-alert-error m-b-16">{{ sendError }}</div>
                         }
+
+                        <button mat-flat-button color="primary" class="w-100 m-t-4"
+                                type="submit" [disabled]="isSending">
+                          {{ isSending ? 'Sending OTP…' : 'Send OTP' }}
+                        </button>
+                      </form>
+
+                      <div class="m-t-24">
+                        <a [routerLink]="['/authentication/login']"
+                           class="text-primary text-decoration-none f-s-14 f-w-500">
+                          ← Back to password login
+                        </a>
                       </div>
+                    }
 
-                      @if (error) {
-                        <div class="text-error m-b-12 f-s-13">{{ error }}</div>
-                      }
+                    <!-- ── STEP 2: OTP verification ──────────────────────── -->
+                    @if (step() === 'otp') {
+                      <h4 class="f-w-700 f-s-30 lh-base m-0 m-t-20">Enter OTP</h4>
+                      <p class="f-s-14 mat-body-1 m-t-8 m-b-0">
+                        A 6-digit OTP has been sent to
+                        <strong>{{ maskedPhone }}</strong>.
+                        Valid for 10 minutes.
+                      </p>
 
-                      <button
-                        mat-flat-button
-                        color="primary"
-                        class="w-100"
-                        type="submit"
-                        [disabled]="otp.length < 6 || isSubmitting"
-                      >
-                        {{ isSubmitting ? 'Verifying…' : 'Verify & Sign In' }}
-                      </button>
-                    </form>
+                      <form class="m-t-30" [formGroup]="otpForm" (ngSubmit)="verifyOtp()">
+                        <mat-label class="mat-subtitle-2 f-s-14 f-w-600 m-b-12 d-block">
+                          Security Code
+                        </mat-label>
 
-                    <div class="m-t-24">
-                      <span class="f-s-14">Didn't get the code?
-                        <a href="#" class="text-primary text-decoration-none f-w-500">Resend OTP</a>
-                      </span>
-                    </div>
+                        <!-- 6 digit boxes -->
+                        <div class="otp-boxes m-b-8">
+                          @for (i of [0,1,2,3,4,5]; track i) {
+                            <mat-form-field appearance="outline" class="otp-box" color="primary">
+                              <input
+                                #digitInput
+                                matInput
+                                maxlength="1"
+                                inputmode="numeric"
+                                pattern="\d"
+                                class="text-center"
+                                autocomplete="one-time-code"
+                                (input)="onDigitInput($event, i)"
+                                (keydown)="onKeydown($event, i)"
+                                (paste)="onDigitPaste($event)"
+                              />
+                            </mat-form-field>
+                          }
+                        </div>
 
-                    <div class="m-t-16">
-                      <a [routerLink]="['/authentication/login']"
-                        class="text-primary text-decoration-none f-s-14 f-w-500">
-                        ← Back to password login
-                      </a>
-                    </div>
+                        @if (otpError) {
+                          <div class="otp-alert otp-alert-error m-b-16">{{ otpError }}</div>
+                        }
+
+                        <button mat-flat-button color="primary" class="w-100"
+                                type="submit" [disabled]="otp.length < 6 || isVerifying">
+                          {{ isVerifying ? 'Verifying…' : 'Verify &amp; Sign In' }}
+                        </button>
+                      </form>
+
+                      <!-- Resend + back -->
+                      <div class="d-flex align-items-center justify-content-between m-t-24 f-s-14">
+                        <span>
+                          Didn't get it?
+                          @if (resendCooldown > 0) {
+                            <span class="text-muted"> Resend in {{ resendCooldown }}s</span>
+                          } @else {
+                            <a href="#" class="text-primary text-decoration-none f-w-500 m-l-4"
+                               (click)="$event.preventDefault(); resendOtp()">
+                              Resend OTP
+                            </a>
+                          }
+                        </span>
+                        <a href="#" class="text-primary text-decoration-none f-w-500"
+                           (click)="$event.preventDefault(); goBack()">
+                          Change number
+                        </a>
+                      </div>
+                    }
+
                   </div>
                 </div>
               </div>
             </div>
+
           </div>
         </div>
       </div>
     </div>
   </div>
 </div>
+
+<style>
+.otp-boxes {
+  display: flex;
+  gap: 8px;
+}
+.otp-box {
+  width: 52px;
+  flex-shrink: 0;
+}
+.otp-box input { text-align: center; font-size: 1.2rem; font-weight: 700; }
+.otp-alert {
+  border-radius: 8px;
+  padding: 10px 14px;
+  font-size: 0.82rem;
+}
+.otp-alert-error {
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+  color: #dc2626;
+}
+</style>
