@@ -1,13 +1,15 @@
 <div class="patient-record-page">
-  <a class="back-link" routerLink="/schedule">
+
+  <!-- Back -->
+  <button type="button" class="back-link" (click)="goBack()">
     <i-tabler name="arrow-left" size="16"></i-tabler>
-    Schedule
-  </a>
+    Back
+  </button>
 
   @if (loading()) {
     <div class="patient-loading">
       <mat-spinner diameter="36"></mat-spinner>
-      <span>Loading patient record...</span>
+      <span>Loading patient record…</span>
     </div>
   }
 
@@ -19,76 +21,62 @@
   }
 
   @if (!loading() && patient(); as p) {
+
+    <!-- ── Header ──────────────────────────────────────────────────────────── -->
     <section class="patient-header">
       <div class="avatar">{{ initials() }}</div>
       <div class="patient-title">
         <h1>{{ p.name }}</h1>
         <div class="patient-meta">
-          <span>
-            <i-tabler name="phone" size="15"></i-tabler>
-            {{ p.phone }}
-          </span>
+          <span><i-tabler name="phone" size="15"></i-tabler>{{ p.phone }}</span>
           @if (p.email) {
-            <span>
-              <i-tabler name="mail" size="15"></i-tabler>
-              {{ p.email }}
-            </span>
+            <span><i-tabler name="mail" size="15"></i-tabler>{{ p.email }}</span>
           }
           @if (p.dob) {
-            <span>
-              <i-tabler name="calendar" size="15"></i-tabler>
-              {{ p.dob | date:'dd MMM yyyy' }}
-            </span>
+            <span><i-tabler name="calendar" size="15"></i-tabler>{{ p.dob | date:'dd MMM yyyy' }}</span>
+          }
+          @if (p.gender) {
+            <span><i-tabler name="user" size="15"></i-tabler>{{ p.gender | titlecase }}</span>
+          }
+          @if (p.age) {
+            <span><i-tabler name="clock" size="15"></i-tabler>{{ p.age }} yrs</span>
           }
         </div>
       </div>
     </section>
 
+    <!-- ── Tabs ────────────────────────────────────────────────────────────── -->
     <nav class="pt-tabs" aria-label="Patient record sections">
-      <button
-        type="button"
-        class="pt-tab"
-        [class.on]="activeTab() === 'overview'"
-        (click)="activeTab.set('overview')">
-        Overview
+      <button type="button" class="pt-tab" [class.on]="activeTab() === 'overview'"
+        (click)="activeTab.set('overview')">Overview</button>
+      <button type="button" class="pt-tab" [class.on]="activeTab() === 'appointments'"
+        (click)="activeTab.set('appointments')">
+        Appointments
+        @if (allAppts().length) {
+          <span class="pt-badge">{{ allAppts().length }}</span>
+        }
       </button>
-      <button
-        type="button"
-        class="pt-tab"
-        [class.on]="activeTab() === 'prescriptions'"
-        (click)="activeTab.set('prescriptions')">
-        Prescriptions
-      </button>
+      <button type="button" class="pt-tab" [class.on]="activeTab() === 'prescriptions'"
+        (click)="activeTab.set('prescriptions')">Prescriptions</button>
     </nav>
 
+    <!-- ── Overview ────────────────────────────────────────────────────────── -->
     @if (activeTab() === 'overview') {
       <section class="overview-grid">
         <div class="info-panel">
           <h2>Demographics</h2>
           <dl>
             @if (p.age) {
-              <div>
-                <dt>Age</dt>
-                <dd>{{ p.age }} yrs</dd>
-              </div>
+              <div><dt>Age</dt><dd>{{ p.age }} yrs</dd></div>
             }
             @if (p.gender) {
-              <div>
-                <dt>Sex</dt>
-                <dd>{{ p.gender | titlecase }}</dd>
-              </div>
+              <div><dt>Sex</dt><dd>{{ p.gender | titlecase }}</dd></div>
             }
             @if (p.dob) {
-              <div>
-                <dt>Date of Birth</dt>
-                <dd>{{ p.dob | date:'dd MMM yyyy' }}</dd>
-              </div>
+              <div><dt>Date of Birth</dt><dd>{{ p.dob | date:'dd MMM yyyy' }}</dd></div>
             }
             @if (p.address) {
-              <div>
-                <dt>Address</dt>
-                <dd>{{ p.address }}</dd>
-              </div>
+              <div><dt>Address</dt><dd>{{ p.address }}</dd></div>
             }
             @if (!p.age && !p.gender && !p.dob && !p.address) {
               <div><dt>—</dt><dd>No demographics recorded</dd></div>
@@ -100,13 +88,101 @@
           <h2>Clinical History</h2>
           <p>{{ p.clinical_history || 'No clinical history recorded.' }}</p>
         </div>
+
+        <!-- Visit summary per service -->
+        @if (services().length && allAppts().length) {
+          <div class="info-panel svc-summary-panel">
+            <h2>Visits by Service</h2>
+            <div class="svc-summary-list">
+              @for (s of services(); track s.id) {
+                @if (apptCountFor(s.id) > 0) {
+                  <div class="svc-summary-row">
+                    <span class="svc-summary-name">{{ s.name }}</span>
+                    <span class="svc-summary-count">{{ apptCountFor(s.id) }} visit{{ apptCountFor(s.id) !== 1 ? 's' : '' }}</span>
+                  </div>
+                }
+              }
+            </div>
+          </div>
+        }
       </section>
     }
 
+    <!-- ── Appointments ─────────────────────────────────────────────────────── -->
+    @if (activeTab() === 'appointments') {
+      <section class="appt-section">
+
+        <!-- Service filter -->
+        @if (services().length > 1) {
+          <div class="appt-filter">
+            <mat-form-field appearance="outline" class="appt-svc-select">
+              <mat-label>Filter by Service</mat-label>
+              <mat-select [ngModel]="filterSvcId()" (ngModelChange)="filterSvcId.set($event)">
+                <mat-option value="">All Services</mat-option>
+                @for (s of services(); track s.id) {
+                  @if (apptCountFor(s.id) > 0) {
+                    <mat-option [value]="s.id">{{ s.name }} ({{ apptCountFor(s.id) }})</mat-option>
+                  }
+                }
+              </mat-select>
+            </mat-form-field>
+          </div>
+        }
+
+        @if (filteredAppts().length === 0) {
+          <div class="appt-empty">
+            <i-tabler name="calendar-off" size="36"></i-tabler>
+            <p>No appointments found.</p>
+          </div>
+        } @else {
+          <div class="appt-count">{{ filteredAppts().length }} appointment{{ filteredAppts().length !== 1 ? 's' : '' }}</div>
+          <div class="appt-list">
+            @for (a of filteredAppts(); track a.id) {
+              <div class="appt-card">
+                <div class="appt-card-left">
+                  <div class="appt-service">{{ a.service_name }}</div>
+                  <div class="appt-date">
+                    <i-tabler name="calendar" size="13"></i-tabler>
+                    {{ formatDateTime(a.scheduled_at) }}
+                  </div>
+                  @if (a.notes) {
+                    <div class="appt-notes">
+                      <i-tabler name="notes" size="12"></i-tabler>
+                      {{ a.notes }}
+                    </div>
+                  }
+                  @if (a.cancel_reason) {
+                    <div class="appt-cancel-reason">
+                      <i-tabler name="alert-triangle" size="12"></i-tabler>
+                      {{ a.cancel_reason }}
+                    </div>
+                  }
+                </div>
+                <div class="appt-card-right">
+                  <span class="appt-status" [class]="statusClass(a.status)">
+                    {{ statusLabel[a.status] || a.status }}
+                  </span>
+                  <div class="appt-duration">
+                    <i-tabler name="clock" size="12"></i-tabler>
+                    {{ a.duration_minutes }} min
+                  </div>
+                  @if (a.booking_source) {
+                    <div class="appt-source">{{ a.booking_source }}</div>
+                  }
+                </div>
+              </div>
+            }
+          </div>
+        }
+      </section>
+    }
+
+    <!-- ── Prescriptions ────────────────────────────────────────────────────── -->
     @if (activeTab() === 'prescriptions') {
       <section class="history-panel">
         <app-rx-history-tab [patientId]="p.id"></app-rx-history-tab>
       </section>
     }
+
   }
 </div>

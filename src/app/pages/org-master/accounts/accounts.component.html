@@ -1,0 +1,169 @@
+<div class="ac-page">
+
+  <!-- ── Header ─────────────────────────────────────────────────────────────── -->
+  <div class="ac-header">
+    <div>
+      <h1 class="ac-title">Accounts &amp; Revenue</h1>
+      <p class="ac-sub">Org-wide financial overview</p>
+    </div>
+    <div class="period-tabs">
+      @for (p of periodOptions; track p) {
+        <button
+          class="period-btn"
+          [class.period-btn--active]="period() === p"
+          (click)="setPeriod(p)"
+        >{{ p }}d</button>
+      }
+    </div>
+  </div>
+
+  <!-- ── Clinic filter ──────────────────────────────────────────────────────── -->
+  <div class="ac-filters">
+    <mat-form-field appearance="outline" class="filter-field">
+      <mat-label>Filter by Clinic</mat-label>
+      <mat-select [(ngModel)]="filterClinicId" (ngModelChange)="onClinicFilterChange()">
+        <mat-option value="">All Clinics</mat-option>
+        @for (c of clinics(); track c.id) {
+          <mat-option [value]="c.id">{{ c.name }}</mat-option>
+        }
+      </mat-select>
+    </mat-form-field>
+  </div>
+
+  <!-- ── Loading ───────────────────────────────────────────────────────────── -->
+  @if (loading()) {
+    <div class="ac-loading">
+      <mat-spinner diameter="36"></mat-spinner>
+      <span>Loading data…</span>
+    </div>
+  }
+
+  @if (!loading() && summary()) {
+
+    <!-- ── Summary cards ─────────────────────────────────────────────────────── -->
+    <div class="summary-grid">
+
+      <div class="summary-card">
+        <div class="sc-icon sc-icon--green">
+          <i-tabler name="currency-rupee" size="22"></i-tabler>
+        </div>
+        <div class="sc-body">
+          <div class="sc-label">Total Revenue</div>
+          <div class="sc-value">{{ formatCurrency(summary()!.revenue.total_revenue) }}</div>
+        </div>
+      </div>
+
+      <div class="summary-card">
+        <div class="sc-icon sc-icon--blue">
+          <i-tabler name="chart-bar" size="22"></i-tabler>
+        </div>
+        <div class="sc-body">
+          <div class="sc-label">Last {{ period() }}d Revenue</div>
+          <div class="sc-value">{{ formatCurrency(summary()!.revenue.period_revenue) }}</div>
+        </div>
+      </div>
+
+      <div class="summary-card">
+        <div class="sc-icon sc-icon--teal">
+          <i-tabler name="check-circle" size="22"></i-tabler>
+        </div>
+        <div class="sc-body">
+          <div class="sc-label">Completed Appointments</div>
+          <div class="sc-value">{{ summary()!.appointments.completed }}</div>
+        </div>
+      </div>
+
+      <div class="summary-card">
+        <div class="sc-icon sc-icon--orange">
+          <i-tabler name="calendar-event" size="22"></i-tabler>
+        </div>
+        <div class="sc-body">
+          <div class="sc-label">Upcoming Appointments</div>
+          <div class="sc-value">{{ summary()!.appointments.upcoming }}</div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- ── Revenue by Clinic ──────────────────────────────────────────────────── -->
+    <div class="section">
+      <h2 class="section-title">Revenue by Clinic</h2>
+      @if (clinicRevenue().length === 0) {
+        <div class="section-empty">No data available.</div>
+      } @else {
+        <div class="rev-table-wrap">
+          <table class="rev-table">
+            <thead>
+              <tr>
+                <th>Clinic</th>
+                <th>Status</th>
+                <th>Total Revenue</th>
+                <th>Period Revenue</th>
+                <th>Completed</th>
+                <th>Upcoming</th>
+                <th>Last Activity</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (c of clinicRevenue(); track c.clinic_id) {
+                <tr>
+                  <td class="clinic-name">{{ c.clinic_name }}</td>
+                  <td>
+                    <span class="status-chip" [class.status-active]="c.is_active" [class.status-inactive]="!c.is_active">
+                      {{ c.is_active ? 'Active' : 'Inactive' }}
+                    </span>
+                  </td>
+                  <td class="amount">{{ formatCurrency(c.total_revenue) }}</td>
+                  <td class="amount">{{ formatCurrency(c.period_revenue) }}</td>
+                  <td>{{ c.completed_appointments }}</td>
+                  <td>{{ c.upcoming_appointments }}</td>
+                  <td class="muted">{{ formatDate(c.last_completed_at) }}</td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      }
+    </div>
+
+    <!-- ── Top Services ───────────────────────────────────────────────────────── -->
+    <div class="section">
+      <h2 class="section-title">Top Services</h2>
+      @if (topServices().length === 0) {
+        <div class="section-empty">No data available.</div>
+      } @else {
+        <div class="svc-list">
+          @for (svc of topServices(); track svc.id; let i = $index) {
+            <div class="svc-row">
+              <div class="svc-rank">{{ i + 1 }}</div>
+              <div class="svc-info">
+                <div class="svc-name">{{ svc.service_name }}</div>
+                <div class="svc-price">{{ formatCurrency(svc.price) }} per session</div>
+              </div>
+              <div class="svc-stats">
+                <div class="svc-stat">
+                  <span class="stat-label">Total Bookings</span>
+                  <span class="stat-val">{{ svc.total_bookings }}</span>
+                </div>
+                <div class="svc-stat">
+                  <span class="stat-label">Period Bookings</span>
+                  <span class="stat-val">{{ svc.period_bookings }}</span>
+                </div>
+                <div class="svc-stat">
+                  <span class="stat-label">Total Revenue</span>
+                  <span class="stat-val amount">{{ formatCurrency(svc.total_revenue) }}</span>
+                </div>
+                <div class="svc-stat">
+                  <span class="stat-label">Period Revenue</span>
+                  <span class="stat-val amount">{{ formatCurrency(svc.period_revenue) }}</span>
+                </div>
+              </div>
+            </div>
+          }
+        </div>
+      }
+    </div>
+
+  }
+
+</div>

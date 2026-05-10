@@ -69,3 +69,20 @@ export interface OtpVerifyRequest {
   phone: string;
   otp: string;
 }
+
+// MFA
+export interface MfaChallengeResponse {
+  mfa_required: true;
+  mfa_token: string;
+}
+
+export type LoginOrMfaResponse = LoginResponse | MfaChallengeResponse;
+
+export function isMfaChallenge(r: LoginOrMfaResponse): r is MfaChallengeResponse {
+  return (r as MfaChallengeResponse).mfa_required === true;
+}
+
+export interface MfaStatusResponse  { mfa_enabled: boolean; }
+export interface MfaSetupResponse   { secret: string; qr_data_url: string; already_enabled: boolean; }
+export interface MfaEnableRequest   { code: string; }
+export interface MfaDisableRequest  { password: string; code: string; }

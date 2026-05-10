@@ -13,6 +13,7 @@ import { format, addDays, subDays, isToday, parseISO } from 'date-fns';
 import { AppointmentsService, Appointment, AppointmentStatus, Slot } from '../../services/appointments.service';
 import { ClinicServicesService } from '../../services/clinic-services.service';
 import { ChairsService } from '../../services/chairs.service';
+import { AuthService } from '../../auth/auth.service';
 import { Chair } from '../../models/clinic.model';
 import { HasPermissionDirective } from '../../core/rbac/has-permission.directive';
 
@@ -322,7 +323,11 @@ export class RescheduleDialog {
               <div class="action-row">
                 @for (a of nonCancelActions; track a.next) {
                   <button mat-flat-button color="primary"
-                          [disabled]="updating" (click)="doAction(a.next)">
+                          [disabled]="pendingKey === statusActionKey(a.next)"
+                          (click)="doAction(a.next)">
+                    @if (pendingKey === statusActionKey(a.next)) {
+                      <mat-spinner diameter="18" class="btn-inline-spinner"></mat-spinner>
+                    }
                     {{ a.label }}
                   </button>
                 }
@@ -332,13 +337,20 @@ export class RescheduleDialog {
             @if (canRescheduleOrCancel) {
               <div class="action-row-secondary">
                 @if (canReschedule) {
-                  <button mat-stroked-button [disabled]="updating" (click)="openReschedule()">
+                  <button mat-stroked-button
+                          [disabled]="pendingKey === 'reschedule'"
+                          (click)="openReschedule()">
+                    @if (pendingKey === 'reschedule') {
+                      <mat-spinner diameter="18" class="btn-inline-spinner"></mat-spinner>
+                    }
                     <i-tabler name="calendar-event" size="15"></i-tabler>
                     Reschedule
                   </button>
                 }
                 @if (canCancel) {
-                  <button mat-stroked-button color="warn" [disabled]="updating" (click)="view = 'cancel'">
+                  <button mat-stroked-button color="warn"
+                          [disabled]="pendingKey === 'reschedule'"
+                          (click)="view = 'cancel'">
                     <i-tabler name="x-circle" size="15"></i-tabler>
                     Cancel Booking
                   </button>
@@ -390,11 +402,15 @@ export class RescheduleDialog {
         </mat-dialog-content>
 
         <mat-dialog-actions align="end">
-          <button mat-stroked-button [disabled]="updating" (click)="view = 'detail'">
+          <button mat-stroked-button [disabled]="pendingKey === 'cancel_submit'" (click)="view = 'detail'">
             Back
           </button>
-          <button mat-flat-button color="warn" [disabled]="updating" (click)="confirmCancel()">
-            @if (updating) { <mat-spinner diameter="16" style="display:inline-block;margin-right:6px"></mat-spinner> }
+          <button mat-flat-button color="warn"
+                  [disabled]="pendingKey === 'cancel_submit'"
+                  (click)="confirmCancel()">
+            @if (pendingKey === 'cancel_submit') {
+              <mat-spinner diameter="18" class="btn-inline-spinner"></mat-spinner>
+            }
             Yes, Cancel Booking
           </button>
         </mat-dialog-actions>
@@ -435,6 +451,7 @@ export class RescheduleDialog {
     .cancel-heading     { font-size: 16px; font-weight: 700; color: #0f172a; margin: 0 0 6px; }
     .cancel-sub         { font-size: 13px; color: #64748b; margin: 0; }
     .cancel-reason-field { width: 100%; margin-top: 8px; }
+    .btn-inline-spinner { display: inline-block; vertical-align: middle; margin-right: 8px; }
   `]
 })
 export class AppointmentDetailDialog {
@@ -446,10 +463,15 @@ export class AppointmentDetailDialog {
 
   statusLabel = STATUS_LABEL;
   sourceIcon  = BOOKING_SOURCE_ICON;
-  updating    = false;
+  /** Which control is waiting on the server — only that row shows a spinner; others stay idle (still disabled while any request runs). */
+  pendingKey: string | null = null;
   actionError = '';
   view: 'detail' | 'cancel' = 'detail';
   cancelReason = '';
+
+  statusActionKey(next: AppointmentStatus): string {
+    return `status:${next}`;
+  }
 
   get allActions() { return STATUS_ACTIONS[this.data.status] ?? []; }
   get nonCancelActions() { return this.allActions.filter(a => a.next !== 'cancelled'); }
@@ -463,38 +485,46 @@ export class AppointmentDetailDialog {
   }
 
   doAction(next: AppointmentStatus) {
-    this.updating    = true;
+    this.pendingKey   = this.statusActionKey(next);
     this.actionError = '';
     this.apptSvc.updateStatus(this.data.id, next).subscribe({
       next: (res) => {
-        this.updating = false;
+        this.pendingKey = null;
         const appt = appointmentFromPatchResponse(res);
         this.dialogRef.close(appt ? { reload: true as const, appointment: appt } : 'reload');
       },
-      error: () => { this.updating = false; this.actionError = 'Failed to update. Please try again.'; },
+      error: () => {
+        this.pendingKey = null;
+        this.actionError = 'Failed to update. Please try again.';
+      },
     });
   }
 
   confirmCancel() {
-    this.updating    = true;
+    this.pendingKey   = 'cancel_submit';
     this.actionError = '';
     this.apptSvc.updateStatus(this.data.id, 'cancelled', this.cancelReason || undefined).subscribe({
       next: (res) => {
-        this.updating = false;
+        this.pendingKey = null;
         const appt = appointmentFromPatchResponse(res);
         this.dialogRef.close(appt ? { reload: true as const, appointment: appt } : 'reload');
       },
-      error: () => { this.updating = false; this.actionError = 'Failed to cancel. Please try again.'; },
+      error: () => {
+        this.pendingKey = null;
+        this.actionError = 'Failed to cancel. Please try again.';
+      },
     });
   }
 
   openReschedule() {
+    this.pendingKey = 'reschedule';
     this.dialog.open(RescheduleDialog, {
       data:      this.data,
       width:     '460px',
       maxWidth:  '95vw',
       autoFocus: false,
     }).afterClosed().subscribe(r => {
+      this.pendingKey = null;
       if (r && typeof r === 'object' && 'reload' in r && (r as { reload: boolean }).reload) {
         this.dialogRef.close(r);
       }
@@ -520,6 +550,63 @@ export class AppointmentDetailDialog {
   }
 }
 
+// ── Greeting helpers ──────────────────────────────────────────────────────────
+
+interface GreetingParts { headline: string; mood: string; }
+
+const GREETINGS: Record<'morning' | 'afternoon' | 'evening' | 'night', string[]> = {
+  morning: [
+    'Ready to make smiles today?',
+    'Your first patient is just around the corner.',
+    'Coffee in hand, clipboard ready?',
+    'A fresh day, a full schedule — let\'s go.',
+    'Another day to change lives, one smile at a time.',
+    'The chair is warmed up and waiting.',
+    'Early bird gets the healthy teeth!',
+  ],
+  afternoon: [
+    'Halfway through — keep the momentum going.',
+    'Post-lunch focus mode: activated.',
+    'Still lots to accomplish — you\'re doing great.',
+    'Your patients are in the best hands.',
+    'The afternoon rush starts now — you\'ve got this.',
+    'Stay sharp, the day isn\'t done yet.',
+    'Fuelled up and ready for the afternoon run.',
+  ],
+  evening: [
+    'Wrapping up a great day?',
+    'Almost there — finish strong.',
+    'Late sessions take dedication. Respect.',
+    'The clinic is in good hands tonight.',
+    'Evening shift — bring it home.',
+    'Not long now — one patient at a time.',
+    'Evening calm, professional calm.',
+  ],
+  night: [
+    'Burning the midnight oil? Impressive dedication.',
+    'Still here — the clinic appreciates you.',
+    'Late-night session in progress. Take care of yourself too.',
+    'Night owl mode. The patients are lucky to have you.',
+  ],
+};
+
+const GREETING_SESSION_KEY = 'df_greeting_shown';
+
+function buildGreeting(firstName: string): GreetingParts {
+  const h = new Date().getHours();
+  let period: keyof typeof GREETINGS;
+  let timeWord: string;
+  if (h >= 5 && h < 12)  { period = 'morning';   timeWord = 'Good morning'; }
+  else if (h < 17)        { period = 'afternoon';  timeWord = 'Good afternoon'; }
+  else if (h < 22)        { period = 'evening';    timeWord = 'Good evening'; }
+  else                    { period = 'night';       timeWord = 'Hey'; }
+
+  const pool = GREETINGS[period];
+  const mood = pool[Math.floor(Math.random() * pool.length)];
+  const name = firstName ? `, ${firstName}` : '';
+  return { headline: `${timeWord}${name}!`, mood };
+}
+
 // ── Schedule Page ─────────────────────────────────────────────────────────────
 
 @Component({
@@ -541,11 +628,16 @@ export class ScheduleComponent implements OnInit, OnDestroy {
   private apptSvc    = inject(AppointmentsService);
   private svcSvc     = inject(ClinicServicesService);
   private chairsSvc  = inject(ChairsService);
+  private authSvc    = inject(AuthService);
   private dialog     = inject(MatDialog);
   private cdr        = inject(ChangeDetectorRef);
 
   statusLabel = STATUS_LABEL;
   sourceIcon  = BOOKING_SOURCE_ICON;
+
+  greeting: GreetingParts = buildGreeting(this.authSvc.getUser()?.first_name ?? '');
+  showGreeting   = !sessionStorage.getItem(GREETING_SESSION_KEY);
+  greetingExiting = false;
 
   selectedDate  = new Date();
   appointments: Appointment[] = [];
@@ -564,6 +656,17 @@ export class ScheduleComponent implements OnInit, OnDestroy {
   private destroy$ = new Subject<void>();
 
   ngOnInit() {
+    if (this.showGreeting) {
+      sessionStorage.setItem(GREETING_SESSION_KEY, '1');
+      setTimeout(() => {
+        this.greetingExiting = true;
+        this.cdr.markForCheck();
+        setTimeout(() => {
+          this.showGreeting = false;
+          this.cdr.markForCheck();
+        }, 900);
+      }, 2400);
+    }
     this.loadMeta();
     this.startPolling();
   }
@@ -711,18 +814,25 @@ export class ScheduleComponent implements OnInit, OnDestroy {
     return byChair.filter(a => a.status !== 'cancelled');
   }
 
-  /** Appointments rendered in kanban columns after pill filter (chair + not cancelled + stat). */
+  /**
+   * Default board rows (Total / Active / Pending pills): exclude completed so finished visits
+   * don’t clutter columns. The Done pill bypasses this and lists only `done` rows.
+   */
+  get boardEligible(): Appointment[] {
+    return this.filtered.filter(a => a.status !== 'done');
+  }
+
+  /** Kanban columns after pill filter. */
   get displayedForBoard(): Appointment[] {
-    const rows = this.filtered;
     switch (this.statFilter) {
-      case 'active':
-        return rows.filter(a => a.status === 'in_progress' || a.status === 'confirmed');
       case 'done':
-        return rows.filter(a => a.status === 'done');
+        return this.filtered.filter(a => a.status === 'done');
+      case 'active':
+        return this.boardEligible.filter(a => a.status === 'in_progress' || a.status === 'confirmed');
       case 'pending':
-        return rows.filter(a => a.status === 'booked');
+        return this.boardEligible.filter(a => a.status === 'booked');
       default:
-        return rows;
+        return this.boardEligible;
     }
   }
 

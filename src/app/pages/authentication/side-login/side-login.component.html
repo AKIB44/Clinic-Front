@@ -3,13 +3,14 @@
     <div class="position-relative shaper-wrapper">
       <div class="w-100 position-relative rounded bg-white auth-card">
         <div class="auth-body">
-          <a [routerLink]="['/dashboards/dashboard1']" class="m-t-20 d-flex">
+          <div class="m-t-20 d-flex">
             <img
               src="./assets/images/logos/dflogo.png"
               class="align-middle m-2"
               alt="DentaFlow"
+              style="max-height: 48px; width: auto;"
             />
-          </a>
+          </div>
 
           <div class="row">
             <div class="col-lg-6">
@@ -32,7 +33,76 @@
                       Sharayu Dental Clinic — Staff Portal
                     </span>
 
+                    <!-- Clinic deactivated banner -->
+                    @if (clinicInactive) {
+                      <div class="clinic-inactive-banner m-t-20">
+                        <span class="banner-icon">🔒</span>
+                        <div>
+                          <div class="banner-title">Clinic access suspended</div>
+                          <div class="banner-body">This clinic has been deactivated. Please contact support to reactivate access.</div>
+                        </div>
+                      </div>
+                    }
+
+                    <!-- ── MFA challenge step ──────────────────────────────── -->
+                    @if (mfaStep) {
+                      <div class="mfa-box">
+                        <span class="mfa-icon">🔐</span>
+                        <div class="mfa-title">Two-Factor Authentication</div>
+                        <div class="mfa-sub">
+                          Enter the 6-digit code from your authenticator app.
+                        </div>
+
+                        <!-- OTP boxes -->
+                        <div class="otp-row" (paste)="onPaste($event)">
+                          @for (digit of mfaDigits; track $index) {
+                            <ng-container>
+                              @if ($index === 3) {
+                                <span class="otp-separator">—</span>
+                              }
+                              <input
+                                #otpInput
+                                type="text"
+                                inputmode="numeric"
+                                maxlength="2"
+                                autocomplete="one-time-code"
+                                [value]="digit"
+                                [class.otp-filled]="digit !== ''"
+                                [class.otp-error]="mfaShake"
+                                class="otp-box"
+                                (input)="onDigitInput($index, $event)"
+                                (keydown)="onDigitKeydown($index, $event)"
+                                (focus)="onDigitFocus($event)"
+                              />
+                            </ng-container>
+                          }
+                        </div>
+
+                        @if (mfaError) {
+                          <div class="text-error m-b-16 f-s-13 text-center">{{ mfaError }}</div>
+                        }
+
+                        <div class="mfa-actions">
+                          <button mat-flat-button color="primary" class="w-100"
+                            (click)="submitMfa()"
+                            [disabled]="!isMfaCodeValid() || mfaSubmitting">
+                            <span class="btn-spinner-row">
+                              @if (mfaSubmitting) {
+                                <mat-spinner diameter="16"></mat-spinner>
+                              }
+                              {{ mfaSubmitting ? 'Verifying…' : 'Verify Code' }}
+                            </span>
+                          </button>
+
+                          <button mat-button class="w-100" (click)="backToPassword()">
+                            Back to login
+                          </button>
+                        </div>
+                      </div>
+                    }
+
                     <!-- Password login -->
+                    @if (!mfaStep) {
                     <form class="m-t-30" [formGroup]="form" (ngSubmit)="submit()">
                       <mat-label class="mat-subtitle-2 f-s-14 f-w-600 m-b-12 d-block">
                         Email
@@ -98,20 +168,23 @@
                         {{ isSubmitting ? 'Signing in…' : 'Sign In' }}
                       </button>
                     </form>
+                    }
 
-                    <div class="d-flex align-items-center m-t-24 gap-2">
-                      <mat-divider class="flex-grow-1"></mat-divider>
-                      <span class="mat-body-2 text-muted">or</span>
-                      <mat-divider class="flex-grow-1"></mat-divider>
-                    </div>
+                    @if (!mfaStep) {
+                      <div class="d-flex align-items-center m-t-24 gap-2">
+                        <mat-divider class="flex-grow-1"></mat-divider>
+                        <span class="mat-body-2 text-muted">or</span>
+                        <mat-divider class="flex-grow-1"></mat-divider>
+                      </div>
 
-                    <button
-                      mat-stroked-button
-                      class="w-100 m-t-16"
-                      [routerLink]="['/authentication/side-two-steps']"
-                    >
-                      Login with OTP
-                    </button>
+                      <button
+                        mat-stroked-button
+                        class="w-100 m-t-16"
+                        [routerLink]="['/authentication/side-two-steps']"
+                      >
+                        Login with OTP
+                      </button>
+                    }
                   </div>
                 </div>
               </div>

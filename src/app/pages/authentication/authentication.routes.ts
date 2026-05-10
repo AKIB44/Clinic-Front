@@ -1,4 +1,5 @@
 import { Routes } from '@angular/router';
+import { guestGuard } from '../../auth/auth.guard';
 
 import { AppBoxedForgotPasswordComponent } from './boxed-forgot-password/boxed-forgot-password.component';
 import { AppBoxedLoginComponent } from './boxed-login/boxed-login.component';
@@ -47,6 +48,7 @@ export const AuthenticationRoutes: Routes = [
       {
         path: 'login',
         component: AppSideLoginComponent,
+        canActivate: [guestGuard],
       },
       {
         path: 'side-register',
@@ -66,6 +68,11 @@ export const AuthenticationRoutes: Routes = [
         path: 'step-up',
         loadComponent: () =>
           import('./step-up/step-up.component').then(m => m.StepUpComponent),
+      },
+      {
+        path: 'mfa-setup',
+        loadComponent: () =>
+          import('./mfa-setup/mfa-setup.component').then(m => m.MfaSetupComponent),
       },
     ],
   },

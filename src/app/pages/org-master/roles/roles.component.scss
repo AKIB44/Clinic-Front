@@ -1,0 +1,470 @@
+.roles-page {
+  padding: 24px;
+  background: var(--surface-ground, #f4f6fb);
+  min-height: 100%;
+}
+
+// ── Header ────────────────────────────────────────────────────────────────────
+
+.roles-header {
+  margin-bottom: 20px;
+  .roles-title { font-size: 1.3rem; font-weight: 700; color: var(--text-color); margin: 0; }
+  .roles-sub   { font-size: .85rem; color: #9e9e9e; margin: 4px 0 0; }
+}
+
+// ── States ────────────────────────────────────────────────────────────────────
+
+.roles-loading {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 40px;
+  color: #9e9e9e;
+  font-size: .9rem;
+}
+
+.roles-error {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 14px 18px;
+  background: #fff3f3;
+  border: 1px solid #ffcdd2;
+  border-radius: 10px;
+  color: #c62828;
+  font-size: .88rem;
+  margin-bottom: 16px;
+}
+
+.roles-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  padding: 40px 24px;
+  color: #bdbdbd;
+  font-size: .88rem;
+  text-align: center;
+}
+
+// ── Layout ────────────────────────────────────────────────────────────────────
+
+.roles-layout {
+  display: grid;
+  grid-template-columns: 320px 1fr;
+  gap: 20px;
+  align-items: start;
+
+  @media (max-width: 900px) { grid-template-columns: 1fr; }
+}
+
+// ── Left panel ────────────────────────────────────────────────────────────────
+
+.roles-left {
+  background: #fff;
+  border-radius: 14px;
+  box-shadow: 0 2px 8px rgba(0,0,0,.06);
+  overflow: hidden;
+  position: sticky;
+  top: 16px;
+}
+
+.panel-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 16px;
+  border-bottom: 1px solid #f0f0f0;
+
+  .panel-title {
+    font-size: .92rem;
+    font-weight: 700;
+    color: #212121;
+  }
+}
+
+.new-role-btn {
+  font-size: .78rem;
+  height: 32px;
+  padding: 0 12px;
+  background: #0d7a5f !important;
+  color: #fff !important;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+// ── Inline forms ──────────────────────────────────────────────────────────────
+
+.inline-form {
+  padding: 14px 16px;
+  border-bottom: 1px solid #f0f0f0;
+  background: #f5fbf9;
+
+  &--edit { background: #fffdf5; }
+}
+
+.inline-form-title {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: .82rem;
+  font-weight: 700;
+  color: #0d7a5f;
+  margin-bottom: 12px;
+
+  .inline-form--edit & { color: #f57c00; }
+}
+
+.form-field {
+  width: 100%;
+  margin-bottom: 2px;
+  ::ng-deep .mat-mdc-form-field-subscript-wrapper { min-height: 18px; }
+}
+
+.form-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: 6px;
+  align-items: center;
+}
+
+// ── Role list ─────────────────────────────────────────────────────────────────
+
+.role-list {
+  padding: 10px 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  max-height: calc(100vh - 220px);
+  overflow-y: auto;
+}
+
+.role-card {
+  padding: 10px 12px;
+  border-radius: 10px;
+  border: 1.5px solid transparent;
+  background: #fafafa;
+  cursor: pointer;
+  transition: border-color .13s, background .13s, box-shadow .13s;
+  outline: none;
+
+  &:hover {
+    border-color: #0d7a5f;
+    background: #f2fbf7;
+    box-shadow: 0 2px 6px rgba(13,122,95,.08);
+  }
+
+  &.selected {
+    border-color: #0d7a5f;
+    background: #e8f5f1;
+  }
+}
+
+.rc-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+  margin-bottom: 2px;
+}
+
+.rc-name {
+  font-size: .88rem;
+  font-weight: 700;
+  color: #212121;
+  flex: 1;
+}
+
+.rc-code {
+  display: block;
+  font-size: .72rem;
+  color: #9e9e9e;
+  font-family: monospace;
+  margin-bottom: 3px;
+}
+
+.rc-desc {
+  display: block;
+  font-size: .76rem;
+  color: #757575;
+  margin-bottom: 4px;
+  line-height: 1.4;
+}
+
+.rc-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 4px;
+}
+
+.rc-perms {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  font-size: .72rem;
+  color: #9e9e9e;
+  font-weight: 600;
+}
+
+.rc-actions { display: flex; gap: 2px; }
+
+.rc-edit {
+  width: 28px; height: 28px;
+  color: #f57c00;
+  &:hover { background: #fff8f0; }
+}
+
+.rc-del {
+  width: 28px; height: 28px;
+  color: #e53935;
+  &:hover { background: #fff3f3; }
+}
+
+// ── Badges ────────────────────────────────────────────────────────────────────
+
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  padding: 2px 7px;
+  border-radius: 10px;
+  font-size: .65rem;
+  font-weight: 700;
+  white-space: nowrap;
+  text-transform: uppercase;
+  letter-spacing: .3px;
+  flex-shrink: 0;
+}
+
+.badge-system { background: #e3f2fd; color: #1565c0; }
+.badge-custom { background: #f3e5f5; color: #6a1b9a; }
+
+// ── Right panel ───────────────────────────────────────────────────────────────
+
+.roles-right {
+  background: #fff;
+  border-radius: 14px;
+  box-shadow: 0 2px 8px rgba(0,0,0,.06);
+  min-height: 400px;
+  overflow: hidden;
+}
+
+.no-selection {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+  padding: 80px 24px;
+  color: #bdbdbd;
+  font-size: .9rem;
+  text-align: center;
+}
+
+// ── Permission panel ──────────────────────────────────────────────────────────
+
+.perm-panel {
+  display: flex;
+  flex-direction: column;
+}
+
+.perm-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 16px 20px;
+  border-bottom: 1px solid #f0f0f0;
+  flex-wrap: wrap;
+}
+
+.perm-header-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+
+  .perm-role-name {
+    font-size: 1rem;
+    font-weight: 700;
+    color: #212121;
+  }
+
+  .perm-role-code {
+    font-size: .75rem;
+    color: #9e9e9e;
+    font-family: monospace;
+  }
+}
+
+.perm-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.perm-count-note {
+  font-size: .76rem;
+  color: #9e9e9e;
+}
+
+.sys-note {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: .73rem;
+  color: #f57c00;
+  background: #fff8e1;
+  padding: 3px 9px;
+  border-radius: 8px;
+}
+
+// ── Buttons ───────────────────────────────────────────────────────────────────
+
+.save-btn {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  background: #0d7a5f !important;
+  color: #fff !important;
+  font-size: .82rem;
+  height: 34px;
+  padding: 0 14px;
+
+  &:disabled {
+    background: #e0e0e0 !important;
+    color: #9e9e9e !important;
+  }
+
+  &--orange { background: #f57c00 !important; }
+}
+
+.btn-spin {
+  display: inline-flex;
+  ::ng-deep circle { stroke: #fff; }
+}
+
+// ── Tree ──────────────────────────────────────────────────────────────────────
+
+.tree-wrap {
+  padding: 8px 12px 16px;
+  overflow-y: auto;
+  max-height: calc(100vh - 260px);
+}
+
+.perm-tree {
+  background: transparent;
+  width: 100%;
+}
+
+// Module (parent) node
+.tree-module-node {
+  display: flex;
+  align-items: center;
+  height: auto !important;
+  min-height: 42px;
+  padding: 4px 0;
+  border-radius: 8px;
+  margin-bottom: 2px;
+  background: #f8f9fc;
+  border: 1px solid #eef0f5;
+
+  &:not(:first-child) { margin-top: 10px; }
+}
+
+.tree-toggle {
+  width: 28px;
+  height: 28px;
+  flex-shrink: 0;
+  color: #546e7a;
+}
+
+.module-checkbox {
+  margin-right: 2px;
+}
+
+.tree-module-label {
+  font-size: .88rem;
+  font-weight: 700;
+  color: #37474f;
+  flex: 1;
+  text-transform: capitalize;
+}
+
+.tree-module-meta {
+  font-size: .72rem;
+  color: #90a4ae;
+  font-weight: 600;
+  padding-right: 12px;
+  white-space: nowrap;
+}
+
+// Leaf (permission) node
+.tree-leaf-node {
+  display: flex;
+  align-items: center;
+  height: auto !important;
+  min-height: 38px;
+  padding: 3px 0;
+  border-radius: 6px;
+  transition: background .1s;
+
+  &:hover { background: #f8fffe; }
+}
+
+.tree-leaf-indent {
+  width: 48px;
+  flex-shrink: 0;
+}
+
+.leaf-checkbox {
+  flex-shrink: 0;
+  margin-right: 4px;
+}
+
+.tree-leaf-info {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  padding: 2px 0;
+}
+
+.tree-perm-label {
+  font-size: .84rem;
+  color: #212121;
+  line-height: 1.3;
+}
+
+.tree-perm-code {
+  font-size: .7rem;
+  color: #b0bec5;
+  font-family: monospace;
+}
+
+.sensitive-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  font-size: .66rem;
+  font-weight: 700;
+  color: #e65100;
+  background: #fff3e0;
+  padding: 2px 7px;
+  border-radius: 8px;
+  white-space: nowrap;
+  flex-shrink: 0;
+  margin-right: 8px;
+}
+
+// ── Responsive ────────────────────────────────────────────────────────────────
+
+@media (max-width: 600px) {
+  .roles-page { padding: 12px; }
+  .perm-header { padding: 12px 14px; }
+  .tree-wrap { padding: 8px; max-height: none; }
+}

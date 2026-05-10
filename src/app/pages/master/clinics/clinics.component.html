@@ -1,8 +1,10 @@
 <div class="master-page">
+
+  <!-- Header -->
   <div class="page-header">
     <div>
       <h1 class="page-title">Clinics</h1>
-      <p class="page-subtitle">Manage all clinics on the platform</p>
+      <p class="page-subtitle">Manage all clinics in your organisation</p>
     </div>
     <button mat-flat-button color="primary" (click)="openDialog()">
       <i-tabler name="plus" size="18"></i-tabler>
@@ -13,58 +15,127 @@
   @if (loading) {
     <div class="center-loader"><mat-spinner diameter="40"></mat-spinner></div>
   } @else {
-    <div class="master-card">
-      <table mat-table [dataSource]="clinics" class="master-table">
 
-        <ng-container matColumnDef="name">
-          <th mat-header-cell *matHeaderCellDef>Clinic Name</th>
-          <td mat-cell *matCellDef="let c"><div class="cell-primary">{{ c.name }}</div></td>
-        </ng-container>
+    <div class="clinics-list">
+      @for (c of clinics; track c.id) {
 
-        <ng-container matColumnDef="city">
-          <th mat-header-cell *matHeaderCellDef>City</th>
-          <td mat-cell *matCellDef="let c">{{ c.city }}{{ c.state ? ', ' + c.state : '' }}</td>
-        </ng-container>
+        <!-- ── Clinic card ─────────────────────────────────────────────────── -->
+        <div class="clinic-card" [class.expanded]="expandedClinicId === c.id">
 
-        <ng-container matColumnDef="phone">
-          <th mat-header-cell *matHeaderCellDef>Phone</th>
-          <td mat-cell *matCellDef="let c">{{ c.phone }}</td>
-        </ng-container>
+          <div class="clinic-row">
+            <!-- Info -->
+            <div class="clinic-info">
+              <div class="clinic-name">{{ c.name }}</div>
+              <div class="clinic-meta">
+                <span><i-tabler name="map-pin" size="13"></i-tabler> {{ c.city }}{{ c.state ? ', ' + c.state : '' }}</span>
+                <span><i-tabler name="phone" size="13"></i-tabler> {{ c.phone }}</span>
+                <span><i-tabler name="mail" size="13"></i-tabler> {{ c.email }}</span>
+              </div>
+            </div>
 
-        <ng-container matColumnDef="email">
-          <th mat-header-cell *matHeaderCellDef>Email</th>
-          <td mat-cell *matCellDef="let c">{{ c.email }}</td>
-        </ng-container>
-
-        <ng-container matColumnDef="status">
-          <th mat-header-cell *matHeaderCellDef>Status</th>
-          <td mat-cell *matCellDef="let c">
+            <!-- Status chip -->
             <span class="status-chip" [class.active]="c.is_active" [class.inactive]="!c.is_active">
               <span class="dot"></span>{{ c.is_active ? 'Active' : 'Inactive' }}
             </span>
-          </td>
-        </ng-container>
 
-        <ng-container matColumnDef="actions">
-          <th mat-header-cell *matHeaderCellDef></th>
-          <td mat-cell *matCellDef="let c">
-            <div class="action-row">
-              <button mat-icon-button matTooltip="Edit" (click)="openDialog(c)">
+            <!-- Actions -->
+            <div class="clinic-actions">
+              <button mat-stroked-button (click)="toggleStaffPanel(c)"
+                      [color]="expandedClinicId === c.id ? 'primary' : ''">
+                <i-tabler name="users" size="15"></i-tabler>
+                Staff &amp; Roles
+                <i-tabler [name]="expandedClinicId === c.id ? 'chevron-up' : 'chevron-down'" size="14"></i-tabler>
+              </button>
+              <button mat-icon-button matTooltip="Edit clinic" (click)="openDialog(c)">
                 <i-tabler name="pencil" size="16"></i-tabler>
               </button>
               <button mat-icon-button [matTooltip]="c.is_active ? 'Deactivate' : 'Activate'" (click)="toggle(c)">
                 <i-tabler [name]="c.is_active ? 'toggle-right' : 'toggle-left'" size="18"></i-tabler>
               </button>
             </div>
-          </td>
-        </ng-container>
+          </div>
 
-        <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
-        <tr mat-row *matRowDef="let row; columns: displayedColumns;"></tr>
-        <tr class="mat-row" *matNoDataRow>
-          <td class="mat-cell empty-row" [attr.colspan]="displayedColumns.length">No clinics found.</td>
-        </tr>
-      </table>
+          <!-- ── Staff panel ─────────────────────────────────────────────── -->
+          @if (expandedClinicId === c.id) {
+            <div class="staff-panel">
+              <div class="staff-panel-header">
+                <i-tabler name="shield-check" size="16"></i-tabler>
+                Staff &amp; Role Assignment — {{ c.name }}
+              </div>
+
+              @if (panelFor(c.id)?.loading) {
+                <div class="staff-loading">
+                  <mat-spinner diameter="28"></mat-spinner>
+                </div>
+              } @else if (!panelFor(c.id)?.users?.length) {
+                <div class="staff-empty">
+                  <i-tabler name="user-x" size="28"></i-tabler>
+                  <span>No staff found for this clinic.</span>
+                </div>
+              } @else {
+                <table class="staff-table">
+                  <thead>
+                    <tr>
+                      <th>Name</th>
+                      <th>Email</th>
+                      <th>Current Role</th>
+                      <th>Assign Role</th>
+                      <th></th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    @for (u of panelFor(c.id)?.users ?? []; track u.id) {
+                      <tr [class.inactive-row]="!u.is_active">
+                        <td>
+                          <div class="user-name">{{ u.first_name }} {{ u.last_name }}</div>
+                          @if (u.designation) {
+                            <div class="user-desig">{{ u.designation }}</div>
+                          }
+                        </td>
+                        <td class="user-email">{{ u.email }}</td>
+                        <td>
+                          <span class="role-badge {{ roleBadgeClass(u.role_code) }}">
+                            {{ u.role_name || u.legacy_role || '—' }}
+                          </span>
+                        </td>
+                        <td>
+                          <mat-form-field appearance="outline" class="role-select">
+                            <mat-select [(ngModel)]="panelFor(c.id)!.selectedRoles[u.id]">
+                              @for (r of panelFor(c.id)?.roles ?? []; track r.id) {
+                                <mat-option [value]="r.id">{{ r.name }}</mat-option>
+                              }
+                            </mat-select>
+                          </mat-form-field>
+                        </td>
+                        <td>
+                          <button mat-flat-button color="primary" class="save-btn"
+                                  [disabled]="panelFor(c.id)?.savingUserId === u.id || !(panelFor(c.id)?.selectedRoles ?? {})[u.id]"
+                                  (click)="saveRole(c.id, u)">
+                            @if (panelFor(c.id)?.savingUserId === u.id) {
+                              <mat-spinner diameter="14" style="display:inline-block"></mat-spinner>
+                            } @else {
+                              Save
+                            }
+                          </button>
+                        </td>
+                      </tr>
+                    }
+                  </tbody>
+                </table>
+              }
+            </div>
+          }
+
+        </div>
+      }
+
+      @if (!clinics.length) {
+        <div class="empty-state">
+          <i-tabler name="building-hospital" size="40"></i-tabler>
+          <p>No clinics found. Create one to get started.</p>
+        </div>
+      }
     </div>
   }
+
 </div>

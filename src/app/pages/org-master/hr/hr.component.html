@@ -1,0 +1,151 @@
+<div class="hr-page">
+
+  <!-- ── Header ─────────────────────────────────────────────────────────────── -->
+  <div class="hr-header">
+    <div>
+      <h1 class="hr-title">Human Resources</h1>
+      <p class="hr-sub">Org-wide staff directory</p>
+    </div>
+  </div>
+
+  <!-- ── Summary chips ──────────────────────────────────────────────────────── -->
+  <div class="hr-chips">
+    <div class="chip chip-total">
+      <i-tabler name="users" size="16"></i-tabler>
+      <span>{{ total() }} Total Staff</span>
+    </div>
+    <div class="chip chip-active">
+      <i-tabler name="user-check" size="16"></i-tabler>
+      <span>{{ activeCount() }} Active</span>
+    </div>
+    <div class="chip chip-inactive">
+      <i-tabler name="user-off" size="16"></i-tabler>
+      <span>{{ inactiveCount() }} Inactive</span>
+    </div>
+  </div>
+
+  <!-- ── Filters ────────────────────────────────────────────────────────────── -->
+  <div class="hr-filters">
+
+    <div class="search-box">
+      <i-tabler name="search" size="17" class="search-icon"></i-tabler>
+      <input
+        class="search-input"
+        type="text"
+        placeholder="Name, email or phone…"
+        [(ngModel)]="searchTerm"
+        (ngModelChange)="onSearchInput()"
+        autocomplete="off"
+      />
+      @if (searchTerm) {
+        <button class="search-clear" (click)="searchTerm = ''; onFilterChange()">
+          <i-tabler name="x" size="14"></i-tabler>
+        </button>
+      }
+    </div>
+
+    <mat-form-field appearance="outline" class="filter-field">
+      <mat-label>Clinic</mat-label>
+      <mat-select [(ngModel)]="filterClinicId" (ngModelChange)="onFilterChange()">
+        <mat-option value="">All Clinics</mat-option>
+        @for (c of clinics(); track c.id) {
+          <mat-option [value]="c.id">{{ c.name }}</mat-option>
+        }
+      </mat-select>
+    </mat-form-field>
+
+    <mat-form-field appearance="outline" class="filter-field">
+      <mat-label>Status</mat-label>
+      <mat-select [(ngModel)]="filterActive" (ngModelChange)="onFilterChange()">
+        <mat-option value="">All</mat-option>
+        <mat-option value="true">Active</mat-option>
+        <mat-option value="false">Inactive</mat-option>
+      </mat-select>
+    </mat-form-field>
+
+  </div>
+
+  <!-- ── Loading ───────────────────────────────────────────────────────────── -->
+  @if (loading()) {
+    <div class="hr-loading">
+      <mat-spinner diameter="36"></mat-spinner>
+      <span>Loading staff…</span>
+    </div>
+  }
+
+  <!-- ── Error ─────────────────────────────────────────────────────────────── -->
+  @if (error()) {
+    <div class="hr-error">
+      <i-tabler name="alert-circle" size="20"></i-tabler>
+      <span>{{ error() }}</span>
+    </div>
+  }
+
+  <!-- ── Results ───────────────────────────────────────────────────────────── -->
+  @if (!loading()) {
+    @if (staff().length === 0 && !error()) {
+      <div class="hr-empty">
+        <i-tabler name="users-off" size="40"></i-tabler>
+        <p>No staff found{{ searchTerm ? ' for "' + searchTerm + '"' : '' }}.</p>
+      </div>
+    } @else {
+      <div class="hr-grid">
+        @for (s of staff(); track s.id) {
+          <div class="staff-card">
+
+            <div class="sc-avatar">{{ initials(s) }}</div>
+
+            <div class="sc-info">
+              <div class="sc-name">{{ s.first_name }} {{ s.last_name }}</div>
+              <div class="sc-meta">
+                <span class="sc-meta-item">
+                  <i-tabler name="mail" size="13"></i-tabler>
+                  {{ s.email }}
+                </span>
+                @if (s.phone) {
+                  <span class="sc-meta-item">
+                    <i-tabler name="phone" size="13"></i-tabler>
+                    {{ s.phone }}
+                  </span>
+                }
+              </div>
+              <div class="sc-badges">
+                <span class="badge badge-role">{{ roleLabel(s) }}</span>
+                @if (s.clinic_name) {
+                  <span class="badge badge-clinic">
+                    <i-tabler name="building-hospital" size="11"></i-tabler>
+                    {{ s.clinic_name }}
+                  </span>
+                }
+              </div>
+            </div>
+
+            <div class="sc-right">
+              <span class="status-chip" [class.status-active]="s.is_active" [class.status-inactive]="!s.is_active">
+                {{ s.is_active ? 'Active' : 'Inactive' }}
+              </span>
+              @if (s.last_login_at) {
+                <div class="sc-login">
+                  <i-tabler name="clock" size="12"></i-tabler>
+                  {{ formatDate(s.last_login_at) }}
+                </div>
+              }
+              <button
+                mat-icon-button
+                class="toggle-btn"
+                [class.toggle-deactivate]="s.is_active"
+                [class.toggle-activate]="!s.is_active"
+                [title]="s.is_active ? 'Deactivate' : 'Activate'"
+                (click)="toggleActive(s)"
+              >
+                <i-tabler [name]="s.is_active ? 'user-off' : 'user-check'" size="18"></i-tabler>
+              </button>
+            </div>
+
+          </div>
+        }
+      </div>
+    }
+  }
+
+</div>

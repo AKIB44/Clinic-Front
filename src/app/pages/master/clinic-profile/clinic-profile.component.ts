@@ -54,7 +54,7 @@ export class ClinicProfileComponent implements OnInit {
   save() {
     if (this.form.invalid) return;
     this.saving.set(true);
-    this.svc.update(this.form.value as Partial<Clinic>).subscribe({
+    this.svc.updateActive(this.form.value as Partial<Clinic>).subscribe({
       next: () => {
         this.saving.set(false);
         this.toast.success('Clinic profile updated');

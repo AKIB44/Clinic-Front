@@ -67,3 +67,53 @@
 
 //This is for the icons (Required file)
 @import "icons/font-awesome/css/fontawesome-all.css";
+
+// Keep Tabler icons aligned with adjacent text across the app.
+i-tabler {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  vertical-align: middle;
+  line-height: 1;
+}
+
+// Utility class `d-flex` is used on many icons; force inline context for text alignment.
+i-tabler.d-flex {
+  display: inline-flex !important;
+}
+
+i-tabler svg {
+  display: block;
+}
+.avatar-circle {
+  width: 38px; height: 38px;
+  border-radius: 50%;
+  background: #0d7a5f;
+  color: #fff;
+  font-size: .85rem;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  letter-spacing: .5px;
+
+  &--lg { width: 56px; height: 56px; font-size: 1.1rem; }
+}
+
+.profile-link {
+  border-radius: 10px;
+  transition: background .12s;
+  &:hover { background: #f5f5f5; }
+  .icon-wrap {
+    width: 36px; height: 36px; border-radius: 10px;
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+  }
+}
+
+.profile-trigger {
+  border-radius: 40px !important;
+  padding: 4px 10px !important;
+  height: auto !important;
+}

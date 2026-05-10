@@ -5,12 +5,6 @@ export const navItems: NavItem[] = [
   // ── Clinic ─────────────────────────────────────────────────────────────────
   { navCap: 'Clinic' },
   {
-    displayName: 'Dashboard',
-    iconName: 'layout-dashboard',
-    bgcolor: 'primary',
-    route: '/dashboards/dashboard1',
-  },
-  {
     displayName: "Today's Schedule",
     iconName: 'calendar-event',
     bgcolor: 'success',
@@ -24,8 +18,39 @@ export const navItems: NavItem[] = [
     displayName: 'Patient Search',
     iconName: 'user-search',
     bgcolor: 'accent',
-    route: '/apps/contacts',
+    route: '/patients',
     permissions: ['patient.view'],
+  },
+
+  // ── Org Master ─────────────────────────────────────────────────────────────
+  { navCap: 'Org Master', permissions: ['org.manage'] },
+  {
+    displayName: 'Human Resources',
+    iconName: 'users',
+    bgcolor: 'success',
+    route: '/org-master/hr',
+    permissions: ['org.manage'],
+  },
+  {
+    displayName: 'Role Management',
+    iconName: 'shield-check',
+    bgcolor: 'warning',
+    route: '/org-master/roles',
+    permissions: ['org.manage'],
+  },
+  {
+    displayName: 'Accounts',
+    iconName: 'report-money',
+    bgcolor: 'primary',
+    route: '/org-master/accounts',
+    permissions: ['org.manage'],
+  },
+  {
+    displayName: 'Security (MFA)',
+    iconName: 'shield-lock',
+    bgcolor: 'accent',
+    route: '/authentication/mfa-setup',
+    permissions: ['org.manage'],
   },
 
   // ── Operations ─────────────────────────────────────────────────────────────
@@ -37,18 +62,19 @@ export const navItems: NavItem[] = [
     route: '/rx/new',
     permissions: ['prescription.create'],
   },
-  {
-    displayName: 'Invoices',
-    iconName: 'file-invoice',
-    bgcolor: 'warning',
-    route: '/apps/invoice',
-  },
-
   // ── Master — permission-gated (roles kept as fallback during migration) ─────
   {
     navCap: 'Master',
     roles: ['admin'],
     permissions: ['clinic.settings', 'staff.manage'],
+  },
+  {
+    displayName: 'Clinics',
+    iconName: 'building-hospital',
+    bgcolor: 'primary',
+    route: '/master/clinics',
+    roles: ['admin'],
+    permissions: ['org.manage'],
   },
   {
     displayName: 'Clinic Profile',

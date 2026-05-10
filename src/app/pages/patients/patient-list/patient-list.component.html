@@ -1,0 +1,112 @@
+<div class="pl-page">
+
+  <!-- ── Header ────────────────────────────────────────────────────────────── -->
+  <div class="pl-header">
+    <div>
+      <h1 class="pl-title">Patient Search</h1>
+      <p class="pl-sub">Search by name or mobile number, filter by service</p>
+    </div>
+  </div>
+
+  <!-- ── Filters ────────────────────────────────────────────────────────────── -->
+  <div class="pl-filters">
+
+    <!-- Search box -->
+    <div class="search-box">
+      <i-tabler name="search" size="17" class="search-icon"></i-tabler>
+      <input
+        class="search-input"
+        type="text"
+        placeholder="Name or mobile number…"
+        [(ngModel)]="searchTerm"
+        (ngModelChange)="onSearchInput()"
+        autocomplete="off"
+      />
+      @if (searchTerm) {
+        <button class="search-clear" (click)="clearSearch()">
+          <i-tabler name="x" size="14"></i-tabler>
+        </button>
+      }
+    </div>
+
+    <!-- Service filter -->
+    <mat-form-field appearance="outline" class="svc-filter">
+      <mat-label>Filter by Service</mat-label>
+      <mat-select [(ngModel)]="selectedSvcId" (ngModelChange)="onServiceChange()">
+        <mat-option value="">All Services</mat-option>
+        @for (s of services; track s.id) {
+          <mat-option [value]="s.id">{{ s.name }}</mat-option>
+        }
+      </mat-select>
+    </mat-form-field>
+
+  </div>
+
+  <!-- ── Loading ───────────────────────────────────────────────────────────── -->
+  @if (loading) {
+    <div class="pl-loading">
+      <mat-spinner diameter="36"></mat-spinner>
+      <span>Searching…</span>
+    </div>
+  }
+
+  <!-- ── Results ───────────────────────────────────────────────────────────── -->
+  @if (!loading && searched) {
+
+    @if (patients.length === 0) {
+      <div class="pl-empty">
+        <i-tabler name="user-x" size="40"></i-tabler>
+        <p>No patients found{{ searchTerm ? ' for "' + searchTerm + '"' : '' }}{{ selectedSvcId ? ' in selected service' : '' }}.</p>
+      </div>
+    } @else {
+      <div class="pl-count">{{ patients.length }} patient{{ patients.length !== 1 ? 's' : '' }} found</div>
+
+      <div class="pl-grid">
+        @for (p of patients; track p.id) {
+          <div class="patient-card" (click)="openRecord(p)" tabindex="0" (keydown.enter)="openRecord(p)">
+
+            <div class="pc-avatar">{{ initials(p.name) }}</div>
+
+            <div class="pc-info">
+              <div class="pc-name">{{ p.name }}</div>
+              <div class="pc-meta">
+                <span class="pc-meta-item">
+                  <i-tabler name="phone" size="13"></i-tabler>
+                  {{ p.phone }}
+                </span>
+                @if (p.age) {
+                  <span class="pc-meta-item">
+                    <i-tabler name="calendar" size="13"></i-tabler>
+                    {{ p.age }} yrs
+                  </span>
+                }
+                @if (p.gender) {
+                  <span class="pc-meta-item">
+                    <i-tabler [name]="genderIcon(p.gender)" size="13"></i-tabler>
+                    {{ p.gender | titlecase }}
+                  </span>
+                }
+              </div>
+            </div>
+
+            <div class="pc-visit">
+              @if (p.last_visit) {
+                <div class="pc-last-service">{{ p.last_service }}</div>
+                <div class="pc-last-date">
+                  <i-tabler name="clock" size="12"></i-tabler>
+                  {{ formatDate(p.last_visit) }}
+                </div>
+              } @else {
+                <div class="pc-no-visit">No visits yet</div>
+              }
+            </div>
+
+            <i-tabler name="chevron-right" size="16" class="pc-arrow"></i-tabler>
+
+          </div>
+        }
+      </div>
+    }
+  }
+
+</div>

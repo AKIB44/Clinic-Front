@@ -3,7 +3,12 @@ import { HttpClient } from '@angular/common/http';
 import { Observable, tap, switchMap, from, firstValueFrom } from 'rxjs';
 import { Router } from '@angular/router';
 import { authApiConfig } from './auth.config';
-import { LoginRequest, LoginResponse, AuthUser, StepUpResponse, OtpRequestResponse, OtpVerifyRequest } from './auth.models';
+import {
+  LoginRequest, LoginResponse, AuthUser, StepUpResponse,
+  OtpRequestResponse, OtpVerifyRequest,
+  LoginOrMfaResponse, MfaStatusResponse, MfaSetupResponse,
+  MfaEnableRequest, MfaDisableRequest,
+} from './auth.models';
 import { AuthStorageService } from './auth-storage.service';
 import { PermissionService } from '../core/rbac/permission.service';
 import { BreakGlassService } from '../core/rbac/break-glass.service';
@@ -19,15 +24,19 @@ export class AuthService {
   private readonly _user = signal<AuthUser | null>(this.authStorage.getUser());
   readonly user = this._user.asReadonly();
 
-  login(payload: LoginRequest): Observable<LoginResponse> {
+  login(payload: LoginRequest): Observable<LoginOrMfaResponse> {
     return this.http
-      .post<LoginResponse>(`${authApiConfig.baseUrl}${authApiConfig.loginEndpoint}`, payload)
+      .post<LoginOrMfaResponse>(`${authApiConfig.baseUrl}${authApiConfig.loginEndpoint}`, payload);
+  }
+
+  /** Called after a successful MFA TOTP challenge. */
+  mfaChallenge(mfa_token: string, code: string): Observable<LoginResponse> {
+    return this.http
+      .post<LoginResponse>(`${authApiConfig.baseUrl}/auth/mfa/challenge`, { mfa_token, code })
       .pipe(
         switchMap((response) => {
           this.authStorage.storeSession(response);
           this._user.set(response.user);
-          // Await permissions before emitting so guards and directives
-          // see a loaded permission set on the first render after navigation.
           return from(
             this.permissions
               .refresh(response.user.active_clinic_id ?? response.user.clinic_id)
@@ -35,6 +44,31 @@ export class AuthService {
           );
         })
       );
+  }
+
+  /** Completes a non-MFA login session store. Called by login component after MFA is not required. */
+  finaliseLogin(response: LoginResponse): Promise<LoginResponse> {
+    this.authStorage.storeSession(response);
+    this._user.set(response.user);
+    return this.permissions
+      .refresh(response.user.active_clinic_id ?? response.user.clinic_id)
+      .then(() => response);
+  }
+
+  mfaStatus(): Observable<MfaStatusResponse> {
+    return this.http.get<MfaStatusResponse>(`${authApiConfig.baseUrl}/auth/mfa/status`);
+  }
+
+  mfaSetup(): Observable<MfaSetupResponse> {
+    return this.http.post<MfaSetupResponse>(`${authApiConfig.baseUrl}/auth/mfa/setup`, {});
+  }
+
+  mfaEnable(payload: MfaEnableRequest): Observable<MfaStatusResponse> {
+    return this.http.post<MfaStatusResponse>(`${authApiConfig.baseUrl}/auth/mfa/enable`, payload);
+  }
+
+  mfaDisable(payload: MfaDisableRequest): Observable<MfaStatusResponse> {
+    return this.http.post<MfaStatusResponse>(`${authApiConfig.baseUrl}/auth/mfa/disable`, payload);
   }
 
   refresh(refreshToken: string): Observable<{ access_token: string; refresh_token?: string }> {
@@ -109,8 +143,9 @@ export class AuthService {
 
   /** Called by APP_INITIALIZER — loads permissions on every app boot (page refresh). */
   initPermissions(): Promise<void> {
+    if (!this.authStorage.isAuthenticated()) return Promise.resolve();
     const clinicId = this.getActiveClinicId();
-    if (!this.authStorage.isAuthenticated() || !clinicId) return Promise.resolve();
-    return this.permissions.refresh(clinicId);
+    // Org admins have no clinic_id — still load org-scoped permissions.
+    return this.permissions.refresh(clinicId ?? undefined);
   }
 }

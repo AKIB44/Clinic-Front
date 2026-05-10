@@ -1,0 +1,152 @@
+<div class="mfa-page">
+
+  <div class="mfa-card">
+
+    <!-- Header -->
+    <div class="mfa-header">
+      <div class="mfa-header-icon">
+        <i-tabler name="shield-lock" size="28"></i-tabler>
+      </div>
+      <div>
+        <h2 class="mfa-title">Two-Factor Authentication</h2>
+        <p class="mfa-sub">Secure your account with an authenticator app</p>
+      </div>
+    </div>
+
+    @if (loading()) {
+      <div class="mfa-loading">
+        <mat-spinner diameter="36"></mat-spinner>
+        <span>Loading…</span>
+      </div>
+    }
+
+    @if (error()) {
+      <div class="mfa-error">
+        <i-tabler name="alert-circle" size="18"></i-tabler>
+        {{ error() }}
+      </div>
+    }
+
+    <!-- ── SCAN phase ────────────────────────────────────────────────────── -->
+    @if (phase() === 'scan' && !loading()) {
+      <div class="phase-body">
+        <div class="step-badge">Step 1 of 2</div>
+        <p class="phase-instructions">
+          Open your authenticator app (Google Authenticator, Authy, Microsoft Authenticator) and scan the QR code below.
+        </p>
+
+        @if (qrDataUrl) {
+          <div class="qr-wrap">
+            <img [src]="qrDataUrl" alt="MFA QR code" class="qr-img" />
+          </div>
+        }
+
+        <details class="manual-entry">
+          <summary>Can't scan? Enter key manually</summary>
+          <div class="manual-secret">{{ secret }}</div>
+        </details>
+
+        <button mat-flat-button color="primary" class="mfa-btn" (click)="proceedToVerify()">
+          I've scanned the code
+          <i-tabler name="arrow-right" size="16"></i-tabler>
+        </button>
+      </div>
+    }
+
+    <!-- ── VERIFY phase ──────────────────────────────────────────────────── -->
+    @if (phase() === 'verify' && !loading()) {
+      <div class="phase-body">
+        <div class="step-badge">Step 2 of 2</div>
+        <p class="phase-instructions">
+          Enter the 6-digit code shown in your authenticator app to confirm setup.
+        </p>
+
+        <mat-form-field appearance="outline" class="code-field">
+          <mat-label>Verification code</mat-label>
+          <input matInput [(ngModel)]="verifyCode" inputmode="numeric"
+            maxlength="6" autocomplete="one-time-code"
+            placeholder="000000" (keydown.enter)="submitVerify()" />
+        </mat-form-field>
+
+        @if (verifyError) {
+          <div class="inline-error">{{ verifyError }}</div>
+        }
+
+        <div class="phase-actions">
+          <button mat-button (click)="phase.set('scan')">Back</button>
+          <button mat-flat-button color="primary"
+            [disabled]="!isVerifyCodeValid() || verifying"
+            (click)="submitVerify()">
+            @if (verifying) { <mat-spinner diameter="16" class="btn-spin"></mat-spinner> }
+            Enable MFA
+          </button>
+        </div>
+      </div>
+    }
+
+    <!-- ── DONE phase (MFA active) ───────────────────────────────────────── -->
+    @if (phase() === 'done' && !loading()) {
+      <div class="phase-body">
+        <div class="status-badge status-active">
+          <i-tabler name="shield-check" size="18"></i-tabler>
+          MFA is enabled
+        </div>
+        <p class="phase-instructions">
+          Your account is protected with two-factor authentication. You'll be asked for your authenticator code each time you sign in.
+        </p>
+
+        <div class="done-actions">
+          <button mat-flat-button color="primary" (click)="goToDashboard()">
+            <i-tabler name="arrow-left" size="16"></i-tabler>
+            Back to Dashboard
+          </button>
+          <button mat-stroked-button color="warn" (click)="openDisable()">
+            <i-tabler name="shield-off" size="16"></i-tabler>
+            Disable MFA
+          </button>
+        </div>
+      </div>
+    }
+
+    <!-- ── DISABLE phase ─────────────────────────────────────────────────── -->
+    @if (phase() === 'disable' && !loading()) {
+      <div class="phase-body">
+        <div class="status-badge status-warn">
+          <i-tabler name="alert-triangle" size="16"></i-tabler>
+          Disabling MFA reduces account security
+        </div>
+        <p class="phase-instructions">
+          Enter your account password and current authenticator code to confirm.
+        </p>
+
+        <mat-form-field appearance="outline" class="code-field">
+          <mat-label>Account password</mat-label>
+          <input matInput type="password" [(ngModel)]="disablePassword"
+            autocomplete="current-password" />
+        </mat-form-field>
+
+        <mat-form-field appearance="outline" class="code-field">
+          <mat-label>Authenticator code</mat-label>
+          <input matInput [(ngModel)]="disableCode" inputmode="numeric"
+            maxlength="6" autocomplete="one-time-code" placeholder="000000" />
+        </mat-form-field>
+
+        @if (disableError) {
+          <div class="inline-error">{{ disableError }}</div>
+        }
+
+        <div class="phase-actions">
+          <button mat-button (click)="cancelDisable()">Cancel</button>
+          <button mat-flat-button color="warn"
+            [disabled]="!isDisableReady() || disabling"
+            (click)="submitDisable()">
+            @if (disabling) { <mat-spinner diameter="16" class="btn-spin"></mat-spinner> }
+            Disable MFA
+          </button>
+        </div>
+      </div>
+    }
+
+  </div>
+
+</div>

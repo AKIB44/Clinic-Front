@@ -3,6 +3,11 @@ import { permissionGuard } from '../../core/rbac/permission.guard';
 
 export const MasterRoutes: Routes = [
   {
+    path: 'clinics',
+    loadComponent: () => import('./clinics/clinics.component').then(m => m.ClinicsComponent),
+    canActivate: [permissionGuard('org.manage')],
+  },
+  {
     path: 'clinic-profile',
     loadComponent: () => import('./clinic-profile/clinic-profile.component').then(m => m.ClinicProfileComponent),
     canActivate: [permissionGuard('clinic.settings')],

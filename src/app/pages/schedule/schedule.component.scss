@@ -7,6 +7,162 @@
   height: 100%;
 }
 
+// ─── Greeting overlay ─────────────────────────────────────────────────────────
+
+.greeting-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  background: radial-gradient(ellipse at 50% 50%, #0d1b3e 0%, #040d1f 100%);
+  animation: overlayIn 0.55s cubic-bezier(0.22, 1, 0.36, 1) both;
+
+  &.greeting-exit {
+    animation: overlayOut 0.9s cubic-bezier(0.4, 0, 1, 1) forwards;
+
+    .greeting-headline,
+    .greeting-mood {
+      animation: textBlurOut 0.75s cubic-bezier(0.4, 0, 1, 1) forwards;
+    }
+
+    .greeting-mood {
+      animation-delay: 0.05s;
+    }
+
+    .greeting-pulse {
+      opacity: 0;
+      transition: opacity 0.3s;
+    }
+  }
+}
+
+// Ambient floating colour blobs
+.greeting-blob {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(72px);
+  pointer-events: none;
+  will-change: transform;
+}
+
+.greeting-blob-1 {
+  width: 480px;
+  height: 480px;
+  background: radial-gradient(circle, rgba(29, 78, 216, 0.55) 0%, transparent 70%);
+  top: -10%;
+  left: -5%;
+  animation: blob1 7s ease-in-out infinite;
+}
+
+.greeting-blob-2 {
+  width: 360px;
+  height: 360px;
+  background: radial-gradient(circle, rgba(99, 102, 241, 0.45) 0%, transparent 70%);
+  bottom: -5%;
+  right: -5%;
+  animation: blob2 8s ease-in-out infinite;
+}
+
+.greeting-blob-3 {
+  width: 260px;
+  height: 260px;
+  background: radial-gradient(circle, rgba(14, 165, 233, 0.3) 0%, transparent 70%);
+  top: 55%;
+  left: 60%;
+  animation: blob3 5.5s ease-in-out infinite;
+}
+
+// Content wrapper
+.greeting-content {
+  position: relative;
+  z-index: 1;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  padding: 0 2rem;
+  max-width: 640px;
+}
+
+.greeting-headline {
+  font-size: clamp(1.8rem, 4.5vw, 3rem);
+  font-weight: 700;
+  color: #ffffff;
+  letter-spacing: -0.01em;
+  line-height: 1.15;
+  text-shadow: 0 0 48px rgba(99, 179, 255, 0.7), 0 2px 24px rgba(0,0,0,.4);
+  animation: textRiseIn 0.7s cubic-bezier(0.16, 1, 0.3, 1) 0.25s both;
+}
+
+.greeting-mood {
+  font-size: clamp(1rem, 2.2vw, 1.35rem);
+  font-weight: 400;
+  color: rgba(186, 220, 255, 0.85);
+  letter-spacing: 0.015em;
+  line-height: 1.5;
+  text-shadow: 0 0 24px rgba(99, 179, 255, 0.4);
+  animation: textRiseIn 0.7s cubic-bezier(0.16, 1, 0.3, 1) 0.48s both;
+}
+
+// Subtle pulsing ring under the text
+.greeting-pulse {
+  width: 220px;
+  height: 3px;
+  border-radius: 2px;
+  background: linear-gradient(90deg, transparent, rgba(99, 179, 255, 0.6), transparent);
+  animation: pulseBar 2s ease-in-out 0.9s infinite;
+  transition: opacity 0.3s;
+}
+
+// ─── Greeting keyframes ────────────────────────────────────────────────────────
+
+@keyframes overlayIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+@keyframes overlayOut {
+  0%   { opacity: 1; backdrop-filter: blur(0px); }
+  60%  { opacity: 0.6; backdrop-filter: blur(6px); }
+  100% { opacity: 0; backdrop-filter: blur(16px); }
+}
+
+@keyframes textRiseIn {
+  from { opacity: 0; transform: translateY(28px) scale(0.96); filter: blur(10px); }
+  to   { opacity: 1; transform: translateY(0)    scale(1);    filter: blur(0); }
+}
+
+@keyframes textBlurOut {
+  from { opacity: 1; transform: scale(1);    filter: blur(0px); }
+  to   { opacity: 0; transform: scale(1.06); filter: blur(20px); }
+}
+
+@keyframes blob1 {
+  0%, 100% { transform: translate(0, 0)      scale(1); }
+  40%       { transform: translate(40px, -30px) scale(1.08); }
+  70%       { transform: translate(-20px, 20px) scale(0.95); }
+}
+
+@keyframes blob2 {
+  0%, 100% { transform: translate(0, 0)        scale(1); }
+  35%       { transform: translate(-35px, 25px) scale(1.06); }
+  65%       { transform: translate(20px, -15px) scale(0.96); }
+}
+
+@keyframes blob3 {
+  0%, 100% { transform: translate(0, 0)       scale(1); }
+  50%       { transform: translate(-25px, 18px) scale(1.1); }
+}
+
+@keyframes pulseBar {
+  0%, 100% { opacity: 0.35; transform: scaleX(0.7); }
+  50%       { opacity: 0.9;  transform: scaleX(1); }
+}
+
 // ─── Board wrapper ────────────────────────────────────────────────────────────
 
 .kanban-page {

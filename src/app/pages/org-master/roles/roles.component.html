@@ -1,0 +1,240 @@
+<div class="roles-page">
+
+  <!-- ── Header ──────────────────────────────────────────────────────────────── -->
+  <div class="roles-header">
+    <div>
+      <h1 class="roles-title">Role Management</h1>
+      <p class="roles-sub">Define roles and their permissions for your organisation</p>
+    </div>
+  </div>
+
+  @if (loading()) {
+    <div class="roles-loading">
+      <mat-spinner diameter="36"></mat-spinner>
+      <span>Loading roles…</span>
+    </div>
+  }
+
+  @if (error()) {
+    <div class="roles-error">
+      <i-tabler name="alert-circle" size="20"></i-tabler>
+      <span>{{ error() }}</span>
+    </div>
+  }
+
+  @if (!loading()) {
+    <div class="roles-layout">
+
+      <!-- ── LEFT: Role List ───────────────────────────────────────────────── -->
+      <div class="roles-left">
+        <div class="panel-header">
+          <span class="panel-title">Roles ({{ roles().length }})</span>
+          <button mat-raised-button class="new-role-btn" (click)="openCreateDialog()">
+            <i-tabler name="plus" size="16"></i-tabler>
+            New Role
+          </button>
+        </div>
+
+        <!-- Create form -->
+        @if (showCreateForm()) {
+          <div class="inline-form">
+            <div class="inline-form-title">
+              <i-tabler name="shield-plus" size="15"></i-tabler>
+              Create Custom Role
+            </div>
+            <mat-form-field appearance="outline" class="form-field">
+              <mat-label>Role Name *</mat-label>
+              <input matInput [(ngModel)]="createName" (ngModelChange)="onNameInput()" maxlength="100" />
+            </mat-form-field>
+            <mat-form-field appearance="outline" class="form-field">
+              <mat-label>Role Code *</mat-label>
+              <input matInput [(ngModel)]="createCode" pattern="[a-z0-9_]+" maxlength="50" />
+              <mat-hint>a–z, 0–9 and _ only</mat-hint>
+            </mat-form-field>
+            <mat-form-field appearance="outline" class="form-field">
+              <mat-label>Description</mat-label>
+              <textarea matInput [(ngModel)]="createDescription" rows="2" maxlength="255"></textarea>
+            </mat-form-field>
+            <div class="form-actions">
+              <button mat-button (click)="cancelCreate()">Cancel</button>
+              <button mat-raised-button class="save-btn"
+                [disabled]="!createName.trim() || !createCode.trim() || saving()"
+                (click)="submitCreate()">
+                @if (saving()) { <mat-spinner diameter="14" class="btn-spin"></mat-spinner> }
+                Create
+              </button>
+            </div>
+          </div>
+        }
+
+        <!-- Edit form -->
+        @if (editingRole()) {
+          <div class="inline-form inline-form--edit">
+            <div class="inline-form-title">
+              <i-tabler name="pencil" size="15"></i-tabler>
+              Edit "{{ editingRole()!.name }}"
+            </div>
+            <mat-form-field appearance="outline" class="form-field">
+              <mat-label>Role Name</mat-label>
+              <input matInput [(ngModel)]="editName" maxlength="100" />
+            </mat-form-field>
+            <mat-form-field appearance="outline" class="form-field">
+              <mat-label>Description</mat-label>
+              <textarea matInput [(ngModel)]="editDescription" rows="2" maxlength="255"></textarea>
+            </mat-form-field>
+            <div class="form-actions">
+              <button mat-button (click)="cancelEdit()">Cancel</button>
+              <button mat-raised-button class="save-btn save-btn--orange"
+                [disabled]="!editName.trim() || saving()"
+                (click)="submitEdit()">
+                @if (saving()) { <mat-spinner diameter="14" class="btn-spin"></mat-spinner> }
+                Save
+              </button>
+            </div>
+          </div>
+        }
+
+        <!-- Role cards -->
+        <div class="role-list">
+          @for (r of roles(); track r.id) {
+            <div class="role-card"
+              [class.selected]="selectedRole()?.id === r.id"
+              (click)="selectRole(r)"
+              tabindex="0"
+              (keydown.enter)="selectRole(r)">
+              <div class="rc-row">
+                <span class="rc-name">{{ r.name }}</span>
+                @if (r.is_system) {
+                  <span class="badge badge-system">
+                    <i-tabler name="lock" size="10"></i-tabler> System
+                  </span>
+                } @else {
+                  <span class="badge badge-custom">Custom</span>
+                }
+              </div>
+              <span class="rc-code">{{ r.code }}</span>
+              @if (r.description) {
+                <span class="rc-desc">{{ r.description }}</span>
+              }
+              <div class="rc-footer">
+                <span class="rc-perms">
+                  <i-tabler name="shield" size="12"></i-tabler>
+                  {{ permissionCount(r) }}
+                </span>
+                @if (!r.is_system) {
+                  <div class="rc-actions" (click)="$event.stopPropagation()">
+                    <button mat-icon-button class="rc-edit" matTooltip="Edit" (click)="openEditDialog(r)">
+                      <i-tabler name="pencil" size="15"></i-tabler>
+                    </button>
+                    <button mat-icon-button class="rc-del" matTooltip="Delete" (click)="deleteRole(r)">
+                      <i-tabler name="trash" size="15"></i-tabler>
+                    </button>
+                  </div>
+                }
+              </div>
+            </div>
+          }
+          @if (roles().length === 0) {
+            <div class="roles-empty">
+              <i-tabler name="shield-off" size="36"></i-tabler>
+              <p>No roles found.</p>
+            </div>
+          }
+        </div>
+      </div>
+
+      <!-- ── RIGHT: Permission Tree ─────────────────────────────────────────── -->
+      <div class="roles-right">
+        @if (!selectedRole()) {
+          <div class="no-selection">
+            <i-tabler name="shield-check" size="48"></i-tabler>
+            <p>Select a role to view and edit its permissions</p>
+          </div>
+        } @else {
+          <div class="perm-panel">
+
+            <!-- Perm panel header -->
+            <div class="perm-header">
+              <div class="perm-header-info">
+                <span class="perm-role-name">{{ selectedRole()!.name }}</span>
+                <span class="perm-role-code">{{ selectedRole()!.code }}</span>
+              </div>
+              <div class="perm-header-actions">
+                <span class="perm-count-note">
+                  {{ pendingPermissions().length }} of {{ allPermissions().length }} permissions selected
+                </span>
+                @if (selectedRole()!.is_system) {
+                  <span class="sys-note">
+                    <i-tabler name="info-circle" size="13"></i-tabler>
+                    System role
+                  </span>
+                }
+                <button mat-raised-button class="save-btn"
+                  [disabled]="!permissionsChanged() || saving()"
+                  (click)="savePermissions()">
+                  @if (saving()) { <mat-spinner diameter="14" class="btn-spin"></mat-spinner> }
+                  <i-tabler name="device-floppy" size="15"></i-tabler>
+                  Save Changes
+                </button>
+              </div>
+            </div>
+
+            <!-- Mat Tree -->
+            <div class="tree-wrap">
+              <mat-tree [dataSource]="dataSource" [treeControl]="treeControl" class="perm-tree">
+
+                <!-- Module (parent) node -->
+                <mat-tree-node *matTreeNodeDef="let node; when: hasChild"
+                  matTreeNodePadding matTreeNodePaddingIndent="0"
+                  class="tree-module-node">
+                  <button mat-icon-button matTreeNodeToggle class="tree-toggle"
+                    [attr.aria-label]="'Toggle ' + node.label">
+                    <i-tabler [name]="treeControl.isExpanded(node) ? 'chevron-down' : 'chevron-right'" size="16"></i-tabler>
+                  </button>
+                  <mat-checkbox
+                    [checked]="moduleAllChecked(node)"
+                    [indeterminate]="modulePartialChecked(node)"
+                    (change)="toggleModule(node)"
+                    color="primary"
+                    class="module-checkbox">
+                  </mat-checkbox>
+                  <span class="tree-module-label">{{ node.label }}</span>
+                  <span class="tree-module-meta">
+                    {{ moduleCheckedCount(node) }}/{{ moduleChildCount(node) }}
+                  </span>
+                </mat-tree-node>
+
+                <!-- Permission (leaf) node -->
+                <mat-tree-node *matTreeNodeDef="let node"
+                  matTreeNodePadding matTreeNodePaddingIndent="0"
+                  class="tree-leaf-node">
+                  <span class="tree-leaf-indent"></span>
+                  <mat-checkbox
+                    [checked]="isLeafChecked(node)"
+                    (change)="toggleLeaf(node)"
+                    color="primary"
+                    class="leaf-checkbox">
+                  </mat-checkbox>
+                  <div class="tree-leaf-info">
+                    <span class="tree-perm-label">{{ node.label }}</span>
+                    <span class="tree-perm-code">{{ node.description }}</span>
+                  </div>
+                  @if (node.isSensitive) {
+                    <span class="sensitive-badge">
+                      <i-tabler name="alert-triangle" size="11"></i-tabler>
+                      Sensitive
+                    </span>
+                  }
+                </mat-tree-node>
+
+              </mat-tree>
+            </div>
+
+          </div>
+        }
+      </div>
+
+    </div>
+  }
+
+</div>

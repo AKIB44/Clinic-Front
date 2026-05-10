@@ -1,5 +1,19 @@
 <div class="kanban-page">
 
+  <!-- ── Greeting overlay ─────────────────────────────────────────────── -->
+  @if (showGreeting) {
+    <div class="greeting-overlay" [class.greeting-exit]="greetingExiting" aria-live="polite">
+      <div class="greeting-blob greeting-blob-1"></div>
+      <div class="greeting-blob greeting-blob-2"></div>
+      <div class="greeting-blob greeting-blob-3"></div>
+      <div class="greeting-content">
+        <div class="greeting-headline">{{ greeting.headline }}</div>
+        <div class="greeting-mood">{{ greeting.mood }}</div>
+        <div class="greeting-pulse"></div>
+      </div>
+    </div>
+  }
+
   <!-- ── Header toolbar ───────────────────────────────────────────────── -->
   <div class="board-header">
     <h1 class="board-title">Today's Schedule</h1>

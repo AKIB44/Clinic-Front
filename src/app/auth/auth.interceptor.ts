@@ -22,7 +22,13 @@ function addAuthHeaders(req: HttpRequest<unknown>, token: string, clinicId: stri
 
 function isPublicAuthRequest(req: HttpRequest<unknown>): boolean {
   const u = req.url;
-  return u.includes('/auth/login') || u.includes('/auth/refresh') || u.includes('/auth/logout');
+  return (
+    u.includes('/auth/login') ||
+    u.includes('/auth/refresh') ||
+    u.includes('/auth/logout') ||
+    u.includes('/auth/otp/') ||
+    u.includes('/auth/mfa/challenge')
+  );
 }
 
 // Retry the request with a known-good token. If the retry itself fails with
@@ -64,9 +70,14 @@ export const authInterceptor: HttpInterceptorFn = (
   return next(authedReq).pipe(
     catchError((err: HttpErrorResponse) => {
       // Pass non-401 errors through (components handle 4xx/5xx themselves).
-      // Exception: 403 → forbidden page immediately; no retry needed.
+      // Exception: 403 → forbidden page; unless clinic_inactive → login with reason.
       if (err.status === 403) {
-        router.navigate(['/authentication/forbidden']);
+        if (err.error?.error === 'clinic_inactive') {
+          storage.clearSession();
+          router.navigate(['/authentication/login'], { queryParams: { reason: 'clinic_inactive' } });
+        } else {
+          router.navigate(['/authentication/forbidden']);
+        }
         return EMPTY;
       }
       if (err.status !== 401) return throwError(() => err);
@@ -99,10 +110,19 @@ export const authInterceptor: HttpInterceptorFn = (
       }
 
       if (isRefreshing) {
+        // Wait for the in-flight refresh to complete.
+        // '' is the failure sentinel — unblock and redirect to login.
         return refreshDone$.pipe(
           filter((t): t is string => t !== null),
           take(1),
-          switchMap((newToken) => retryWithToken(req, next, newToken, clinicId, router))
+          switchMap((newToken) => {
+            if (!newToken) {
+              storage.clearSession();
+              router.navigate(['/authentication/login']);
+              return EMPTY;
+            }
+            return retryWithToken(req, next, newToken, clinicId, router);
+          })
         );
       }
 
@@ -114,12 +134,13 @@ export const authInterceptor: HttpInterceptorFn = (
           refreshDone$.next(res.access_token);
           return retryWithToken(req, next, res.access_token, clinicId, router);
         }),
-        catchError((refreshErr) => {
-          // Only errors from authService.refresh() itself reach here.
-          // A failed retry is caught inside retryWithToken, not here.
+        catchError((refreshErr: HttpErrorResponse) => {
           storage.clearSession();
-          router.navigate(['/authentication/login']);
-          return throwError(() => refreshErr);
+          // Unblock any concurrent requests waiting on the subject.
+          refreshDone$.next('');
+          const reason = refreshErr.error?.error === 'clinic_inactive' ? 'clinic_inactive' : null;
+          router.navigate(['/authentication/login'], reason ? { queryParams: { reason } } : {});
+          return EMPTY;
         }),
         finalize(() => { isRefreshing = false; })
       );

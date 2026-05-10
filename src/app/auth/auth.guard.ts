@@ -12,3 +12,15 @@ export const authGuard: CanActivateFn = () => {
 
   return router.createUrlTree(['/authentication/login']);
 };
+
+/** Prevents authenticated users from reaching public auth pages (login, register, etc.) */
+export const guestGuard: CanActivateFn = () => {
+  const authStorage = inject(AuthStorageService);
+  const router = inject(Router);
+
+  if (authStorage.isAuthenticated()) {
+    return router.createUrlTree(['/schedule']);
+  }
+
+  return true;
+};
