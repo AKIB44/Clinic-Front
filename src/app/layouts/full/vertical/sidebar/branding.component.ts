@@ -11,7 +11,7 @@ import { CoreService } from 'src/app/services/core.service';
       @if(options.theme === 'light') {
       <a href="/">
         <img
-          src="./assets/images/logos/dflogo.png"
+          src="./assets/images/logos/df-logo.jpg"
           class="align-middle m-2"
           alt="logo"
         />
@@ -19,7 +19,7 @@ import { CoreService } from 'src/app/services/core.service';
       } @if(options.theme === 'dark') {
       <a href="/">
         <img
-          src="./assets/images/logos/dflogo.png"
+          src="./assets/images/logos/df-logo.jpg"
           class="align-middle m-2"
           alt="logo"
         />

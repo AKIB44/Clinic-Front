@@ -6,9 +6,9 @@ import { FormsModule } from '@angular/forms';
 import { MaterialModule } from '../../material.module';
 import { TablerIconsModule } from 'angular-tabler-icons';
 import { MatDialog, MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
-import { Router } from '@angular/router';
+import { Router, NavigationEnd } from '@angular/router';
 import { interval, Subject, forkJoin, merge, of } from 'rxjs';
-import { map, switchMap, takeUntil } from 'rxjs/operators';
+import { map, switchMap, takeUntil, filter } from 'rxjs/operators';
 import { format, addDays, subDays, isToday, parseISO } from 'date-fns';
 import { AppointmentsService, Appointment, AppointmentStatus, Slot } from '../../services/appointments.service';
 import { ClinicServicesService } from '../../services/clinic-services.service';
@@ -629,6 +629,7 @@ export class ScheduleComponent implements OnInit, OnDestroy {
   private svcSvc     = inject(ClinicServicesService);
   private chairsSvc  = inject(ChairsService);
   private authSvc    = inject(AuthService);
+  private router     = inject(Router);
   private dialog     = inject(MatDialog);
   private cdr        = inject(ChangeDetectorRef);
 
@@ -669,6 +670,7 @@ export class ScheduleComponent implements OnInit, OnDestroy {
     }
     this.loadMeta();
     this.startPolling();
+    this.watchServiceChanges();
   }
 
   ngOnDestroy() {
@@ -702,6 +704,22 @@ export class ScheduleComponent implements OnInit, OnDestroy {
         this.cdr.markForCheck();
       },
     });
+  }
+
+  // ── Service column sync ───────────────────────────────────────────────────
+  // Reloads columns (1) every 5 min silently and (2) whenever the user
+  // navigates back to /schedule from anywhere (e.g. after adding a service).
+
+  private watchServiceChanges() {
+    // Silent 5-minute refresh
+    interval(300_000).pipe(takeUntil(this.destroy$)).subscribe(() => this.loadMeta());
+
+    // Instant reload on route re-activation
+    this.router.events.pipe(
+      filter(e => e instanceof NavigationEnd),
+      filter(e => (e as NavigationEnd).urlAfterRedirects === '/schedule'),
+      takeUntil(this.destroy$),
+    ).subscribe(() => this.loadMeta());
   }
 
   // ── Date helpers ──────────────────────────────────────────────────────────

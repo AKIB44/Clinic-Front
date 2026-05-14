@@ -1,8 +1,8 @@
 <div class="master-page">
   <div class="page-header">
     <div>
-      <h1 class="page-title">Dental Services</h1>
-      <p class="page-subtitle">Configure procedures offered by your clinic</p>
+      <h1 class="page-title">{{ pageTitle }}</h1>
+      <p class="page-subtitle">{{ pageSubtitle }}</p>
     </div>
     <button mat-flat-button color="primary" (click)="openDialog()">
       <i-tabler name="plus" size="18"></i-tabler>
@@ -45,16 +45,41 @@
           </td>
         </ng-container>
 
+        <!-- Doctor column — admin only -->
+        <ng-container matColumnDef="doctor">
+          <th mat-header-cell *matHeaderCellDef>Doctor</th>
+          <td mat-cell *matCellDef="let s">
+            @if (s.doctor_name) {
+              <span class="doctor-chip">
+                <i-tabler name="user-circle" size="13"></i-tabler>
+                {{ s.doctor_name }}
+              </span>
+            } @else {
+              <span class="cell-muted">Clinic-wide</span>
+            }
+          </td>
+        </ng-container>
+
         <ng-container matColumnDef="actions">
           <th mat-header-cell *matHeaderCellDef></th>
           <td mat-cell *matCellDef="let s">
             <div class="action-row">
-              <button mat-icon-button matTooltip="Edit" (click)="openDialog(s)">
-                <i-tabler name="pencil" size="16"></i-tabler>
-              </button>
-              <button mat-icon-button matTooltip="Delete" color="warn" (click)="delete(s)">
-                <i-tabler name="trash" size="16"></i-tabler>
-              </button>
+              @if (canEdit(s)) {
+                <button mat-icon-button matTooltip="Edit" (click)="openDialog(s)">
+                  <i-tabler name="pencil" size="16"></i-tabler>
+                </button>
+                <button mat-icon-button
+                  [matTooltip]="s.is_active ? 'Deactivate' : 'Activate'"
+                  (click)="toggle(s)">
+                  <i-tabler [name]="s.is_active ? 'toggle-right' : 'toggle-left'" size="18"
+                    [style.color]="s.is_active ? '#2e7d32' : '#9e9e9e'"></i-tabler>
+                </button>
+              }
+              @if (isAdmin) {
+                <button mat-icon-button matTooltip="Delete" color="warn" (click)="delete(s)">
+                  <i-tabler name="trash" size="16"></i-tabler>
+                </button>
+              }
             </div>
           </td>
         </ng-container>
@@ -62,7 +87,9 @@
         <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
         <tr mat-row *matRowDef="let row; columns: displayedColumns;"></tr>
         <tr class="mat-row" *matNoDataRow>
-          <td class="mat-cell empty-row" [attr.colspan]="displayedColumns.length">No services configured.</td>
+          <td class="mat-cell empty-row" [attr.colspan]="displayedColumns.length">
+            {{ isAdmin ? 'No services configured.' : 'You have not added any services yet.' }}
+          </td>
         </tr>
       </table>
     </div>

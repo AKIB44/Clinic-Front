@@ -22,6 +22,8 @@ export interface ClinicService {
   price: number;
   is_active: boolean;
   description?: string;
+  doctor_id?: string | null;
+  doctor_name?: string | null;
 }
 
 export interface Chair {

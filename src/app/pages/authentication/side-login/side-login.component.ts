@@ -12,18 +12,19 @@ import { CommonModule } from '@angular/common';
 import { finalize } from 'rxjs';
 import { AuthService } from 'src/app/auth/auth.service';
 import { isMfaChallenge, LoginResponse } from 'src/app/auth/auth.models';
+import { AuroraBgComponent } from '../aurora-bg/aurora-bg.component';
 
 @Component({
   selector: 'app-side-login',
   standalone: true,
-  imports: [RouterModule, CommonModule, MaterialModule, FormsModule, ReactiveFormsModule],
+  imports: [RouterModule, CommonModule, MaterialModule, FormsModule, ReactiveFormsModule, AuroraBgComponent],
   templateUrl: './side-login.component.html',
   styles: [`
     /* ── Clinic inactive banner ── */
     .clinic-inactive-banner {
       display: flex; align-items: flex-start; gap: 12px;
       background: #fff3cd; border: 1px solid #ffc107;
-      border-radius: 10px; padding: 14px 16px; color: #664d03;
+      border-radius: 10px; padding: 14px 16px; color: #664d03; margin-bottom: 16px;
     }
     .banner-icon  { font-size: 20px; flex-shrink: 0; margin-top: 1px; }
     .banner-title { font-weight: 700; font-size: 14px; margin-bottom: 4px; }
@@ -32,63 +33,36 @@ import { isMfaChallenge, LoginResponse } from 'src/app/auth/auth.models';
     /* ── MFA card ── */
     .mfa-box {
       background: #f0f7ff; border: 1px solid #bbdefb;
-      border-radius: 16px; padding: 28px 20px 24px; margin-top: 20px;
+      border-radius: 16px; padding: 28px 20px 24px;
     }
     .mfa-icon  { font-size: 36px; text-align: center; display: block; margin-bottom: 8px; }
     .mfa-title { font-size: 1.05rem; font-weight: 700; color: #1565c0; margin-bottom: 4px; }
     .mfa-sub   { font-size: .82rem; color: #546e7a; margin-bottom: 22px; line-height: 1.5; }
+    .mfa-actions { display: flex; flex-direction: column; gap: 8px; }
 
-    /* ── OTP input row ── */
+    /* ── OTP boxes ── */
     .otp-row {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 8px;
-      margin-bottom: 20px;
+      display: flex; align-items: center; justify-content: center;
+      gap: 8px; margin-bottom: 20px;
     }
-
     .otp-box {
-      width: 48px;
-      height: 56px;
-      border: 2px solid #b0bec5;
-      border-radius: 10px;
-      background: #fff;
-      font-size: 1.5rem;
-      font-weight: 700;
-      color: #1565c0;
-      text-align: center;
-      caret-color: transparent;
-      outline: none;
+      width: 48px; height: 56px;
+      border: 2px solid #b0bec5; border-radius: 10px;
+      background: #fff; font-size: 1.5rem; font-weight: 700; color: #1565c0;
+      text-align: center; caret-color: transparent; outline: none;
       transition: border-color 0.18s, box-shadow 0.18s, background 0.18s;
       -moz-appearance: textfield;
     }
     .otp-box::-webkit-outer-spin-button,
     .otp-box::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
-
     .otp-box:focus {
-      border-color: #1976d2;
-      box-shadow: 0 0 0 3px rgba(25, 118, 210, 0.15);
-      background: #e3f2fd;
+      border-color: #1976d2; box-shadow: 0 0 0 3px rgba(25,118,210,.15); background: #e3f2fd;
     }
-
-    .otp-box.otp-filled {
-      border-color: #1976d2;
-      background: #e8f5ff;
+    .otp-box.otp-filled { border-color: #1976d2; background: #e8f5ff; }
+    .otp-box.otp-error  {
+      border-color: #e53935; background: #fff5f5; animation: otp-shake 0.35s ease;
     }
-
-    .otp-box.otp-error {
-      border-color: #e53935;
-      background: #fff5f5;
-      animation: otp-shake 0.35s ease;
-    }
-
-    .otp-separator {
-      font-size: 1.4rem;
-      color: #90a4ae;
-      font-weight: 300;
-      user-select: none;
-      flex-shrink: 0;
-    }
+    .otp-separator { font-size: 1.4rem; color: #90a4ae; user-select: none; flex-shrink: 0; }
 
     @keyframes otp-shake {
       0%, 100% { transform: translateX(0); }
@@ -96,18 +70,7 @@ import { isMfaChallenge, LoginResponse } from 'src/app/auth/auth.models';
       75%       { transform: translateX(4px); }
     }
 
-    /* ── Verify button spinner row ── */
-    .mfa-actions {
-      display: flex;
-      flex-direction: column;
-      gap: 8px;
-    }
-
-    .btn-spinner-row {
-      display: inline-flex;
-      align-items: center;
-      gap: 8px;
-    }
+    .btn-spinner-row { display: inline-flex; align-items: center; gap: 8px; }
   `],
 })
 export class AppSideLoginComponent implements OnInit {

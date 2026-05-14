@@ -38,7 +38,8 @@ export class AppBreadcrumbComponent {
       // tslint:disable-next-line - Disables all
       .subscribe((event) => {
         // tslint:disable-next-line - Disables all
-        this.titleService.setTitle(event['title'] + ' - Angular 18');
+        const routeTitle = event['title'];
+        this.titleService.setTitle(routeTitle ? `${routeTitle} — DentaFlow` : 'DentaFlow');
         this.pageInfo = event;
       });
   }

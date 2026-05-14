@@ -45,13 +45,13 @@ export const navItems: NavItem[] = [
     route: '/org-master/accounts',
     permissions: ['org.manage'],
   },
-  {
-    displayName: 'Security (MFA)',
-    iconName: 'shield-lock',
-    bgcolor: 'accent',
-    route: '/authentication/mfa-setup',
-    permissions: ['org.manage'],
-  },
+  // {
+  //   displayName: 'Security (MFA)',
+  //   iconName: 'shield-lock',
+  //   bgcolor: 'accent',
+  //   route: '/authentication/mfa-setup',
+  //   permissions: ['org.manage'],
+  // },
 
   // ── Operations ─────────────────────────────────────────────────────────────
   { navCap: 'Operations' },
@@ -61,6 +61,13 @@ export const navItems: NavItem[] = [
     bgcolor: 'success',
     route: '/rx/new',
     permissions: ['prescription.create'],
+  },
+  {
+    displayName: 'My Services',
+    iconName: 'stethoscope',
+    bgcolor: 'primary',
+    route: '/my-services',
+    permissions: ['service.manage_own'],
   },
   // ── Master — permission-gated (roles kept as fallback during migration) ─────
   {
@@ -86,7 +93,7 @@ export const navItems: NavItem[] = [
   },
   {
     displayName: 'Services',
-    iconName: 'tooth',
+    iconName: 'tool',
     bgcolor: 'success',
     route: '/master/services',
     roles: ['admin'],

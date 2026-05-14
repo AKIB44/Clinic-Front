@@ -1,197 +1,178 @@
-<div class="blank-layout-container justify-content-center">
-  <div class="auth-wrapper">
-    <div class="position-relative shaper-wrapper">
-      <div class="w-100 position-relative rounded bg-white auth-card">
-        <div class="auth-body">
-          <div class="m-t-20 d-flex">
-            <img
-              src="./assets/images/logos/dflogo.png"
-              class="align-middle m-2"
-              alt="DentaFlow"
-              style="max-height: 48px; width: auto;"
-            />
-          </div>
+<div class="df-login-page">
 
-          <div class="row">
-            <div class="col-lg-6">
-              <div class="align-items-center justify-content-center d-none d-lg-flex">
-                <img
-                  src="/assets/images/backgrounds/appbg1.png"
-                  alt="login"
-                  style="max-width: 500px"
-                />
-              </div>
-            </div>
-            <div class="col-lg-6">
-              <div class="d-flex align-items-start align-items-lg-center justify-content-center">
-                <div class="row justify-content-center w-100">
-                  <div class="col-lg-11">
-                    <h4 class="f-w-700 f-s-30 m-0 m-t-20 lh-base">
-                      Welcome to DentaFlow
-                    </h4>
-                    <span class="f-s-14 d-block mat-body-1 m-t-8">
-                      Sharayu Dental Clinic — Staff Portal
-                    </span>
+  <!-- ── Left: branded panel ─────────────────────────────────────────────── -->
+  <div class="df-login-left">
+    <app-aurora-bg></app-aurora-bg>
 
-                    <!-- Clinic deactivated banner -->
-                    @if (clinicInactive) {
-                      <div class="clinic-inactive-banner m-t-20">
-                        <span class="banner-icon">🔒</span>
-                        <div>
-                          <div class="banner-title">Clinic access suspended</div>
-                          <div class="banner-body">This clinic has been deactivated. Please contact support to reactivate access.</div>
-                        </div>
-                      </div>
-                    }
+    <div class="df-left-content">
+      <!-- Hero illustration -->
+      <div class="df-hero-wrap">
+        <img src="/assets/images/backgrounds/appbg1.png" alt="DentaFlow" class="df-hero-img" />
+        <div class="df-hero-glow"></div>
+      </div>
 
-                    <!-- ── MFA challenge step ──────────────────────────────── -->
-                    @if (mfaStep) {
-                      <div class="mfa-box">
-                        <span class="mfa-icon">🔐</span>
-                        <div class="mfa-title">Two-Factor Authentication</div>
-                        <div class="mfa-sub">
-                          Enter the 6-digit code from your authenticator app.
-                        </div>
+      <!-- Tagline -->
+      <div class="df-tagline">
+        <h2 class="df-tagline-title">Smart Dental Practice</h2>
+        <p class="df-tagline-sub">Schedule · Patients · Prescriptions · Multi-clinic</p>
+      </div>
 
-                        <!-- OTP boxes -->
-                        <div class="otp-row" (paste)="onPaste($event)">
-                          @for (digit of mfaDigits; track $index) {
-                            <ng-container>
-                              @if ($index === 3) {
-                                <span class="otp-separator">—</span>
-                              }
-                              <input
-                                #otpInput
-                                type="text"
-                                inputmode="numeric"
-                                maxlength="2"
-                                autocomplete="one-time-code"
-                                [value]="digit"
-                                [class.otp-filled]="digit !== ''"
-                                [class.otp-error]="mfaShake"
-                                class="otp-box"
-                                (input)="onDigitInput($index, $event)"
-                                (keydown)="onDigitKeydown($index, $event)"
-                                (focus)="onDigitFocus($event)"
-                              />
-                            </ng-container>
-                          }
-                        </div>
+      <!-- Feature chips -->
+      <div class="df-chips">
+        <span class="df-chip"><span class="df-chip-dot"></span>Secure &amp; HIPAA-ready</span>
+        <span class="df-chip"><span class="df-chip-dot"></span>Multi-clinic</span>
+        <span class="df-chip"><span class="df-chip-dot"></span>Real-time</span>
+      </div>
+    </div>
+  </div>
 
-                        @if (mfaError) {
-                          <div class="text-error m-b-16 f-s-13 text-center">{{ mfaError }}</div>
-                        }
+  <!-- ── Right: form panel ───────────────────────────────────────────────── -->
+  <div class="df-login-right">
+    <div class="df-form-container">
 
-                        <div class="mfa-actions">
-                          <button mat-flat-button color="primary" class="w-100"
-                            (click)="submitMfa()"
-                            [disabled]="!isMfaCodeValid() || mfaSubmitting">
-                            <span class="btn-spinner-row">
-                              @if (mfaSubmitting) {
-                                <mat-spinner diameter="16"></mat-spinner>
-                              }
-                              {{ mfaSubmitting ? 'Verifying…' : 'Verify Code' }}
-                            </span>
-                          </button>
+      <!-- Logo -->
+      <div class="df-right-logo">
+        <img src="./assets/images/logos/df-logo.jpg" alt="DentaFlow" class="df-right-logo-img" />
+      </div>
 
-                          <button mat-button class="w-100" (click)="backToPassword()">
-                            Back to login
-                          </button>
-                        </div>
-                      </div>
-                    }
+      <!-- Top accent bar -->
+      <div class="df-accent-bar"></div>
 
-                    <!-- Password login -->
-                    @if (!mfaStep) {
-                    <form class="m-t-30" [formGroup]="form" (ngSubmit)="submit()">
-                      <mat-label class="mat-subtitle-2 f-s-14 f-w-600 m-b-12 d-block">
-                        Email
-                      </mat-label>
-                      <mat-form-field appearance="outline" class="w-100" color="primary">
-                        <input
-                          matInput
-                          type="email"
-                          formControlName="email"
-                          autocomplete="email"
-                        />
-                        @if (f['email'].touched && f['email'].invalid) {
-                        <mat-hint class="m-b-16 error-msg">
-                          @if (f['email'].errors?.['required']) {
-                            <div class="text-error">Email is required.</div>
-                          }
-                          @if (f['email'].errors?.['email']) {
-                            <div class="text-error">Enter a valid email address.</div>
-                          }
-                        </mat-hint>
-                        }
-                      </mat-form-field>
+      <h2 class="df-form-title">Welcome back</h2>
+      <p class="df-form-sub">Sign in to your DentaFlow account</p>
 
-                      <mat-label class="mat-subtitle-2 f-s-14 f-w-600 m-b-12 d-block">
-                        Password
-                      </mat-label>
-                      <mat-form-field appearance="outline" class="w-100" color="primary">
-                        <input
-                          matInput
-                          [type]="hidePassword ? 'password' : 'text'"
-                          formControlName="password"
-                          autocomplete="current-password"
-                        />
-                        <button
-                          mat-icon-button
-                          matSuffix
-                          type="button"
-                          (click)="hidePassword = !hidePassword"
-                          [attr.aria-label]="hidePassword ? 'Show password' : 'Hide password'"
-                        >
-                          <mat-icon>{{ hidePassword ? 'visibility_off' : 'visibility' }}</mat-icon>
-                        </button>
-                        @if (f['password'].touched && f['password'].invalid) {
-                        <mat-hint class="m-b-16 error-msg">
-                          @if (f['password'].errors?.['required']) {
-                            <div class="text-error">Password is required.</div>
-                          }
-                        </mat-hint>
-                        }
-                      </mat-form-field>
-
-                      @if (loginError) {
-                        <div class="text-error m-b-12 f-s-13">{{ loginError }}</div>
-                      }
-
-                      <button
-                        mat-flat-button
-                        color="primary"
-                        class="w-100 m-t-8"
-                        type="submit"
-                        [disabled]="isSubmitting"
-                      >
-                        {{ isSubmitting ? 'Signing in…' : 'Sign In' }}
-                      </button>
-                    </form>
-                    }
-
-                    @if (!mfaStep) {
-                      <div class="d-flex align-items-center m-t-24 gap-2">
-                        <mat-divider class="flex-grow-1"></mat-divider>
-                        <span class="mat-body-2 text-muted">or</span>
-                        <mat-divider class="flex-grow-1"></mat-divider>
-                      </div>
-
-                      <button
-                        mat-stroked-button
-                        class="w-100 m-t-16"
-                        [routerLink]="['/authentication/side-two-steps']"
-                      >
-                        Login with OTP
-                      </button>
-                    }
-                  </div>
-                </div>
-              </div>
-            </div>
+      <!-- Clinic deactivated banner -->
+      @if (clinicInactive) {
+        <div class="clinic-inactive-banner">
+          <span class="banner-icon">🔒</span>
+          <div>
+            <div class="banner-title">Clinic access suspended</div>
+            <div class="banner-body">This clinic has been deactivated. Please contact support.</div>
           </div>
         </div>
-      </div>
+      }
+
+      <!-- ── MFA challenge ─────────────────────────────────────────────── -->
+      @if (mfaStep) {
+        <div class="mfa-box">
+          <span class="mfa-icon">🔐</span>
+          <div class="mfa-title">Two-Factor Authentication</div>
+          <div class="mfa-sub">Enter the 6-digit code from your authenticator app.</div>
+
+          <div class="otp-row" (paste)="onPaste($event)">
+            @for (digit of mfaDigits; track $index) {
+              <ng-container>
+                @if ($index === 3) {
+                  <span class="otp-separator">—</span>
+                }
+                <input
+                  #otpInput
+                  type="text"
+                  inputmode="numeric"
+                  maxlength="2"
+                  autocomplete="one-time-code"
+                  [value]="digit"
+                  [class.otp-filled]="digit !== ''"
+                  [class.otp-error]="mfaShake"
+                  class="otp-box"
+                  (input)="onDigitInput($index, $event)"
+                  (keydown)="onDigitKeydown($index, $event)"
+                  (focus)="onDigitFocus($event)"
+                />
+              </ng-container>
+            }
+          </div>
+
+          @if (mfaError) {
+            <div class="text-error m-b-16 f-s-13 text-center">{{ mfaError }}</div>
+          }
+
+          <div class="mfa-actions">
+            <button mat-flat-button color="primary" class="w-100 df-signin-btn"
+              (click)="submitMfa()"
+              [disabled]="!isMfaCodeValid() || mfaSubmitting">
+              <span class="btn-spinner-row">
+                @if (mfaSubmitting) { <mat-spinner diameter="16"></mat-spinner> }
+                {{ mfaSubmitting ? 'Verifying…' : 'Verify Code' }}
+              </span>
+            </button>
+            <button mat-button class="w-100 m-t-8" (click)="backToPassword()">
+              ← Back to login
+            </button>
+          </div>
+        </div>
+      }
+
+      <!-- ── Password login form ────────────────────────────────────────── -->
+      @if (!mfaStep) {
+        <form class="df-form" [formGroup]="form" (ngSubmit)="submit()">
+
+          <div class="df-field-group">
+            <label class="df-label">Email address</label>
+            <mat-form-field appearance="outline" class="w-100 df-field">
+              <input matInput type="email" formControlName="email" autocomplete="email"
+                 />
+              <mat-icon matSuffix class="field-icon">mail_outline</mat-icon>
+              @if (f['email'].touched && f['email'].invalid) {
+                <mat-hint class="error-msg">
+                  @if (f['email'].errors?.['required']) { <span class="text-error">Email is required.</span> }
+                  @if (f['email'].errors?.['email'])    { <span class="text-error">Enter a valid email.</span> }
+                </mat-hint>
+              }
+            </mat-form-field>
+          </div>
+
+          <div class="df-field-group">
+            <label class="df-label">Password</label>
+            <mat-form-field appearance="outline" class="w-100 df-field">
+              <input matInput [type]="hidePassword ? 'password' : 'text'"
+                formControlName="password" autocomplete="current-password"
+                 />
+              <button mat-icon-button matSuffix type="button"
+                (click)="hidePassword = !hidePassword"
+                [attr.aria-label]="hidePassword ? 'Show password' : 'Hide password'">
+                <mat-icon>{{ hidePassword ? 'visibility_off' : 'visibility' }}</mat-icon>
+              </button>
+              @if (f['password'].touched && f['password'].invalid) {
+                <mat-hint class="error-msg">
+                  <span class="text-error">Password is required.</span>
+                </mat-hint>
+              }
+            </mat-form-field>
+          </div>
+
+          @if (loginError) {
+            <div class="df-error-alert">
+              <mat-icon style="font-size:16px;width:16px;height:16px;line-height:16px">error_outline</mat-icon>
+              {{ loginError }}
+            </div>
+          }
+
+          <button mat-flat-button color="primary" class="w-100 df-signin-btn" type="submit"
+            [disabled]="isSubmitting">
+            <span class="btn-spinner-row">
+              @if (isSubmitting) { <mat-spinner diameter="16"></mat-spinner> }
+              {{ isSubmitting ? 'Signing in…' : 'Sign In' }}
+            </span>
+          </button>
+        </form>
+
+        <div class="df-divider">
+          <span>or</span>
+        </div>
+
+        <button mat-stroked-button class="w-100 df-otp-btn"
+          [routerLink]="['/authentication/side-two-steps']">
+          <mat-icon class="m-r-6">phone_iphone</mat-icon>
+          Login with OTP
+        </button>
+      }
+
+      <!-- Footer -->
+      <p class="df-footer-note">
+        <mat-icon style="font-size:13px;width:13px;height:13px;vertical-align:middle;margin-right:3px">lock</mat-icon>
+        Secured with end-to-end encryption
+      </p>
     </div>
   </div>
 </div>

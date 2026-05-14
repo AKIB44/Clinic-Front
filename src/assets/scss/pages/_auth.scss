@@ -171,3 +171,358 @@
     min-width: 1130px;
   }
 }
+
+// ─── DentaFlow split-panel login ──────────────────────────────────────────────
+
+.df-login-page {
+  min-height: 100vh;
+  display: flex;
+  overflow: hidden;
+  background: #fff;
+}
+
+// ── Left branded panel ────────────────────────────────────────────────────────
+
+.df-login-left {
+  flex: 0 0 56%;
+  background: #000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  overflow: hidden;
+  animation: dfLeftIn 0.7s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+// WebGL fluid canvas fills .df-login-left as position:absolute background
+
+.df-left-content {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 2.5rem 3rem;
+  width: 100%;
+  max-width: 580px;
+  pointer-events: none; // let mouse events pass through to the fluid canvas
+}
+
+// Logo lives in the right panel now — left panel uses hero image as anchor
+
+.df-hero-wrap {
+  position: relative;
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  animation: dfFadeUp 0.7s 0.35s both;
+}
+
+.df-hero-img {
+  width: 100%;
+  max-width: 460px;
+  max-height: 340px;
+  object-fit: contain;
+  object-position: center;
+  border-radius: 28px;
+  -webkit-mask-image: radial-gradient(ellipse 88% 82% at 50% 46%, black 48%, transparent 100%);
+  mask-image: radial-gradient(ellipse 88% 82% at 50% 46%, black 48%, transparent 100%);
+  filter: drop-shadow(0 16px 40px rgba(21, 101, 192, 0.5));
+  animation: dfFloat 6s ease-in-out infinite;
+}
+
+.df-hero-glow {
+  position: absolute;
+  bottom: -10px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 72%;
+  height: 60px;
+  background: radial-gradient(ellipse, rgba(100, 181, 246, 0.35) 0%, transparent 70%);
+  border-radius: 50%;
+  filter: blur(22px);
+  animation: dfFloat 6s ease-in-out infinite reverse;
+}
+
+// Ring halo behind the image
+.df-hero-wrap::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 72%;
+  height: 72%;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(21, 101, 192, 0.22) 0%, transparent 70%);
+  filter: blur(32px);
+  pointer-events: none;
+  z-index: 0;
+}
+
+.df-hero-img { position: relative; z-index: 1; }
+
+.df-tagline {
+  text-align: center;
+  margin-top: 2rem;
+  animation: dfFadeUp 0.7s 0.5s both;
+
+  .df-tagline-title {
+    font-size: clamp(1.25rem, 2.2vw, 1.6rem);
+    font-weight: 700;
+    color: #fff;
+    margin: 0 0 6px;
+    letter-spacing: -0.01em;
+    line-height: 1.25;
+  }
+
+  .df-tagline-sub {
+    font-size: .82rem;
+    color: rgba(186, 220, 255, 0.75);
+    margin: 0;
+    letter-spacing: 0.02em;
+  }
+}
+
+.df-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  justify-content: center;
+  margin-top: 1.5rem;
+  animation: dfFadeUp 0.7s 0.65s both;
+}
+
+.df-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: .72rem;
+  font-weight: 600;
+  color: rgba(255,255,255,0.82);
+  background: rgba(255,255,255,0.1);
+  border: 1px solid rgba(255,255,255,0.18);
+  border-radius: 20px;
+  padding: 4px 12px;
+  letter-spacing: 0.03em;
+  backdrop-filter: blur(8px);
+
+  .df-chip-dot {
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    background: #64b5f6;
+    flex-shrink: 0;
+    box-shadow: 0 0 6px rgba(100, 181, 246, 0.8);
+  }
+}
+
+// ── Right form panel ──────────────────────────────────────────────────────────
+
+.df-login-right {
+  flex: 1;
+  background: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem 1.5rem;
+  animation: dfRightIn 0.7s cubic-bezier(0.22, 1, 0.36, 1) 0.1s both;
+}
+
+.df-form-container {
+  width: 100%;
+  max-width: 400px;
+  position: relative;
+}
+
+// ── Right-panel logo ──────────────────────────────────────────────────────────
+
+.df-right-logo {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  margin-bottom: 2rem;
+  padding: 8px 16px 4px 8px;
+  animation: dfFadeUp 0.5s 0.2s both;
+}
+
+.df-right-logo-img {
+  height: clamp(52px, 8vw, 72px);
+  max-width: min(300px, 92vw);
+  width: auto;
+  object-fit: contain;
+  display: block;
+}
+
+.df-accent-bar {
+  height: 4px;
+  width: 48px;
+  background: linear-gradient(90deg, #1565c0, #42a5f5);
+  border-radius: 4px;
+  margin-bottom: 1.8rem;
+  animation: dfAccentIn 0.5s 0.4s both;
+}
+
+.df-form-title {
+  font-size: 1.75rem;
+  font-weight: 700;
+  color: #0d1b2a;
+  margin: 0 0 6px;
+  letter-spacing: -0.02em;
+  animation: dfFadeUp 0.5s 0.3s both;
+}
+
+.df-form-sub {
+  font-size: .88rem;
+  color: #64748b;
+  margin: 0 0 1.75rem;
+  animation: dfFadeUp 0.5s 0.35s both;
+}
+
+.df-form {
+  animation: dfFadeUp 0.5s 0.4s both;
+}
+
+.df-field-group {
+  margin-bottom: 4px;
+}
+
+.df-label {
+  display: block;
+  font-size: .78rem;
+  font-weight: 600;
+  color: #334155;
+  margin-bottom: 4px;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+}
+
+.df-field {
+  .field-icon { color: #94a3b8; font-size: 18px; }
+
+  // Focused state — blue border glow
+  &.mat-focused {
+    .mdc-notched-outline__leading,
+    .mdc-notched-outline__notch,
+    .mdc-notched-outline__trailing {
+      border-color: #1976d2 !important;
+      box-shadow: 0 0 0 3px rgba(25, 118, 210, 0.1);
+    }
+  }
+}
+
+.df-error-alert {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: #fff5f5;
+  border: 1px solid #fecaca;
+  border-radius: 8px;
+  padding: 10px 14px;
+  color: #c62828;
+  font-size: .82rem;
+  font-weight: 500;
+  margin-bottom: 14px;
+}
+
+.df-signin-btn {
+  height: 48px !important;
+  border-radius: 10px !important;
+  font-size: .95rem !important;
+  font-weight: 600 !important;
+  letter-spacing: 0.02em;
+  background: linear-gradient(135deg, #1565c0 0%, #1976d2 100%) !important;
+  box-shadow: 0 4px 16px rgba(21, 101, 192, 0.35) !important;
+  transition: box-shadow 0.2s, transform 0.15s !important;
+  margin-top: 8px;
+
+  &:hover:not([disabled]) {
+    box-shadow: 0 6px 24px rgba(21, 101, 192, 0.45) !important;
+    transform: translateY(-1px);
+  }
+
+  &:active:not([disabled]) { transform: translateY(0); }
+
+  .btn-spinner-row {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+  }
+}
+
+.df-divider {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 20px 0;
+  color: #94a3b8;
+  font-size: .8rem;
+  font-weight: 500;
+
+  &::before, &::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: #e2e8f0;
+  }
+}
+
+.df-otp-btn {
+  height: 44px !important;
+  border-radius: 10px !important;
+  border-color: #cbd5e1 !important;
+  color: #475569 !important;
+  font-weight: 500 !important;
+  transition: border-color 0.2s, background 0.2s !important;
+
+  &:hover { border-color: #1976d2 !important; color: #1976d2 !important; background: #f0f7ff !important; }
+}
+
+.df-footer-note {
+  text-align: center;
+  font-size: .72rem;
+  color: #94a3b8;
+  margin-top: 24px;
+  margin-bottom: 0;
+}
+
+// ── Keyframes ─────────────────────────────────────────────────────────────────
+
+@keyframes dfLeftIn {
+  from { opacity: 0; transform: translateX(-40px); }
+  to   { opacity: 1; transform: translateX(0); }
+}
+
+@keyframes dfRightIn {
+  from { opacity: 0; transform: translateX(30px); }
+  to   { opacity: 1; transform: translateX(0); }
+}
+
+@keyframes dfFadeUp {
+  from { opacity: 0; transform: translateY(20px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes dfAccentIn {
+  from { width: 0; opacity: 0; }
+  to   { width: 48px; opacity: 1; }
+}
+
+@keyframes dfFloat {
+  0%, 100% { transform: translateY(0); }
+  50%       { transform: translateY(-12px); }
+}
+
+
+// ── Responsive ────────────────────────────────────────────────────────────────
+
+@media (max-width: 991px) {
+  .df-login-left { display: none; }
+  .df-login-right { padding: 2.5rem 1.5rem; }
+  .df-form-container { max-width: 440px; }
+}
+
+@media (max-width: 480px) {
+  .df-login-right { padding: 1.5rem 1rem; }
+  .df-form-container { max-width: 100%; }
+}

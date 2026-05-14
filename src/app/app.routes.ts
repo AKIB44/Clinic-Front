@@ -62,6 +62,14 @@ export const routes: Routes = [
           ),
       },
       {
+        path: 'my-services',
+        canActivate: [permissionGuard('service.manage_own')],
+        loadComponent: () =>
+          import('./pages/master/services/services.component').then(
+            (m) => m.ServicesMasterComponent
+          ),
+      },
+      {
         path: 'master',
         canActivate: [anyPermissionGuard('clinic.settings', 'staff.manage')],
         loadChildren: () =>
