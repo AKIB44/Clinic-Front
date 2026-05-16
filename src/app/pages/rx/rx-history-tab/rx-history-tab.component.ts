@@ -53,10 +53,15 @@ export class RxHistoryTabComponent implements OnInit {
   async resendWA(rxId: number): Promise<void> {
     this.resendingId.set(rxId);
     try {
+      const { url } = await this.rxSvc.getPdfUrl(rxId);
+      if (!url) { this.errorMsg.set('PDF not generated yet. Generate PDF first.'); return; }
       await this.rxSvc.sendOnWA(rxId);
       await this.load();
+      const rx = this.prescriptions().find(r => r.id === rxId);
+      const msg = `Your prescription${rx ? ` (${rx.prescription_no})` : ''} is ready. View / download: ${url}`;
+      window.open(`https://wa.me/?text=${encodeURIComponent(msg)}`, '_blank');
     } catch {
-      this.errorMsg.set('WhatsApp resend failed. Please try again.');
+      this.errorMsg.set('Could not share prescription. Please try again.');
     } finally {
       this.resendingId.set(null);
     }

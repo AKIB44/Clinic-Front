@@ -135,7 +135,7 @@
         {{ generating() ? 'Generating...' : 'Generate PDF' }}
       </button>
       <button type="button" class="primary wa" [disabled]="saving() || generating() || waSent()" (click)="saveAndSendWA()">
-        {{ waSent() ? 'Sent' : 'Save and send WA' }}
+        {{ waSent() ? 'Shared ✓' : 'Save &amp; Share on WA' }}
       </button>
     </div>
 

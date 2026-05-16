@@ -7,7 +7,7 @@ import { ReactiveFormsModule, FormBuilder, Validators, FormGroup } from '@angula
 import { MaterialModule } from '../../material.module';
 import { TablerIconsModule } from 'angular-tabler-icons';
 import { HttpErrorResponse } from '@angular/common/http';
-import { addDays, format, isSunday } from 'date-fns';
+import { addDays, format } from 'date-fns';
 import { forkJoin } from 'rxjs';
 import { Router, RouterLink } from '@angular/router';
 import { trigger, transition, style, animate, query, stagger, state } from '@angular/animations';
@@ -156,8 +156,8 @@ export class BookingComponent implements OnInit, OnDestroy {
 
   // ── Dates ─────────────────────────────────────────────────────────────────
   readonly dates: DateOption[] = Array.from({ length: 14 }, (_, i) => {
-    const d = addDays(new Date(), i + 1);
-    return { iso: format(d, 'yyyy-MM-dd'), label: format(d, 'd'), shortDay: format(d, 'EEE'), disabled: isSunday(d) };
+    const d = addDays(new Date(), i);
+    return { iso: format(d, 'yyyy-MM-dd'), label: format(d, 'd'), shortDay: format(d, 'EEE'), disabled: false };
   });
 
   // ── Selection state ───────────────────────────────────────────────────────
@@ -485,7 +485,7 @@ export class BookingComponent implements OnInit, OnDestroy {
     const payload: BookingPayload = {
       service_id:     this.selectedService()!.id,
       chair_id:       this.defaultChairId!,
-      scheduled_at:   `${this.selectedDate()}T${this.selectedSlot()}:00`,
+      scheduled_at:   `${this.selectedDate()}T${this.selectedSlot()}:00+05:30`,
       booking_source: 'internal',
       patient:        this.patientData!,
       intake_data:    this.intakePayload,

@@ -239,7 +239,7 @@ export class RescheduleDialog {
     this.updating = true;
     this.error    = '';
     const dateStr = format(this.selectedDate, 'yyyy-MM-dd');
-    this.apptSvc.reschedule(this.data.id, { scheduled_at: `${dateStr}T${this.selectedSlot}:00` }).subscribe({
+    this.apptSvc.reschedule(this.data.id, { scheduled_at: `${dateStr}T${this.selectedSlot}:00+05:30` }).subscribe({
       next: (res) => {
         const appt = appointmentFromPatchResponse(res);
         this.dialogRef.close(
@@ -654,6 +654,10 @@ export class ScheduleComponent implements OnInit, OnDestroy {
   /** Filter driven by summary-strip pills (Total / Active / Done / Pending). */
   statFilter: ScheduleStatFilter = 'all';
 
+  /** True once the user explicitly clicks any filter pill.
+   *  Resets on every date change so the default board only shows active columns. */
+  pillSelected = false;
+
   private destroy$ = new Subject<void>();
 
   ngOnInit() {
@@ -731,18 +735,21 @@ export class ScheduleComponent implements OnInit, OnDestroy {
 
   prevDay() {
     this.statFilter = 'all';
+    this.pillSelected = false;
     this.selectedDate = subDays(this.selectedDate, 1);
     this.triggerReload();
   }
 
   nextDay() {
     this.statFilter = 'all';
+    this.pillSelected = false;
     this.selectedDate = addDays(this.selectedDate, 1);
     this.triggerReload();
   }
 
   goToday() {
     this.statFilter = 'all';
+    this.pillSelected = false;
     this.selectedDate = new Date();
     this.triggerReload();
   }
@@ -750,6 +757,7 @@ export class ScheduleComponent implements OnInit, OnDestroy {
   onDatePick(value: Date | null) {
     if (value) {
       this.statFilter = 'all';
+      this.pillSelected = false;
       this.selectedDate = value;
       this.triggerReload();
     }
@@ -757,6 +765,7 @@ export class ScheduleComponent implements OnInit, OnDestroy {
 
   setStatFilter(f: ScheduleStatFilter) {
     this.statFilter = f;
+    this.pillSelected = true;
     this.cdr.markForCheck();
   }
 
@@ -852,6 +861,53 @@ export class ScheduleComponent implements OnInit, OnDestroy {
       default:
         return this.boardEligible;
     }
+  }
+
+  /** Columns sorted by total day bookings (most → least).
+   *  Visible set is scoped to the active pill filter so each column always has
+   *  relevant cards. Without a pill the default shows only services with
+   *  upcoming / in-progress work (booked | confirmed | in_progress). */
+  get sortedColumns(): ServiceColumn[] {
+    const counts = new Map<string, number>();
+    for (const a of this.filtered) {
+      counts.set(a.service_id, (counts.get(a.service_id) ?? 0) + 1);
+    }
+
+    let relevantIds: Set<string>;
+    if (!this.pillSelected) {
+      relevantIds = new Set(
+        this.filtered
+          .filter(a => a.status === 'booked' || a.status === 'confirmed' || a.status === 'in_progress')
+          .map(a => a.service_id),
+      );
+    } else {
+      switch (this.statFilter) {
+        case 'active':
+          relevantIds = new Set(
+            this.filtered
+              .filter(a => a.status === 'in_progress' || a.status === 'confirmed')
+              .map(a => a.service_id),
+          );
+          break;
+        case 'done':
+          relevantIds = new Set(
+            this.filtered.filter(a => a.status === 'done').map(a => a.service_id),
+          );
+          break;
+        case 'pending':
+          relevantIds = new Set(
+            this.filtered.filter(a => a.status === 'booked').map(a => a.service_id),
+          );
+          break;
+        default: // 'all' — Total pill: any non-cancelled appointment
+          relevantIds = new Set(this.filtered.map(a => a.service_id));
+          break;
+      }
+    }
+
+    return [...this.columns]
+      .filter(c => relevantIds.has(c.serviceId))
+      .sort((a, b) => (counts.get(b.serviceId) ?? 0) - (counts.get(a.serviceId) ?? 0));
   }
 
   columnCards(serviceId: string): Appointment[] {

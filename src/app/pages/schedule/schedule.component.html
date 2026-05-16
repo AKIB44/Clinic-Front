@@ -110,7 +110,7 @@
     <div class="board-scroll">
       <div class="board-inner">
 
-        @for (col of columns; track trackByServiceId($index, col)) {
+        @for (col of sortedColumns; track trackByServiceId($index, col)) {
           <div class="kanban-col">
 
             <!-- Column header -->

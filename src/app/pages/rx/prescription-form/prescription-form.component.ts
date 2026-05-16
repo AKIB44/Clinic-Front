@@ -206,14 +206,19 @@ export class PrescriptionFormComponent implements OnInit {
   }
 
   async saveAndSendWA(): Promise<void> {
-    await this.generatePdf();
+    // Only generate PDF if not already done
+    if (!this.pdfUrl()) {
+      await this.generatePdf();
+    }
     if (!this.pdfUrl() || !this.savedId()) return;
     try {
       await this.rxSvc.sendOnWA(this.savedId()!);
       this.waSent.set(true);
-      this.successMsg.set(`Prescription ${this.savedRxNo()} sent to patient on WhatsApp.`);
+      this.successMsg.set(`Prescription ${this.savedRxNo()} saved. Opening WhatsApp…`);
+      const msg = `Your prescription (${this.savedRxNo()}) is ready. View / download: ${this.pdfUrl()}`;
+      window.open(`https://wa.me/?text=${encodeURIComponent(msg)}`, '_blank');
     } catch {
-      this.errorMsg.set('WhatsApp send failed. Try again using Resend WA button.');
+      this.errorMsg.set('Could not complete. Please try again.');
     }
   }
 
