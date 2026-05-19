@@ -1,5 +1,5 @@
 export const authApiConfig = {
-  baseUrl: 'http://localhost:3000/v1',
+  baseUrl: '/v1',
   loginEndpoint: '/auth/login',
   /**
    * Optional clinic UUID for `/booking` when `?clinic=` is omitted.
