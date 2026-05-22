@@ -132,7 +132,10 @@ export class AppSideLoginComponent implements OnInit {
             return;
           }
           this.authService.finaliseLogin(res as LoginResponse)
-            .then(() => this.router.navigate([this.authService.getRedirectPath()]));
+            .then(() => {
+              sessionStorage.removeItem('df_greeting_shown');
+              this.router.navigate([this.authService.getRedirectPath()]);
+            });
         },
         error: (err: HttpErrorResponse) => {
           if (err.error?.error === 'clinic_inactive') {
@@ -238,7 +241,10 @@ export class AppSideLoginComponent implements OnInit {
     this.authService.mfaChallenge(this.mfaToken, code)
       .pipe(finalize(() => (this.mfaSubmitting = false)))
       .subscribe({
-        next: () => this.router.navigate([this.authService.getRedirectPath()]),
+        next: () => {
+          sessionStorage.removeItem('df_greeting_shown');
+          this.router.navigate([this.authService.getRedirectPath()]);
+        },
         error: (err: HttpErrorResponse) => {
           this.triggerShake();
           if (err.status === 401) {

@@ -50,7 +50,9 @@ export class HeaderComponent {
   }
 
   get loggedInUserRole(): string {
-    const role = this.authService.getUser()?.role;
+    const user = this.authService.getUser();
+    if (user?.is_org_admin) return 'Org Admin';
+    const role = user?.role;
     if (!role) return 'User';
     if (role === 'admin') return 'Admin';
     if (role === 'receptionist') return 'Receptionist';

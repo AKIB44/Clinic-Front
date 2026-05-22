@@ -17,6 +17,7 @@ export interface AuthUser {
   last_name?: string;
   username?: string;
   role?: AppRole;
+  is_org_admin?: boolean;
   // Legacy single-clinic field (kept for backward compat)
   clinic_id?: string;
   // RBAC fields
