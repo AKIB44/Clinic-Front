@@ -47,4 +47,8 @@ export class OrgHrService {
   ): Observable<{ ok: boolean }> {
     return this.http.patch<{ ok: boolean }>(`${this.base}/staff/${id}`, payload);
   }
+
+  resetPassword(id: string, newPassword: string): Observable<{ ok: boolean }> {
+    return this.http.post<{ ok: boolean }>(`${this.base}/staff/${id}/reset-password`, { new_password: newPassword });
+  }
 }

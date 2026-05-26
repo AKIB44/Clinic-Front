@@ -17,5 +17,10 @@ export const OrgMasterRoutes: Routes = [
     loadComponent: () => import('./roles/roles.component').then(m => m.RolesComponent),
     canActivate: [permissionGuard('org.manage')],
   },
+  {
+    path: 'release-notes',
+    loadComponent: () => import('./release-notes/release-notes.component').then(m => m.ReleaseNotesComponent),
+    canActivate: [permissionGuard('org.manage')],
+  },
   { path: '', redirectTo: 'hr', pathMatch: 'full' },
 ];

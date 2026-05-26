@@ -1,0 +1,137 @@
+<div class="rna-page">
+
+  <!-- Header -->
+  <div class="rna-header">
+    <div>
+      <h1 class="rna-title">Release Notes</h1>
+      <p class="rna-sub">Manage what users see upon login after each deployment</p>
+    </div>
+    @if (!showForm) {
+      <button mat-flat-button color="primary" (click)="openCreate()">
+        <i-tabler name="plus" size="16"></i-tabler>
+        New Release Note
+      </button>
+    }
+  </div>
+
+  <!-- Form -->
+  @if (showForm) {
+    <div class="rna-form-card">
+      <div class="rna-form-title">
+        {{ editingId ? 'Edit Release Note' : 'Create Release Note' }}
+      </div>
+      <form [formGroup]="form" class="rna-form">
+
+        <mat-form-field appearance="outline" class="rna-field-version">
+          <mat-label>Version</mat-label>
+          <input matInput formControlName="version" placeholder="e.g. 1.4.0" />
+          @if (form.get('version')?.hasError('required')) {
+            <mat-error>Required</mat-error>
+          }
+        </mat-form-field>
+
+        <mat-form-field appearance="outline" class="rna-field-title">
+          <mat-label>Title</mat-label>
+          <input matInput formControlName="title" placeholder="What's new in this release?" />
+          @if (form.get('title')?.hasError('required')) {
+            <mat-error>Required</mat-error>
+          }
+        </mat-form-field>
+
+        <mat-form-field appearance="outline" class="rna-field-body">
+          <mat-label>Body</mat-label>
+          <textarea matInput formControlName="body" rows="8"
+            placeholder="- New feature added&#10;- Bug fix for X&#10;- Improved performance of Y">
+          </textarea>
+          <mat-hint>Start lines with "- " for bullet points</mat-hint>
+          @if (form.get('body')?.hasError('required')) {
+            <mat-error>Required</mat-error>
+          }
+        </mat-form-field>
+
+        <div class="rna-publish-row">
+          <mat-checkbox formControlName="publish" color="primary">
+            Publish immediately (users will see this on next login)
+          </mat-checkbox>
+        </div>
+
+        <div class="rna-form-actions">
+          <button mat-stroked-button type="button" (click)="cancelForm()" [disabled]="saving()">Cancel</button>
+          <button mat-flat-button color="primary" type="button" (click)="save()" [disabled]="form.invalid || saving()">
+            @if (saving()) { <mat-spinner diameter="16" style="display:inline-block;margin-right:6px"></mat-spinner> }
+            {{ editingId ? 'Save Changes' : 'Create' }}
+          </button>
+        </div>
+      </form>
+    </div>
+  }
+
+  <!-- Loading -->
+  @if (loading()) {
+    <div class="rna-loading">
+      <mat-spinner diameter="32"></mat-spinner>
+      <span>Loading…</span>
+    </div>
+  }
+
+  <!-- Empty -->
+  @if (!loading() && notes().length === 0 && !showForm) {
+    <div class="rna-empty">
+      <i-tabler name="notes-off" size="40"></i-tabler>
+      <p>No release notes yet. Create one to get started.</p>
+    </div>
+  }
+
+  <!-- List -->
+  @if (!loading() && notes().length > 0) {
+    <div class="rna-list">
+      @for (n of notes(); track n.id) {
+        <div class="rna-card" [class.rna-card-published]="n.is_published" [class.rna-card-draft]="!n.is_published">
+
+          <div class="rna-card-left">
+            <div class="rna-version-badge" [class.rna-version-pub]="n.is_published" [class.rna-version-draft]="!n.is_published">
+              v{{ n.version }}
+            </div>
+            <div class="rna-status-chip" [class.status-pub]="n.is_published" [class.status-draft]="!n.is_published">
+              <i-tabler [name]="n.is_published ? 'circle-check' : 'pencil'" size="12"></i-tabler>
+              {{ n.is_published ? 'Published' : 'Draft' }}
+            </div>
+          </div>
+
+          <div class="rna-card-body">
+            <div class="rna-card-title">{{ n.title }}</div>
+            <div class="rna-card-body-text">{{ n.body | slice:0:120 }}{{ n.body.length > 120 ? '…' : '' }}</div>
+            <div class="rna-card-meta">
+              @if (n.is_published && n.published_at) {
+                <span><i-tabler name="clock" size="12"></i-tabler> Published {{ formatDate(n.published_at) }}</span>
+              } @else {
+                <span><i-tabler name="clock" size="12"></i-tabler> Created {{ formatDate(n.created_at) }}</span>
+              }
+            </div>
+          </div>
+
+          <div class="rna-card-actions">
+            @if (!n.is_published) {
+              <button mat-stroked-button color="primary" class="btn-publish" (click)="publish(n)" title="Publish to users">
+                <i-tabler name="send" size="15"></i-tabler>
+                Publish
+              </button>
+              <button mat-icon-button (click)="openEdit(n)" title="Edit">
+                <i-tabler name="pencil" size="17"></i-tabler>
+              </button>
+              <button mat-icon-button color="warn" (click)="delete(n)" title="Delete draft">
+                <i-tabler name="trash" size="17"></i-tabler>
+              </button>
+            } @else {
+              <button mat-icon-button (click)="openEdit(n)" title="Edit">
+                <i-tabler name="pencil" size="17"></i-tabler>
+              </button>
+            }
+          </div>
+
+        </div>
+      }
+    </div>
+  }
+
+</div>

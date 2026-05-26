@@ -145,13 +145,7 @@
   <!-- ── Clinic Switcher ────────────────────────────────────────────────── -->
   <app-clinic-switcher></app-clinic-switcher>
 
-  <!-- ── Break-Glass ───────────────────────────────────────────────────── -->
-  @if(!bgService.isActive()) {
-    <button mat-icon-button (click)="openBreakGlass()" aria-label="Break-Glass Access"
-      title="Emergency Break-Glass Access" class="d-flex justify-content-center">
-      <mat-icon style="color:#b71c1c">emergency</mat-icon>
-    </button>
-  }
+  <!-- Break-Glass hidden -->
 
   <!-- ── Profile dropdown ──────────────────────────────────────────────── -->
   <button mat-button color="inherit" [matMenuTriggerFor]="profileMenu" aria-label="Profile"

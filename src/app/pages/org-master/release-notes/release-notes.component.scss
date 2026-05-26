@@ -1,0 +1,66 @@
+.rna-page { padding: 24px; max-width: 860px; margin: 0 auto; }
+
+.rna-header {
+  display: flex; align-items: flex-start; justify-content: space-between;
+  margin-bottom: 24px; gap: 16px; flex-wrap: wrap;
+}
+.rna-title { font-size: 1.4rem; font-weight: 700; color: #1a237e; margin: 0 0 4px; }
+.rna-sub   { font-size: .85rem; color: #78909c; margin: 0; }
+
+/* ── Form ── */
+.rna-form-card {
+  background: #fff; border: 1px solid #e3e8f0; border-radius: 14px;
+  padding: 24px; margin-bottom: 28px;
+  box-shadow: 0 2px 8px rgba(0,0,0,.05);
+}
+.rna-form-title { font-size: 1rem; font-weight: 700; color: #1a237e; margin-bottom: 18px; }
+.rna-form { display: flex; flex-direction: column; gap: 4px; }
+.rna-field-version { max-width: 180px; }
+.rna-field-title   { width: 100%; }
+.rna-field-body    { width: 100%; }
+.rna-publish-row   { margin: 4px 0 12px; }
+.rna-form-actions  { display: flex; gap: 10px; justify-content: flex-end; }
+
+/* ── States ── */
+.rna-loading { display: flex; align-items: center; gap: 12px; padding: 40px 0; color: #78909c; }
+.rna-empty   { text-align: center; padding: 60px 0; color: #90a4ae; }
+.rna-empty i-tabler { display: block; margin: 0 auto 12px; }
+
+/* ── List ── */
+.rna-list { display: flex; flex-direction: column; gap: 12px; }
+
+.rna-card {
+  display: flex; align-items: center; gap: 16px;
+  background: #fff; border-radius: 12px; padding: 16px 20px;
+  border: 1.5px solid #e8eaf0;
+  box-shadow: 0 1px 4px rgba(0,0,0,.04);
+  transition: box-shadow .15s;
+  &:hover { box-shadow: 0 3px 10px rgba(0,0,0,.08); }
+}
+.rna-card-published { border-color: #c8e6c9; }
+.rna-card-draft     { border-color: #fff3e0; }
+
+.rna-card-left { display: flex; flex-direction: column; align-items: center; gap: 6px; min-width: 70px; }
+
+.rna-version-badge {
+  font-size: .8rem; font-weight: 700; padding: 4px 10px;
+  border-radius: 20px; white-space: nowrap;
+}
+.rna-version-pub   { background: #e8f5e9; color: #2e7d32; }
+.rna-version-draft { background: #fff3e0; color: #e65100; }
+
+.rna-status-chip {
+  display: flex; align-items: center; gap: 4px;
+  font-size: .7rem; font-weight: 600; padding: 2px 8px;
+  border-radius: 20px;
+}
+.status-pub   { background: #e8f5e9; color: #388e3c; }
+.status-draft { background: #fff8e1; color: #f57c00; }
+
+.rna-card-body { flex: 1; min-width: 0; }
+.rna-card-title     { font-size: .95rem; font-weight: 700; color: #1a237e; margin-bottom: 4px; }
+.rna-card-body-text { font-size: .82rem; color: #546e7a; margin-bottom: 6px; white-space: pre-line; }
+.rna-card-meta      { font-size: .75rem; color: #90a4ae; display: flex; align-items: center; gap: 5px; }
+
+.rna-card-actions { display: flex; align-items: center; gap: 4px; }
+.btn-publish { font-size: .8rem; height: 32px; line-height: 32px; padding: 0 12px; }

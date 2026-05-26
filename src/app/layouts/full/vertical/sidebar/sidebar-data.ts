@@ -45,6 +45,13 @@ export const navItems: NavItem[] = [
     route: '/org-master/accounts',
     permissions: ['org.manage'],
   },
+  {
+    displayName: 'Release Notes',
+    iconName: 'sparkles',
+    bgcolor: 'accent',
+    route: '/org-master/release-notes',
+    permissions: ['org.manage'],
+  },
   // {
   //   displayName: 'Security (MFA)',
   //   iconName: 'shield-lock',

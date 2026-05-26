@@ -140,6 +140,14 @@
               >
                 <i-tabler [name]="s.is_active ? 'user-off' : 'user-check'" size="18"></i-tabler>
               </button>
+              <button
+                mat-icon-button
+                class="toggle-btn"
+                title="Reset Password"
+                (click)="openResetPassword(s)"
+              >
+                <i-tabler name="key" size="18"></i-tabler>
+              </button>
             </div>
 
           </div>

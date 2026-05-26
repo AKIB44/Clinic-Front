@@ -1,15 +1,94 @@
 import {
-  Component, OnInit, OnDestroy, ChangeDetectionStrategy, ChangeDetectorRef, inject, signal, computed
+  Component, OnInit, OnDestroy, ChangeDetectionStrategy, ChangeDetectorRef, inject, signal, computed,
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { FormsModule } from '@angular/forms';
+import { FormsModule, ReactiveFormsModule, FormGroup, FormControl, Validators, AbstractControl, ValidationErrors } from '@angular/forms';
 import { MaterialModule } from '../../../material.module';
 import { TablerIconsModule } from 'angular-tabler-icons';
+import { MatDialog, MatDialogRef, MAT_DIALOG_DATA } from '@angular/material/dialog';
+import { MatSnackBar } from '@angular/material/snack-bar';
 import { Subject, debounceTime, distinctUntilChanged, takeUntil } from 'rxjs';
 import { OrgHrService, OrgStaff } from '../../../services/org-hr.service';
 import { ClinicsService } from '../../../services/clinics.service';
 import { Clinic } from '../../../models/clinic.model';
 import { format, parseISO } from 'date-fns';
+
+// ── Reset Password Dialog ─────────────────────────────────────────────────────
+
+function passwordsMatch(g: AbstractControl): ValidationErrors | null {
+  const p = g.get('newPassword')?.value;
+  const c = g.get('confirmPassword')?.value;
+  return p && c && p !== c ? { mismatch: true } : null;
+}
+
+@Component({
+  selector: 'app-reset-password-dialog',
+  standalone: true,
+  imports: [CommonModule, FormsModule, ReactiveFormsModule, MaterialModule, TablerIconsModule],
+  template: `
+    <h2 mat-dialog-title style="font-size:1.05rem;font-weight:700;">Reset Password</h2>
+    <mat-dialog-content style="padding-top:8px;min-width:320px;">
+      <p style="font-size:.85rem;color:#546e7a;margin-bottom:16px;">
+        Set a new password for <strong>{{ data.name }}</strong>.
+        They will need to use this password on their next login.
+      </p>
+      <form [formGroup]="form" style="display:flex;flex-direction:column;gap:14px;">
+        <mat-form-field appearance="outline">
+          <mat-label>New Password</mat-label>
+          <input matInput [type]="hide1 ? 'password' : 'text'" formControlName="newPassword" autocomplete="new-password" />
+          <button mat-icon-button matSuffix type="button" (click)="hide1=!hide1">
+            <i-tabler [name]="hide1 ? 'eye' : 'eye-off'" size="18"></i-tabler>
+          </button>
+          @if (form.get('newPassword')?.hasError('minlength')) {
+            <mat-error>Minimum 8 characters</mat-error>
+          }
+          @if (form.get('newPassword')?.hasError('required')) {
+            <mat-error>Required</mat-error>
+          }
+        </mat-form-field>
+        <mat-form-field appearance="outline">
+          <mat-label>Confirm Password</mat-label>
+          <input matInput [type]="hide2 ? 'password' : 'text'" formControlName="confirmPassword" autocomplete="new-password" />
+          <button mat-icon-button matSuffix type="button" (click)="hide2=!hide2">
+            <i-tabler [name]="hide2 ? 'eye' : 'eye-off'" size="18"></i-tabler>
+          </button>
+          @if (form.hasError('mismatch') && form.get('confirmPassword')?.touched) {
+            <mat-error>Passwords do not match</mat-error>
+          }
+        </mat-form-field>
+      </form>
+      @if (error) {
+        <p style="color:#e53935;font-size:.82rem;margin-top:8px;">{{ error }}</p>
+      }
+    </mat-dialog-content>
+    <mat-dialog-actions align="end" style="gap:8px;padding-bottom:16px;">
+      <button mat-stroked-button mat-dialog-close [disabled]="submitting">Cancel</button>
+      <button mat-flat-button color="primary" [disabled]="form.invalid || submitting" (click)="submit()">
+        @if (submitting) { <mat-spinner diameter="18" style="display:inline-block;"></mat-spinner> }
+        @else { Reset Password }
+      </button>
+    </mat-dialog-actions>
+  `,
+})
+export class ResetPasswordDialogComponent {
+  readonly dialogRef = inject(MatDialogRef<ResetPasswordDialogComponent>);
+  readonly data: { name: string } = inject(MAT_DIALOG_DATA);
+
+  hide1 = true;
+  hide2 = true;
+  submitting = false;
+  error = '';
+
+  form = new FormGroup({
+    newPassword:     new FormControl('', [Validators.required, Validators.minLength(8)]),
+    confirmPassword: new FormControl('', [Validators.required]),
+  }, { validators: passwordsMatch });
+
+  submit() {
+    if (this.form.invalid) { this.form.markAllAsTouched(); return; }
+    this.dialogRef.close(this.form.value.newPassword);
+  }
+}
 
 @Component({
   selector: 'app-hr',
@@ -22,6 +101,8 @@ import { format, parseISO } from 'date-fns';
 export class HrComponent implements OnInit, OnDestroy {
   private hrSvc      = inject(OrgHrService);
   private clinicsSvc = inject(ClinicsService);
+  private dialog     = inject(MatDialog);
+  private snack      = inject(MatSnackBar);
   private cdr        = inject(ChangeDetectorRef);
   private destroy$   = new Subject<void>();
   private search$    = new Subject<string>();
@@ -108,5 +189,25 @@ export class HrComponent implements OnInit, OnDestroy {
   formatDate(iso?: string): string {
     if (!iso) return '—';
     try { return format(parseISO(iso), 'd MMM yyyy'); } catch { return iso; }
+  }
+
+  openResetPassword(s: OrgStaff) {
+    const name = `${s.first_name} ${s.last_name}`.trim();
+    const ref = this.dialog.open(ResetPasswordDialogComponent, {
+      data: { name },
+      width: '400px',
+      disableClose: true,
+    });
+    ref.afterClosed().subscribe((newPassword: string | undefined) => {
+      if (!newPassword) return;
+      this.hrSvc.resetPassword(s.id, newPassword).subscribe({
+        next: () => {
+          this.snack.open(`Password reset for ${name}.`, 'Dismiss', { duration: 4000, panelClass: 'snack-success' });
+        },
+        error: () => {
+          this.snack.open('Failed to reset password. Please try again.', 'Dismiss', { duration: 5000, panelClass: 'snack-error' });
+        },
+      });
+    });
   }
 }

@@ -30,3 +30,11 @@ body { margin: 0; font-family: Roboto, "Helvetica Neue", sans-serif; }
 .activity-detail-panel .mat-mdc-dialog-container {
   padding: 0 !important;
 }
+
+.snack-success .mdc-snackbar__surface { background: #2e7d32 !important; }
+.snack-success .mat-mdc-snack-bar-label { color: #fff !important; }
+.snack-success .mat-mdc-button { color: #a5d6a7 !important; }
+
+.snack-error .mdc-snackbar__surface { background: #c62828 !important; }
+.snack-error .mat-mdc-snack-bar-label { color: #fff !important; }
+.snack-error .mat-mdc-button { color: #ef9a9a !important; }
