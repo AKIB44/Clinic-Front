@@ -1,0 +1,210 @@
+<div class="tp-card">
+
+  <!-- Header -->
+  <div class="tp-header" (click)="collapsed.set(!collapsed())">
+    <div class="tp-title">
+      <i-tabler name="clipboard-heart" size="18"></i-tabler>
+      <span>Treatment Plan</span>
+      <span class="tp-badge">{{ totalItems() }}</span>
+    </div>
+    <div class="tp-header-right">
+      <i-tabler [name]="collapsed() ? 'chevron-down' : 'chevron-up'" size="18"></i-tabler>
+    </div>
+  </div>
+
+  @if (!collapsed()) {
+    <div class="tp-body">
+
+      <!-- No plan yet -->
+      @if (store.plans().length === 0) {
+        <div class="tp-empty">
+          <i-tabler name="clipboard-heart" size="32"></i-tabler>
+          <p>No treatment plan yet.</p>
+          @if (!store.isSealed()) {
+            <button mat-flat-button color="primary" [disabled]="creating()" (click)="createPlan()">
+              @if (creating()) { <mat-spinner diameter="16" style="display:inline-block;margin-right:6px"></mat-spinner> }
+              Create Treatment Plan
+            </button>
+          }
+        </div>
+      }
+
+      <!-- Plans -->
+      @for (plan of store.plans(); track plan.id) {
+        <div class="plan-section">
+          <div class="plan-title-row">
+            <span class="plan-title">{{ plan.title }}</span>
+            <span class="plan-date">{{ plan.created_at | date:'d MMM yyyy' }}</span>
+          </div>
+
+          <!-- Items grouped by priority -->
+          @for (priority of priorities; track priority) {
+            @if (itemsByPriority(plan, priority).length > 0) {
+              <div class="priority-group">
+                <div class="priority-label"
+                     [style.color]="priorityMeta(priority).color"
+                     [style.background]="priorityMeta(priority).bg">
+                  {{ priorityMeta(priority).label }}
+                </div>
+                @for (item of itemsByPriority(plan, priority); track item.id) {
+                  <div class="plan-item" [class.item-declined]="item.status === 'DECLINED'"
+                                        [class.item-done]="item.status === 'DONE'">
+                    <div class="item-left">
+                      <div class="item-name">{{ item.service_name ?? 'Service' }}</div>
+                      <div class="item-meta">
+                        @if (item.tooth_numbers.length) {
+                          <span>Teeth: {{ item.tooth_numbers.join(', ') }}</span>
+                        }
+                        @if (item.estimated_sessions > 1) {
+                          <span>· {{ item.done_sessions }}/{{ item.estimated_sessions }} visits</span>
+                        }
+                        @if (item.cost_min !== null || item.cost_max !== null) {
+                          <span>· Est. ₹{{ item.cost_min | number:'1.0-0' }}–{{ item.cost_max | number:'1.0-0' }}</span>
+                        }
+                        @if (item.decline_reason) {
+                          <span class="item-decline-reason">· {{ declineLabel(item.decline_reason) }}</span>
+                        }
+                      </div>
+                      @if (item.patient_facing_notes) {
+                        <div class="item-notes">{{ item.patient_facing_notes }}</div>
+                      }
+                      @if (item.estimated_sessions > 1) {
+                        <div class="item-progress">
+                          <div class="progress-bar">
+                            <div class="progress-fill"
+                                 [style.width.%]="(item.done_sessions / item.estimated_sessions) * 100"></div>
+                          </div>
+                        </div>
+                      }
+                    </div>
+
+                    <div class="item-right">
+                      <span class="item-status-chip"
+                            [style.color]="statusMeta(item.status).color"
+                            [style.background]="statusMeta(item.status).bg">
+                        {{ statusMeta(item.status).label }}
+                      </span>
+
+                      @if (!store.isSealed() && item.status === 'PROPOSED') {
+                        <div class="item-actions">
+                          <button mat-stroked-button color="primary" class="btn-xs"
+                                  [disabled]="updating() === item.id"
+                                  (click)="acceptItem(item)">
+                            Accept
+                          </button>
+                          <button mat-stroked-button color="warn" class="btn-xs"
+                                  [disabled]="updating() === item.id"
+                                  (click)="declineItem(item)">
+                            Decline
+                          </button>
+                        </div>
+                      }
+                    </div>
+                  </div>
+                }
+              </div>
+            }
+          }
+
+          <!-- Add item form -->
+          @if (!store.isSealed() && addingTo() === plan.id) {
+            <div class="add-item-form">
+              <div class="add-item-title">Add Plan Item</div>
+
+              <mat-form-field appearance="outline" class="add-field">
+                <mat-label>Service</mat-label>
+                <input matInput [(ngModel)]="addSearchTerm" (ngModelChange)="onSearch()"
+                       placeholder="Search service…" [matAutocomplete]="svcAuto" />
+                <mat-autocomplete #svcAuto="matAutocomplete" [displayWith]="displayFn"
+                                  (optionSelected)="addService.set($event.option.value)">
+                  @for (s of filteredServices(); track s.id) {
+                    <mat-option [value]="s">{{ s.name }} — ₹{{ s.price | number:'1.0-0' }}</mat-option>
+                  }
+                </mat-autocomplete>
+              </mat-form-field>
+
+              <div class="add-row">
+                <mat-form-field appearance="outline" class="add-field-sm">
+                  <mat-label>Priority</mat-label>
+                  <mat-select [(ngModel)]="addPriority">
+                    @for (p of priorities; track p) {
+                      <mat-option [value]="p">{{ priorityMeta(p).label }}</mat-option>
+                    }
+                  </mat-select>
+                </mat-form-field>
+
+                <mat-form-field appearance="outline" class="add-field-sm">
+                  <mat-label>Sessions</mat-label>
+                  <input matInput type="number" [(ngModel)]="addSessions" min="1" />
+                </mat-form-field>
+
+                <mat-form-field appearance="outline" class="add-field-sm">
+                  <mat-label>Cost min ₹</mat-label>
+                  <input matInput type="number" [(ngModel)]="addCostMin" min="0" />
+                </mat-form-field>
+
+                <mat-form-field appearance="outline" class="add-field-sm">
+                  <mat-label>Cost max ₹</mat-label>
+                  <input matInput type="number" [(ngModel)]="addCostMax" min="0" />
+                </mat-form-field>
+              </div>
+
+              <mat-form-field appearance="outline" class="add-field">
+                <mat-label>Patient-facing notes (optional)</mat-label>
+                <input matInput [(ngModel)]="addNotes" placeholder="Shown on estimate PDF…" />
+              </mat-form-field>
+
+              <div class="add-actions">
+                <button mat-flat-button color="primary"
+                        [disabled]="!addService() || addingItem()"
+                        (click)="confirmAddItem(plan.id)">
+                  @if (addingItem()) { <mat-spinner diameter="16" style="display:inline-block;margin-right:6px"></mat-spinner> }
+                  Add Item
+                </button>
+                <button mat-stroked-button (click)="cancelAdd()">Cancel</button>
+              </div>
+
+              @if (addError()) {
+                <div class="add-error">{{ addError() }}</div>
+              }
+            </div>
+          }
+
+          @if (!store.isSealed() && addingTo() !== plan.id) {
+            <button mat-stroked-button class="add-item-btn" (click)="startAdd(plan.id)">
+              <i-tabler name="plus" size="14"></i-tabler> Add Item
+            </button>
+          }
+        </div>
+      }
+
+      <!-- Decline reason dialog (inline) -->
+      @if (decliningItem()) {
+        <div class="decline-overlay">
+          <div class="decline-panel">
+            <div class="decline-title">Reason for declining</div>
+            <div class="decline-options">
+              @for (r of declineReasons; track r.value) {
+                <button class="decline-opt"
+                        [class.active]="selectedDeclineReason() === r.value"
+                        (click)="selectedDeclineReason.set(r.value)">
+                  {{ r.label }}
+                </button>
+              }
+            </div>
+            <div class="decline-actions">
+              <button mat-flat-button color="warn"
+                      [disabled]="!selectedDeclineReason() || updating() !== null"
+                      (click)="confirmDecline()">
+                @if (updating() !== null) { <mat-spinner diameter="16" style="display:inline-block;margin-right:6px"></mat-spinner> }
+                Confirm Decline
+              </button>
+              <button mat-stroked-button (click)="cancelDecline()">Cancel</button>
+            </div>
+          </div>
+        </div>
+      }
+
+    </div>
+  }
+</div>

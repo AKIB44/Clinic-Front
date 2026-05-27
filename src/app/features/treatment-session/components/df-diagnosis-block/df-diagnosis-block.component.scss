@@ -1,0 +1,42 @@
+.dx-card          { background: #fff; border-radius: 12px; box-shadow: 0 1px 4px rgba(0,0,0,.08); overflow: hidden; }
+.dx-header        { display: flex; align-items: center; gap: 8px; padding: 14px 18px;
+                    background: #f8fafd; border-bottom: 1px solid #e5eaf0;
+                    font-size: 14px; font-weight: 600; color: #1e3a5f; }
+.dx-count         { background: #0074ba; color: #fff; font-size: 11px; font-weight: 700;
+                    border-radius: 10px; padding: 1px 7px; margin-left: 2px; }
+.dx-add-area      { padding: 12px 18px; border-bottom: 1px solid #f1f5f9; }
+.dx-quick-chips   { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 10px; }
+.dx-chip          { font-size: 12px; padding: 4px 10px; border-radius: 20px; border: 1px solid #cbd5e1;
+                    background: #f8fafd; color: #475569; cursor: pointer; white-space: nowrap;
+                    transition: all .15s; }
+.dx-chip:hover    { background: #e0f0ff; border-color: #0074ba; color: #0074ba; }
+.dx-input-row     { display: flex; gap: 8px; align-items: flex-start; flex-wrap: wrap; }
+.dx-text-field    { flex: 2; min-width: 180px; }
+.dx-kind-field    { width: 140px; }
+.dx-icd-field     { width: 130px; }
+.dx-add-btn       { margin-top: 4px; height: 56px; }
+.dx-error         { color: #c62828; font-size: 12px; margin-top: 4px; }
+.dx-empty         { padding: 28px; text-align: center; color: #94a3b8;
+                    display: flex; flex-direction: column; align-items: center; gap: 6px; }
+.dx-list          { padding: 4px 0; }
+.dx-item          { display: flex; align-items: center; gap: 10px; padding: 10px 18px;
+                    border-bottom: 1px solid #f8fafd; }
+.dx-item:last-child { border-bottom: none; }
+.dx-kind-dot      { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+.dx-item-body     { flex: 1; }
+.dx-item-text     { font-size: 14px; color: #0f172a; font-weight: 500; }
+.dx-item-meta     { display: flex; gap: 6px; align-items: center; margin-top: 2px; }
+.dx-kind-label    { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: .4px; }
+.dx-icd           { font-size: 11px; color: #94a3b8; }
+.dx-delete-btn    { width: 28px; height: 28px; opacity: .6; }
+.dx-delete-btn:hover { opacity: 1; }
+.dx-tooth-row     { display: flex; align-items: flex-start; gap: 8px; margin-top: 4px; flex-wrap: wrap; }
+.dx-tooth-label   { font-size: 12px; font-weight: 600; color: #64748b; white-space: nowrap; padding-top: 4px; }
+.dx-tooth-grid    { display: flex; flex-wrap: wrap; gap: 4px; flex: 1; }
+.dx-tooth-btn     { width: 32px; height: 24px; font-size: 10px; font-weight: 600;
+                    border: 1px solid #e2e8f0; border-radius: 4px; background: #fff;
+                    cursor: pointer; color: #374151; padding: 0; line-height: 1; }
+.dx-tooth-btn.active { background: #1d4ed8; border-color: #1d4ed8; color: #fff; }
+.dx-tooth-clear   { font-size: 11px; color: #94a3b8; background: none; border: none;
+                    cursor: pointer; padding: 2px 4px; white-space: nowrap; }
+.dx-tooth-clear:hover { color: #c62828; }

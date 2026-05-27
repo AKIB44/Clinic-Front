@@ -1,0 +1,216 @@
+<div class="inv-card">
+
+  <div class="inv-header">
+    <i-tabler name="microscope" size="18"></i-tabler>
+    <span>Investigations</span>
+    <span class="inv-count">{{ store.investigations().length }}</span>
+    @if (!store.isSealed()) {
+      <button mat-icon-button class="inv-add-btn" (click)="openForm()" title="Order investigation">
+        <i-tabler name="plus" size="18"></i-tabler>
+      </button>
+    }
+  </div>
+
+  <!-- Order form -->
+  @if (showForm) {
+    <div class="inv-form-section">
+      <div class="inv-form">
+        <div class="inv-form-title">New Investigation Order</div>
+
+        <mat-form-field appearance="outline" class="inv-full-field">
+          <mat-label>Type</mat-label>
+          <mat-select [(ngModel)]="newKind">
+            <mat-optgroup label="Imaging">
+              @for (k of imagingKinds; track k.value) {
+                <mat-option [value]="k.value">{{ k.label }}</mat-option>
+              }
+            </mat-optgroup>
+            <mat-optgroup label="Laboratory">
+              @for (k of laboratoryKinds; track k.value) {
+                <mat-option [value]="k.value">{{ k.label }}</mat-option>
+              }
+            </mat-optgroup>
+          </mat-select>
+        </mat-form-field>
+
+        @if (isCbct()) {
+          <mat-form-field appearance="outline" class="inv-full-field">
+            <mat-label>CBCT FOV</mat-label>
+            <mat-select [(ngModel)]="newCbctFov">
+              <mat-option value="small">Small</mat-option>
+              <mat-option value="medium">Medium</mat-option>
+              <mat-option value="large">Large</mat-option>
+            </mat-select>
+          </mat-form-field>
+        }
+
+        <mat-form-field appearance="outline" class="inv-full-field">
+          <mat-label>Clinical indication *</mat-label>
+          <input matInput [(ngModel)]="newIndication" placeholder="e.g. Rule out periapical abscess tooth 46">
+        </mat-form-field>
+
+        <mat-form-field appearance="outline" class="inv-full-field">
+          <mat-label>Vendor / Lab (optional)</mat-label>
+          <input matInput [(ngModel)]="newVendor" placeholder="Internal or external lab name">
+        </mat-form-field>
+
+        @if (addError()) {
+          <div class="inv-error">{{ addError() }}</div>
+        }
+
+        <div class="inv-form-actions">
+          <button mat-stroked-button (click)="closeForm()" [disabled]="adding()">Cancel</button>
+          <button mat-flat-button color="primary" (click)="addInvestigation()"
+                  [disabled]="adding() || !newIndication.trim()">
+            @if (adding()) { <mat-spinner diameter="16"></mat-spinner> } @else { Order }
+          </button>
+        </div>
+      </div>
+    </div>
+  }
+
+  <!-- Pending investigations -->
+  @if (pendingInvestigations().length > 0) {
+    <div class="inv-section-label">Pending</div>
+    <div class="inv-list">
+      @for (inv of pendingInvestigations(); track inv.id) {
+        <div class="inv-item">
+          <div class="inv-item-main">
+            <span class="inv-kind-badge">{{ kindLabel(inv.kind) }}</span>
+            <span class="inv-indication">{{ inv.clinical_indication }}</span>
+            @if (inv.vendor) { <span class="inv-vendor">{{ inv.vendor }}</span> }
+          </div>
+          @if (!store.isSealed()) {
+            <div class="inv-item-actions">
+              <button mat-stroked-button class="inv-receive-btn"
+                      (click)="openReceive(inv.id)"
+                      [disabled]="receivingId() === inv.id">
+                <i-tabler name="file-check" size="14"></i-tabler>
+                Receive
+              </button>
+              <button mat-icon-button class="inv-cancel-btn"
+                      [disabled]="cancelling() === inv.id"
+                      (click)="cancelInvestigation(inv.id)"
+                      title="Cancel order">
+                @if (cancelling() === inv.id) {
+                  <mat-spinner diameter="14"></mat-spinner>
+                } @else {
+                  <i-tabler name="x" size="14"></i-tabler>
+                }
+              </button>
+            </div>
+          }
+        </div>
+
+        <!-- Receive form (inline under the row) -->
+        @if (receivingId() === inv.id) {
+          <div class="inv-receive-form">
+            <div class="inv-receive-title">Record result for {{ kindLabel(inv.kind) }}</div>
+
+            <!-- File upload -->
+            <label class="inv-file-label" [class.inv-uploading]="uploading()">
+              @if (uploading()) {
+                <mat-spinner diameter="14"></mat-spinner>
+                <span>Uploading…</span>
+              } @else if (pendingFilename()) {
+                <i-tabler name="file-check" size="14"></i-tabler>
+                <span>{{ pendingFilename() }}</span>
+              } @else {
+                <i-tabler name="upload" size="14"></i-tabler>
+                <span>Upload report (optional)</span>
+              }
+              <input type="file" accept="image/*,application/pdf,.dcm"
+                     (change)="onReportFilePicked($event)"
+                     [disabled]="uploading()" style="display:none">
+            </label>
+
+            <mat-form-field appearance="outline" class="inv-full-field">
+              <mat-label>Vendor report ref (optional)</mat-label>
+              <input matInput [(ngModel)]="receiveVendorRef">
+            </mat-form-field>
+
+            <mat-form-field appearance="outline" class="inv-full-field">
+              <mat-label>Interpretation *</mat-label>
+              <textarea matInput [(ngModel)]="receiveInterp" rows="3"
+                        placeholder="e.g. Periapical radiolucency ~3mm at apex of 46, consistent with chronic apical periodontitis."></textarea>
+            </mat-form-field>
+
+            <div class="inv-form-actions">
+              <button mat-stroked-button (click)="closeReceive()">Cancel</button>
+              <button mat-flat-button color="primary"
+                      [disabled]="!receiveInterp.trim() || uploading()"
+                      (click)="confirmReceive()">
+                <i-tabler name="check" size="14"></i-tabler>
+                Mark as Read
+              </button>
+            </div>
+          </div>
+        }
+      }
+    </div>
+  }
+
+  <!-- Read investigations -->
+  @if (readInvestigations().length > 0) {
+    <div class="inv-section-label">Results</div>
+    <div class="inv-list">
+      @for (inv of readInvestigations(); track inv.id) {
+        <div class="inv-item inv-item--read">
+          <div class="inv-item-main">
+            <span class="inv-kind-badge inv-kind-badge--read">{{ kindLabel(inv.kind) }}</span>
+            <span class="inv-indication">{{ inv.clinical_indication }}</span>
+          </div>
+
+          <!-- Image thumbnail for standard imaging kinds -->
+          @if (inv.url && isImageKind(inv.kind)) {
+            <div class="inv-thumb-wrap">
+              <a [href]="inv.url" target="_blank" rel="noopener" title="Open full image">
+                <img class="inv-thumb" [src]="inv.url" alt="{{ kindLabel(inv.kind) }}" loading="lazy">
+              </a>
+            </div>
+          }
+
+          <!-- CBCT stub (DICOM — no inline viewer) -->
+          @if (inv.kind === 'cbct') {
+            <div class="inv-dicom-stub">
+              <i-tabler name="cube-3d-sphere" size="16"></i-tabler>
+              <span>DICOM volume</span>
+              @if (inv.url) {
+                <a [href]="inv.url" target="_blank" rel="noopener" class="inv-dicom-link">
+                  <i-tabler name="external-link" size="12"></i-tabler>
+                  Download
+                </a>
+              }
+            </div>
+          }
+
+          <div class="inv-interp">{{ inv.interpretation }}</div>
+
+          @if (inv.url && !isImageKind(inv.kind) && inv.kind !== 'cbct') {
+            <a class="inv-report-link" [href]="inv.url" target="_blank" rel="noopener">
+              <i-tabler name="external-link" size="13"></i-tabler>
+              View report
+            </a>
+          }
+        </div>
+      }
+    </div>
+  }
+
+  <!-- Empty state -->
+  @if (store.investigations().length === 0 && !showForm) {
+    <div class="inv-empty">
+      <i-tabler name="test-pipe" size="32"></i-tabler>
+      <span>No investigations ordered</span>
+    </div>
+  }
+
+  <!-- Cancelled (collapsed) -->
+  @if (cancelledInvestigations().length > 0) {
+    <div class="inv-cancelled-row">
+      <i-tabler name="ban" size="13"></i-tabler>
+      {{ cancelledInvestigations().length }} cancelled
+    </div>
+  }
+
+</div>

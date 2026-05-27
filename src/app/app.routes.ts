@@ -82,6 +82,14 @@ export const routes: Routes = [
           import('./pages/org-master/org-master.routes').then((m) => m.OrgMasterRoutes),
       },
       {
+        path: 'treatment/:sessionId',
+        canActivate: [permissionGuard('appointment.view')],
+        loadComponent: () =>
+          import('./features/treatment-session/pages/session-canvas.page').then(
+            (m) => m.SessionCanvasPage
+          ),
+      },
+      {
         path: 'dashboards',
         loadChildren: () =>
           import('./pages/dashboards/dashboards.routes').then((m) => m.DashboardsRoutes),

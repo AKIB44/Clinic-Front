@@ -1,0 +1,94 @@
+<!-- Only show if lab order exists OR session is not sealed (so user can add one) -->
+@if (labOrder() || !store.isSealed()) {
+  <div class="lab-wrap">
+
+    @if (!labOrder()) {
+      <!-- No lab order yet -->
+      @if (!showCreateForm) {
+        <button class="lab-add-btn" (click)="openCreateForm()" [disabled]="store.isSealed()">
+          <i-tabler name="flask" size="13"></i-tabler>
+          Add Lab Work Order
+        </button>
+      } @else {
+        <!-- Create form -->
+        <div class="lab-form">
+          <div class="lab-form-title">
+            <i-tabler name="flask" size="14"></i-tabler>
+            New Lab Work Order
+          </div>
+
+          <div class="lab-form-row">
+            <mat-form-field appearance="outline" class="lab-field">
+              <mat-label>Shade</mat-label>
+              <input matInput [(ngModel)]="newShade" placeholder="e.g. A2, B1…">
+            </mat-form-field>
+
+            <mat-form-field appearance="outline" class="lab-field">
+              <mat-label>Expected Delivery</mat-label>
+              <input matInput type="date" [(ngModel)]="newExpectedDate">
+            </mat-form-field>
+          </div>
+
+          <mat-form-field appearance="outline" class="lab-field lab-full">
+            <mat-label>Notes / Specifications</mat-label>
+            <textarea matInput [(ngModel)]="newNotes" rows="2"
+                      placeholder="Material, design instructions, trial fit notes…"></textarea>
+          </mat-form-field>
+
+          @if (createError()) {
+            <div class="lab-error">{{ createError() }}</div>
+          }
+
+          <div class="lab-form-actions">
+            <button mat-stroked-button (click)="cancelCreateForm()" [disabled]="creating()">
+              Cancel
+            </button>
+            <button mat-flat-button color="accent" [disabled]="creating()" (click)="saveLabOrder()">
+              @if (creating()) {
+                <mat-spinner diameter="14" style="display:inline-block;margin-right:4px"></mat-spinner>
+              }
+              Create Lab Order
+            </button>
+          </div>
+        </div>
+      }
+
+    } @else {
+      <!-- Existing lab order -->
+      <div class="lab-row">
+        <i-tabler name="flask" size="13" class="lab-icon"></i-tabler>
+        <span class="lab-label">Lab Work</span>
+        <span class="lab-status s-{{ labOrder()!.status }}">
+          {{ statusLabels[labOrder()!.status] }}
+        </span>
+
+        @if (labOrder()!.shade) {
+          <span class="lab-detail">Shade: {{ labOrder()!.shade }}</span>
+        }
+
+        @if (labOrder()!.expected_delivery_date) {
+          <span class="lab-detail">
+            <i-tabler name="calendar" size="11"></i-tabler>
+            {{ labOrder()!.expected_delivery_date | date:'d MMM' }}
+          </span>
+        }
+
+        @if (!store.isSealed() && labOrder()!.status !== 'completed' && labOrder()!.status !== 'cancelled') {
+          <mat-select class="lab-status-select"
+                      [value]="labOrder()!.status"
+                      [disabled]="updating()"
+                      (selectionChange)="changeStatus($event.value)">
+            @for (opt of statusOptions; track opt[0]) {
+              <mat-option [value]="opt[0]">{{ opt[1] }}</mat-option>
+            }
+          </mat-select>
+        }
+      </div>
+
+      @if (labOrder()!.notes) {
+        <div class="lab-notes">{{ labOrder()!.notes }}</div>
+      }
+    }
+
+  </div>
+}

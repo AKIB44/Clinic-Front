@@ -1,0 +1,75 @@
+<div class="session-canvas">
+
+  <!-- Header bar -->
+  <div class="session-header">
+    <div class="session-header-left">
+      <button mat-icon-button (click)="goBack()" title="Back to schedule">
+        <i-tabler name="arrow-left" size="20"></i-tabler>
+      </button>
+      <div class="session-patient">
+        @if (store.patient()) {
+          <div class="session-patient-name">{{ store.patient()!.name }}</div>
+          <div class="session-patient-sub">
+            {{ store.patient()!.phone }}
+            @if (store.patient()!.age) { · {{ store.patient()!.age }} yrs }
+            @if (store.patient()!.gender) { · {{ store.patient()!.gender }} }
+          </div>
+        }
+      </div>
+    </div>
+
+    <div class="session-header-right">
+      <div class="session-status-pill s-{{ store.status() | lowercase }}">
+        {{ store.status() | titlecase }}
+      </div>
+      @if (!store.isSealed() && store.sessionId()) {
+        <button mat-flat-button color="warn"
+                [disabled]="!store.canEndTreatment()"
+                [title]="store.canEndTreatment() ? 'End treatment session' : 'Complete or abandon all in-progress services first'"
+                (click)="openEndTreatment()">
+          <i-tabler name="flag-check" size="16"></i-tabler>
+          End Treatment
+        </button>
+      }
+      @if (store.isSealed()) {
+        <div class="session-sealed-badge">
+          <i-tabler name="lock" size="14"></i-tabler>
+          Session Sealed
+        </div>
+      }
+    </div>
+  </div>
+
+  <!-- Loading -->
+  @if (store.loading()) {
+    <div class="session-loading">
+      <mat-spinner diameter="36"></mat-spinner>
+      <span>Loading session…</span>
+    </div>
+  }
+
+  <!-- Error -->
+  @if (store.error()) {
+    <div class="session-error">
+      <i-tabler name="alert-triangle" size="24"></i-tabler>
+      <p>{{ store.error() }}</p>
+      <button mat-stroked-button (click)="goBack()">Go Back</button>
+    </div>
+  }
+
+  <!-- Canvas -->
+  @if (!store.loading() && !store.error() && store.sessionId()) {
+    <div class="session-body">
+      <df-examination-block />
+      <df-tooth-chart />
+      <df-diagnosis-block />
+      <df-investigations-block />
+      <df-treatment-plan />
+      <df-services-block />
+      <df-prescription-block />
+      <df-attachments-block />
+      <df-soap-notes />
+    </div>
+  }
+
+</div>

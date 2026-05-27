@@ -1,0 +1,21 @@
+.etm-dialog        { min-width: 380px; max-width: 460px; }
+.etm-header        { display: flex; align-items: center; gap: 10px; padding: 20px 24px 0; color: #1e3a5f; }
+.etm-title         { margin: 0; font-size: 18px; font-weight: 700; }
+.etm-body          { padding: 16px 24px !important; }
+.etm-failures      { background: #fff5f5; border: 1px solid #fecaca; border-radius: 8px;
+                     padding: 12px 14px; margin-bottom: 12px; }
+.etm-failures-title { display: flex; align-items: center; gap: 6px;
+                      font-size: 13px; font-weight: 600; color: #c62828; margin-bottom: 8px; }
+.etm-failure-item  { display: flex; align-items: center; gap: 6px; font-size: 13px;
+                     color: #7f1d1d; margin-top: 4px; }
+.etm-summary       { background: #f8fafd; border-radius: 8px; padding: 12px 16px; margin-bottom: 16px; }
+.etm-summary-row   { display: flex; justify-content: space-between; padding: 4px 0;
+                     font-size: 14px; color: #475569; border-bottom: 1px solid #e5eaf0; }
+.etm-summary-row:last-child { border-bottom: none; }
+.etm-summary-row.total { font-weight: 700; color: #0f172a; padding-top: 10px; margin-top: 4px; font-size: 15px; }
+.etm-val           { font-weight: 600; }
+.etm-confirm-text  { font-size: 13px; color: #64748b; margin: 0 0 8px; }
+.etm-error         { color: #c62828; font-size: 13px; margin-top: 8px; }
+.etm-warning       { display: flex; align-items: center; gap: 6px; background: #fffbeb;
+                     border: 1px solid #fde68a; border-radius: 8px; padding: 10px 14px;
+                     font-size: 13px; color: #92400e; margin-bottom: 12px; }

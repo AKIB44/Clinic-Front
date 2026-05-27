@@ -7,15 +7,12 @@ import {
   FormGroup, FormControl, Validators, FormsModule, ReactiveFormsModule,
 } from '@angular/forms';
 import { Router, RouterModule, ActivatedRoute } from '@angular/router';
-import { MatDialog } from '@angular/material/dialog';
 import { MaterialModule } from '../../../material.module';
 import { CommonModule } from '@angular/common';
 import { finalize } from 'rxjs';
 import { AuthService } from 'src/app/auth/auth.service';
 import { isMfaChallenge, LoginResponse } from 'src/app/auth/auth.models';
 import { AuroraBgComponent } from '../aurora-bg/aurora-bg.component';
-import { ReleaseNotesService } from 'src/app/services/release-notes.service';
-import { ReleaseNotesDialogComponent } from 'src/app/components/release-notes-dialog/release-notes-dialog.component';
 
 @Component({
   selector: 'app-side-login',
@@ -80,8 +77,6 @@ export class AppSideLoginComponent implements OnInit {
   options = this.settings.getOptions();
   private readonly authService    = inject(AuthService);
   private readonly route          = inject(ActivatedRoute);
-  private readonly dialog         = inject(MatDialog);
-  private readonly releaseNotesSvc = inject(ReleaseNotesService);
 
   @ViewChildren('otpInput') otpInputs!: QueryList<ElementRef<HTMLInputElement>>;
 
@@ -272,25 +267,7 @@ export class AppSideLoginComponent implements OnInit {
   }
 
   private navigateAfterLogin() {
-    this.releaseNotesSvc.getPending().subscribe({
-      next: ({ note }) => {
-        if (note) {
-          const ref = this.dialog.open(ReleaseNotesDialogComponent, {
-            data: note,
-            width: '520px',
-            disableClose: true,
-            panelClass: 'rn-dialog-panel',
-          });
-          ref.afterClosed().subscribe(() => {
-            this.releaseNotesSvc.ack(note.id).subscribe();
-            this.router.navigate([this.authService.getRedirectPath()]);
-          });
-        } else {
-          this.router.navigate([this.authService.getRedirectPath()]);
-        }
-      },
-      error: () => this.router.navigate([this.authService.getRedirectPath()]),
-    });
+    this.router.navigate([this.authService.getRedirectPath()]);
   }
 
   backToPassword() {

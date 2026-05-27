@@ -1,0 +1,140 @@
+<div class="svc-card">
+
+  <!-- Header -->
+  <div class="svc-header">
+    <i-tabler name="stethoscope" size="18"></i-tabler>
+    <span>Services Performed</span>
+    <span class="svc-total">
+      Total: ₹{{ store.totalCharges() | number:'1.2-2' }}
+    </span>
+  </div>
+
+  <!-- Plan items quick-add (accepted items from treatment plan) -->
+  @if (!store.isSealed() && acceptedPlanItems().length > 0) {
+    <div class="svc-plan-items">
+      <div class="svc-plan-label">
+        <i-tabler name="clipboard-heart" size="13"></i-tabler>
+        From treatment plan
+      </div>
+      <div class="svc-plan-chips">
+        @for (item of acceptedPlanItems(); track item.id) {
+          <button class="svc-plan-chip" (click)="addFromPlan(item)">
+            <span class="svc-plan-chip-name">{{ item.service_name }}</span>
+            @if (item.tooth_numbers.length) {
+              <span class="svc-plan-chip-teeth">{{ item.tooth_numbers.join(', ') }}</span>
+            }
+            @if (item.cost_min !== null) {
+              <span class="svc-plan-chip-price">₹{{ item.cost_min | number:'1.0-0' }}</span>
+            }
+          </button>
+        }
+      </div>
+    </div>
+  }
+
+  <!-- Add service picker (hidden when sealed) -->
+  @if (!store.isSealed()) {
+    <div class="svc-picker">
+      <mat-form-field appearance="outline" class="svc-search-field">
+        <mat-label>Search & add service</mat-label>
+        <input matInput [(ngModel)]="searchTerm" (ngModelChange)="onSearch()"
+               placeholder="Type service name…" [matAutocomplete]="auto" />
+        <mat-autocomplete #auto="matAutocomplete" [displayWith]="displayFn"
+                          (optionSelected)="onServiceSelected($event.option.value)">
+          @for (svc of filteredServices(); track svc.id) {
+            <mat-option [value]="svc">
+              <div class="svc-option">
+                <span class="svc-option-name">{{ svc.name }}</span>
+                <span class="svc-option-price">₹{{ svc.price | number:'1.0-0' }}</span>
+              </div>
+            </mat-option>
+          }
+        </mat-autocomplete>
+        <i-tabler matSuffix name="search" size="16"></i-tabler>
+      </mat-form-field>
+    </div>
+
+    <!-- Add confirmation row — shown after selecting a service -->
+    @if (pendingService()) {
+      <div class="svc-confirm-row">
+        <div class="svc-confirm-name">{{ pendingService()!.name }}</div>
+        <div class="svc-confirm-price">₹{{ pendingService()!.price | number:'1.2-2' }}</div>
+
+        <mat-form-field appearance="outline" class="svc-qty-field">
+          <mat-label>Qty</mat-label>
+          <input matInput type="number" [(ngModel)]="addQty" min="1" max="10" />
+        </mat-form-field>
+
+        <mat-form-field appearance="outline" class="svc-disc-field">
+          <mat-label>Discount %</mat-label>
+          <input matInput type="number" [(ngModel)]="addDiscountPct" min="0" max="100" />
+        </mat-form-field>
+
+        <button mat-flat-button color="primary" [disabled]="adding()" (click)="confirmAdd()">
+          @if (adding()) { <mat-spinner diameter="16" style="display:inline-block;margin-right:6px"></mat-spinner> }
+          Add
+        </button>
+        <button mat-icon-button (click)="cancelPending()" title="Cancel">
+          <i-tabler name="x" size="16"></i-tabler>
+        </button>
+      </div>
+
+      @if (addError()) {
+        <div class="svc-error">{{ addError() }}</div>
+      }
+    }
+  }
+
+  <!-- Service list -->
+  @if (store.services().length === 0) {
+    <div class="svc-empty">
+      <i-tabler name="stethoscope" size="32"></i-tabler>
+      <p>No services added yet.</p>
+    </div>
+  } @else {
+    <div class="svc-list">
+      @for (svc of store.services(); track svc.id) {
+        <div class="svc-item" [class.svc-completed]="svc.status === 'COMPLETED'"
+                              [class.svc-abandoned]="svc.status === 'ABANDONED'"
+                              [class.svc-partial]="svc.status === 'PARTIAL'">
+
+          <div class="svc-item-left">
+            <div class="svc-item-name">{{ svc.service_name || 'Service' }}</div>
+            <div class="svc-item-meta">
+              Qty {{ svc.quantity }} · Base ₹{{ svc.base_price | number:'1.2-2' }}
+              @if (svc.discount_pct > 0) { · {{ svc.discount_pct }}% off }
+            </div>
+          </div>
+
+          <div class="svc-item-charge">₹{{ svc.final_charge | number:'1.2-2' }}</div>
+
+          <div class="svc-status-chip s-{{ svc.status | lowercase }}">
+            {{ svc.status | titlecase }}
+          </div>
+
+          <!-- Action buttons — only for in-progress services when not sealed -->
+          @if (svc.status === 'IN_PROGRESS' && !store.isSealed()) {
+            <div class="svc-item-actions">
+              <button mat-stroked-button color="primary" class="btn-sm"
+                      [disabled]="updating() === svc.id"
+                      (click)="completeService(svc)">
+                @if (updating() === svc.id) { <mat-spinner diameter="14" style="display:inline-block;margin-right:4px"></mat-spinner> }
+                Done
+              </button>
+              <button mat-stroked-button color="warn" class="btn-sm"
+                      [disabled]="updating() === svc.id"
+                      (click)="abandonService(svc)">
+                Abandon
+              </button>
+            </div>
+          }
+
+          <!-- Lab work order (T3.3) -->
+          <df-lab-order [service]="svc" />
+
+        </div>
+      }
+    </div>
+  }
+
+</div>

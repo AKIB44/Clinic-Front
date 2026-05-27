@@ -6,7 +6,7 @@ export class ToastService {
   private snack = inject(MatSnackBar);
 
   success(message: string): void {
-    this.snack.open(message, '', { panelClass: ['toast-success'] });
+    this.snack.open(message, '', { panelClass: ['toast-success'], duration: 3000 });
   }
 
   error(message: string): void {

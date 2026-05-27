@@ -16,6 +16,9 @@ import { ChairsService } from '../../services/chairs.service';
 import { AuthService } from '../../auth/auth.service';
 import { Chair } from '../../models/clinic.model';
 import { HasPermissionDirective } from '../../core/rbac/has-permission.directive';
+import { SessionApiService } from '../../features/treatment-session/services/session-api.service';
+import { ReleaseNotesService } from '../../services/release-notes.service';
+import { ReleaseNotesDialogComponent } from '../../components/release-notes-dialog/release-notes-dialog.component';
 
 // ── Icon / color helpers ──────────────────────────────────────────────────────
 
@@ -64,12 +67,13 @@ export interface ServiceColumn {
 export type ScheduleStatFilter = 'all' | 'active' | 'done' | 'pending';
 
 export const STATUS_LABEL: Record<string, string> = {
-  booked:      'Booked',
-  confirmed:   'Confirmed',
-  in_progress: 'In Progress',
-  done:        'Done',
-  no_show:     'No Show',
-  cancelled:   'Cancelled',
+  booked:       'Booked',
+  confirmed:    'Confirmed',
+  in_progress:  'In Progress',
+  in_treatment: 'In Treatment',
+  done:         'Done',
+  no_show:      'No Show',
+  cancelled:    'Cancelled',
 };
 
 export const BOOKING_SOURCE_ICON: Record<string, string> = {
@@ -92,6 +96,7 @@ function appointmentFromPatchResponse(body: unknown): Appointment | undefined {
 }
 
 const STATUS_ACTIONS: Record<AppointmentStatus, Array<{ label: string; next: AppointmentStatus; color: string }>> = {
+  in_treatment: [],  // handled by Start Treatment button separately
   booked:      [
     { label: 'Confirm',  next: 'confirmed',   color: 'primary' },
     { label: 'No Show',  next: 'no_show',     color: 'warn'    },
@@ -377,6 +382,17 @@ export class RescheduleDialog {
               Prescription
             </button>
           </ng-container>
+          @if (canStartTreatment) {
+            <button mat-flat-button color="primary"
+                    [disabled]="pendingKey === 'start_treatment'"
+                    (click)="startTreatment()">
+              @if (pendingKey === 'start_treatment') {
+                <mat-spinner diameter="18" class="btn-inline-spinner"></mat-spinner>
+              }
+              <i-tabler name="stethoscope" size="15"></i-tabler>
+              {{ data.status === 'in_treatment' ? 'Resume Treatment' : 'Start Treatment' }}
+            </button>
+          }
           <button mat-stroked-button mat-dialog-close>Close</button>
         </mat-dialog-actions>
       }
@@ -442,6 +458,7 @@ export class RescheduleDialog {
     .s-booked           { background: #e3f2fd; color: #1565c0; }
     .s-confirmed        { background: #e8f5e9; color: #2e7d32; }
     .s-in_progress      { background: #fff8e1; color: #e65100; }
+    .s-in_treatment     { background: #e8f4fd; color: #0074ba; }
     .s-done             { background: #e8f5e9; color: #1b5e20; }
     .s-no_show          { background: #fce4ec; color: #880e4f; }
     .s-cancelled        { background: #f5f5f5; color: #616161; }
@@ -455,11 +472,12 @@ export class RescheduleDialog {
   `]
 })
 export class AppointmentDetailDialog {
-  dialogRef       = inject(MatDialogRef<AppointmentDetailDialog>);
-  data            = inject<Appointment>(MAT_DIALOG_DATA);
-  private apptSvc = inject(AppointmentsService);
-  private router  = inject(Router);
-  private dialog  = inject(MatDialog);
+  dialogRef          = inject(MatDialogRef<AppointmentDetailDialog>);
+  data               = inject<Appointment>(MAT_DIALOG_DATA);
+  private apptSvc    = inject(AppointmentsService);
+  private router     = inject(Router);
+  private dialog     = inject(MatDialog);
+  private sessionApi = inject(SessionApiService);
 
   statusLabel = STATUS_LABEL;
   sourceIcon  = BOOKING_SOURCE_ICON;
@@ -478,6 +496,7 @@ export class AppointmentDetailDialog {
   get canCancel()  { return this.allActions.some(a => a.next === 'cancelled'); }
   get canReschedule() { return this.data.status === 'booked' || this.data.status === 'confirmed'; }
   get canRescheduleOrCancel() { return this.canReschedule || this.canCancel; }
+  get canStartTreatment() { return this.data.status === 'in_progress' || this.data.status === 'in_treatment'; }
 
   get scheduled(): string {
     try { return format(parseISO(this.data.scheduled_at.replace('Z', '')), 'EEE, d MMM yyyy · h:mm a'); }
@@ -547,6 +566,22 @@ export class AppointmentDetailDialog {
   openPatientRecord() {
     this.dialogRef.close();
     this.router.navigate(['/patients', this.data.patient_id]);
+  }
+
+  startTreatment() {
+    this.pendingKey  = 'start_treatment';
+    this.actionError = '';
+    this.sessionApi.startTreatment(this.data.id).subscribe({
+      next: ({ session }) => {
+        this.pendingKey = null;
+        this.dialogRef.close();
+        this.router.navigate(['/treatment', session.id]);
+      },
+      error: () => {
+        this.pendingKey  = null;
+        this.actionError = 'Failed to start treatment session. Please try again.';
+      },
+    });
   }
 }
 
@@ -625,13 +660,14 @@ function buildGreeting(firstName: string): GreetingParts {
   styleUrls: ['./schedule.component.scss'],
 })
 export class ScheduleComponent implements OnInit, OnDestroy {
-  private apptSvc    = inject(AppointmentsService);
-  private svcSvc     = inject(ClinicServicesService);
-  private chairsSvc  = inject(ChairsService);
-  private authSvc    = inject(AuthService);
-  private router     = inject(Router);
-  private dialog     = inject(MatDialog);
-  private cdr        = inject(ChangeDetectorRef);
+  private apptSvc        = inject(AppointmentsService);
+  private svcSvc         = inject(ClinicServicesService);
+  private chairsSvc      = inject(ChairsService);
+  private authSvc        = inject(AuthService);
+  private router         = inject(Router);
+  private dialog         = inject(MatDialog);
+  private cdr            = inject(ChangeDetectorRef);
+  private releaseNotesSvc = inject(ReleaseNotesService);
 
   statusLabel = STATUS_LABEL;
   sourceIcon  = BOOKING_SOURCE_ICON;
@@ -661,6 +697,8 @@ export class ScheduleComponent implements OnInit, OnDestroy {
   private destroy$ = new Subject<void>();
 
   ngOnInit() {
+    // Greeting: show for 2.4s then fade out over 0.9s
+    const greetingTotalMs = this.showGreeting ? 3300 : 0;
     if (this.showGreeting) {
       sessionStorage.setItem(GREETING_SESSION_KEY, '1');
       setTimeout(() => {
@@ -672,9 +710,31 @@ export class ScheduleComponent implements OnInit, OnDestroy {
         }, 900);
       }, 2400);
     }
+
+    // Release notes: show after greeting finishes (or immediately if no greeting)
+    setTimeout(() => this.checkReleaseNotes(), greetingTotalMs + 200);
+
     this.loadMeta();
     this.startPolling();
     this.watchServiceChanges();
+  }
+
+  private checkReleaseNotes(): void {
+    this.releaseNotesSvc.getPending().subscribe({
+      next: ({ note }) => {
+        if (!note) return;
+        const ref = this.dialog.open(ReleaseNotesDialogComponent, {
+          data: note,
+          width: '520px',
+          disableClose: true,
+          panelClass: 'rn-dialog-panel',
+        });
+        ref.afterClosed().subscribe(() => {
+          this.releaseNotesSvc.ack(note.id).subscribe();
+        });
+      },
+      error: () => { /* silently ignore — non-critical */ },
+    });
   }
 
   ngOnDestroy() {

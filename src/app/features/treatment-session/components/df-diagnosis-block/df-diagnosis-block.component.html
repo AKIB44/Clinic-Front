@@ -1,0 +1,113 @@
+<div class="dx-card">
+
+  <div class="dx-header">
+    <i-tabler name="clipboard-list" size="18"></i-tabler>
+    <span>Diagnosis</span>
+    @if (store.diagnoses().length) {
+      <span class="dx-count">{{ store.diagnoses().length }}</span>
+    }
+  </div>
+
+  <!-- Add form (when not sealed) -->
+  @if (!store.isSealed()) {
+    <div class="dx-add-area">
+      <div class="dx-quick-chips">
+        @for (d of commonDx; track d) {
+          <button class="dx-chip" (click)="quickAdd(d)">+ {{ d }}</button>
+        }
+      </div>
+
+      <div class="dx-input-row">
+        <mat-form-field appearance="outline" class="dx-text-field">
+          <mat-label>Diagnosis text</mat-label>
+          <input matInput [(ngModel)]="newText"
+                 placeholder="Free text or pick from above…" />
+        </mat-form-field>
+
+        <mat-form-field appearance="outline" class="dx-kind-field">
+          <mat-label>Kind</mat-label>
+          <mat-select [(ngModel)]="newKind">
+            <mat-option value="provisional">Provisional</mat-option>
+            <mat-option value="differential">Differential</mat-option>
+            <mat-option value="final">Final</mat-option>
+          </mat-select>
+        </mat-form-field>
+
+        <mat-form-field appearance="outline" class="dx-icd-field">
+          <mat-label>ICD-10 (optional)</mat-label>
+          <input matInput [(ngModel)]="newIcd" placeholder="e.g. K02.1" />
+        </mat-form-field>
+
+        <button mat-flat-button color="primary" class="dx-add-btn"
+                [disabled]="!newText.trim() || adding()"
+                (click)="addDiagnosis()">
+          @if (adding()) { <mat-spinner diameter="16" style="display:inline-block;margin-right:6px"></mat-spinner> }
+          Add
+        </button>
+      </div>
+
+      <!-- Tooth numbers (FDI) — optional multi-select -->
+      <div class="dx-tooth-row">
+        <span class="dx-tooth-label">Teeth (FDI):</span>
+        <div class="dx-tooth-grid">
+          @for (t of allTeeth; track t) {
+            <button class="dx-tooth-btn"
+                    [class.active]="newTeeth.includes(t)"
+                    (click)="toggleTooth(t)"
+                    [title]="'Tooth ' + t">{{ t }}</button>
+          }
+        </div>
+        @if (newTeeth.length > 0) {
+          <button class="dx-tooth-clear" (click)="newTeeth = []">Clear</button>
+        }
+      </div>
+
+      @if (addError()) {
+        <div class="dx-error">{{ addError() }}</div>
+      }
+    </div>
+  }
+
+  <!-- Diagnosis list -->
+  @if (store.diagnoses().length === 0) {
+    <div class="dx-empty">
+      <i-tabler name="clipboard-list" size="28"></i-tabler>
+      <p>No diagnoses recorded.</p>
+    </div>
+  } @else {
+    <div class="dx-list">
+      @for (dx of store.diagnoses(); track dx.id) {
+        <div class="dx-item">
+          <div class="dx-kind-dot" [style.background]="kindColor(dx.kind)"></div>
+          <div class="dx-item-body">
+            <div class="dx-item-text">{{ dx.diagnosis_text }}</div>
+            <div class="dx-item-meta">
+              <span class="dx-kind-label" [style.color]="kindColor(dx.kind)">
+                {{ kindLabel(dx.kind) }}
+              </span>
+              @if (dx.icd10_code) {
+                <span class="dx-icd">· {{ dx.icd10_code }}</span>
+              }
+              @if (dx.tooth_numbers.length) {
+                <span class="dx-icd">· Teeth: {{ dx.tooth_numbers.join(', ') }}</span>
+              }
+            </div>
+          </div>
+          @if (!store.isSealed()) {
+            <button mat-icon-button class="dx-delete-btn"
+                    [disabled]="deleting() === dx.id"
+                    (click)="deleteDiagnosis(dx.id)"
+                    title="Remove diagnosis">
+              @if (deleting() === dx.id) {
+                <mat-spinner diameter="16"></mat-spinner>
+              } @else {
+                <i-tabler name="x" size="15"></i-tabler>
+              }
+            </button>
+          }
+        </div>
+      }
+    </div>
+  }
+
+</div>

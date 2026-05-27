@@ -1,0 +1,139 @@
+import {
+  Component, OnInit, inject, signal, ChangeDetectionStrategy
+} from '@angular/core';
+import { CommonModule } from '@angular/common';
+import { ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
+import { finalize } from 'rxjs/operators';
+import { MaterialModule } from '../../../../material.module';
+import { TablerIconsModule } from 'angular-tabler-icons';
+import { SessionStore } from '../../store/session.store';
+import { SessionApiService } from '../../services/session-api.service';
+import { ToastService } from '../../../../services/toast.service';
+import { RxMasterService } from '../../../../services/rx-master.service';
+import { MedicineSearchComponent } from '../../.././../pages/rx/medicine-search/medicine-search.component';
+import { MedicineLineItemComponent, FieldChangeEvent } from '../../../../pages/rx/medicine-line-item/medicine-line-item.component';
+import { MedFormItem, RxMedicine } from '../../../../pages/rx/rx.interfaces';
+
+@Component({
+  selector: 'df-prescription-block',
+  standalone: true,
+  changeDetection: ChangeDetectionStrategy.OnPush,
+  imports: [
+    CommonModule, ReactiveFormsModule, MaterialModule, TablerIconsModule,
+    MedicineSearchComponent, MedicineLineItemComponent,
+  ],
+  templateUrl: './df-prescription-block.component.html',
+  styleUrl: './df-prescription-block.component.scss',
+})
+export class DfPrescriptionBlockComponent implements OnInit {
+  readonly store  = inject(SessionStore);
+  private api     = inject(SessionApiService);
+  private toast   = inject(ToastService);
+  private master  = inject(RxMasterService);
+  private fb      = inject(FormBuilder);
+
+  readonly showForm  = signal(false);
+  readonly saving    = signal(false);
+  readonly loading   = signal(false);
+  readonly formError = signal<string | null>(null);
+  readonly medicines = signal<MedFormItem[]>([]);
+
+  form!: FormGroup;
+
+  ngOnInit(): void {
+    this.form = this.fb.group({
+      diagnosis:      ['', [Validators.required, Validators.maxLength(500)]],
+      clinical_notes: ['', [Validators.maxLength(5000)]],
+    });
+  }
+
+  openForm(): void {
+    this.form.reset({ diagnosis: '', clinical_notes: '' });
+    this.medicines.set([]);
+    this.formError.set(null);
+
+    // Pre-load defaults from the first in-progress service if available
+    const firstService = this.store.services().find(s => s.status === 'IN_PROGRESS' || s.status === 'COMPLETED');
+    if (firstService?.catalog_item_id) {
+      this.loading.set(true);
+      this.master.getDefaults(firstService.catalog_item_id).then(defaults => {
+        this.loading.set(false);
+        this.medicines.set(defaults.medicines.map(m => this.toFormItem(m)));
+      }).catch(() => this.loading.set(false));
+    }
+
+    this.showForm.set(true);
+  }
+
+  cancelForm(): void {
+    this.showForm.set(false);
+    this.formError.set(null);
+  }
+
+  addMedicine(med: RxMedicine): void {
+    if (this.medicines().some(m => m.id === med.id)) return;
+    this.medicines.update(list => [...list, this.toFormItem(med)]);
+  }
+
+  removeMedicine(id: number): void {
+    this.medicines.update(list => list.filter(m => m.id !== id));
+  }
+
+  updateMedicineField(id: number, event: FieldChangeEvent): void {
+    this.medicines.update(list =>
+      list.map(m => m.id === id ? { ...m, [event.field]: event.value } : m)
+    );
+  }
+
+  trackMedById(_: number, m: MedFormItem): number { return m.id; }
+
+  savePrescription(): void {
+    this.form.markAllAsTouched();
+    if (this.form.invalid) return;
+    if (!this.medicines().length) {
+      this.formError.set('Add at least one medication.');
+      return;
+    }
+
+    const sessionId = this.store.sessionId();
+    if (!sessionId) return;
+
+    this.saving.set(true);
+    this.formError.set(null);
+
+    this.api.addPrescription(sessionId, {
+      diagnosis:      this.form.value.diagnosis.trim(),
+      clinical_notes: this.form.value.clinical_notes?.trim() || undefined,
+      items: this.medicines().map(m => ({
+        medicine_id:  m.id,
+        dosage:       m.dosage       || undefined,
+        frequency:    m.frequency    || undefined,
+        duration:     m.duration     || undefined,
+        quantity:     m.quantity     || undefined,
+        instructions: m.instructions || undefined,
+      })),
+    }).pipe(finalize(() => this.saving.set(false))).subscribe({
+      next: ({ prescription }) => {
+        this.store.addPrescription(prescription);
+        this.showForm.set(false);
+        this.toast.success(`Prescription ${prescription.prescription_no} saved.`);
+      },
+      error: (err) => {
+        const msg = err?.error?.error ?? 'Failed to save prescription.';
+        this.formError.set(msg);
+        this.toast.error(msg);
+      },
+    });
+  }
+
+  private toFormItem(m: RxMedicine): MedFormItem {
+    return {
+      ...m,
+      dosage:       m.default_dose ?? '',
+      frequency:    '',
+      duration:     m.default_days ? `${m.default_days} days` : '',
+      quantity:     '',
+      instructions: '',
+    };
+  }
+}

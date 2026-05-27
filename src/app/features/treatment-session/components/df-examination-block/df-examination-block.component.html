@@ -1,0 +1,72 @@
+<div class="exam-card">
+
+  <div class="exam-header" (click)="expanded.set(!expanded())">
+    <div class="exam-header-left">
+      <i-tabler name="stethoscope" size="18"></i-tabler>
+      <span>Examination & Chief Complaint</span>
+      @if (chiefComplaint && !expanded()) {
+        <span class="exam-preview">— {{ chiefComplaint | slice:0:50 }}{{ chiefComplaint.length > 50 ? '…' : '' }}</span>
+      }
+    </div>
+    <div class="exam-header-right">
+      @if (saving()) { <mat-spinner diameter="14"></mat-spinner> }
+      @if (saved()) { <span class="exam-saved"><i-tabler name="check" size="13"></i-tabler> Saved</span> }
+      <i-tabler [name]="expanded() ? 'chevron-up' : 'chevron-down'" size="16"></i-tabler>
+    </div>
+  </div>
+
+  @if (expanded()) {
+    <div class="exam-body">
+
+      <mat-form-field appearance="outline" class="exam-field-full">
+        <mat-label>Chief Complaint</mat-label>
+        <textarea matInput rows="2" [(ngModel)]="chiefComplaint" [disabled]="store.isSealed()"
+                  (ngModelChange)="onChange()"
+                  placeholder="Patient's main concern today…"></textarea>
+      </mat-form-field>
+
+      <div class="exam-row">
+        <div class="exam-pain-score">
+          <div class="exam-label">Pain Score (0–10)</div>
+          <div class="pain-scale">
+            @for (n of painScaleValues; track n) {
+              <button class="pain-btn"
+                      [class.active]="painScore === n"
+                      [class.pain-low]="n <= 3"
+                      [class.pain-mid]="n >= 4 && n <= 6"
+                      [class.pain-high]="n >= 7"
+                      [disabled]="store.isSealed()"
+                      (click)="setPainScore(n)">
+                {{ n }}
+              </button>
+            }
+          </div>
+        </div>
+
+        <mat-form-field appearance="outline" class="exam-field-half">
+          <mat-label>Pain Site (tooth / region)</mat-label>
+          <input matInput [(ngModel)]="painSite" [disabled]="store.isSealed()"
+                 (ngModelChange)="onChange()" placeholder="e.g. UR6, lower left…" />
+        </mat-form-field>
+
+        <mat-form-field appearance="outline" class="exam-field-half">
+          <mat-label>Pain Trigger</mat-label>
+          <mat-select [(ngModel)]="painTrigger" [disabled]="store.isSealed()" (ngModelChange)="onChange()">
+            <mat-option value="">— Not selected —</mat-option>
+            @for (t of triggers; track t.value) {
+              <mat-option [value]="t.value">{{ t.label }}</mat-option>
+            }
+          </mat-select>
+        </mat-form-field>
+      </div>
+
+      <mat-form-field appearance="outline" class="exam-field-full">
+        <mat-label>Occlusion Notes</mat-label>
+        <input matInput [(ngModel)]="occlusionNotes" [disabled]="store.isSealed()"
+               (ngModelChange)="onChange()" placeholder="Class I / II / III, crossbite, open bite…" />
+      </mat-form-field>
+
+    </div>
+  }
+
+</div>

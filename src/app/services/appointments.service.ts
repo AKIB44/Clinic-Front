@@ -18,7 +18,7 @@ export interface Appointment {
   chair_id: string;
   scheduled_at: string;
   duration_minutes: number;
-  status: 'booked' | 'confirmed' | 'in_progress' | 'done' | 'no_show' | 'cancelled';
+  status: 'booked' | 'confirmed' | 'in_progress' | 'in_treatment' | 'done' | 'no_show' | 'cancelled';
   booking_source: string;
   notes: string | null;
   cancel_reason: string | null;

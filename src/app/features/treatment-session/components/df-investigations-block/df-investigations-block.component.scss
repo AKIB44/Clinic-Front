@@ -1,0 +1,76 @@
+.inv-card          { background: #fff; border-radius: 12px; box-shadow: 0 1px 4px rgba(0,0,0,.08); overflow: hidden; }
+
+.inv-header        { display: flex; align-items: center; gap: 8px; padding: 14px 18px;
+                     background: #f8fafd; border-bottom: 1px solid #e5eaf0;
+                     font-size: 14px; font-weight: 600; color: #1e3a5f; }
+.inv-count         { background: #e0e7ff; color: #3730a3; font-size: 11px; font-weight: 700;
+                     padding: 2px 8px; border-radius: 20px; }
+.inv-add-btn       { margin-left: auto; }
+
+// Section labels
+.inv-section-label { font-size: 11px; font-weight: 700; text-transform: uppercase;
+                     letter-spacing: .5px; color: #64748b; padding: 10px 18px 4px; }
+
+// List
+.inv-list          { padding: 0; }
+
+.inv-item          { padding: 10px 18px; border-bottom: 1px solid #f1f5f9; }
+.inv-item:last-child { border-bottom: none; }
+.inv-item--read    { background: #f8fffe; }
+
+.inv-item-main     { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-bottom: 4px; }
+.inv-kind-badge    { font-size: 11px; font-weight: 700; background: #e0f2fe; color: #0369a1;
+                     padding: 2px 8px; border-radius: 10px; white-space: nowrap; }
+.inv-kind-badge--read { background: #dcfce7; color: #15803d; }
+.inv-indication    { font-size: 13px; color: #334155; }
+.inv-vendor        { font-size: 11px; color: #94a3b8; background: #f8fafc;
+                     padding: 1px 6px; border-radius: 6px; }
+
+.inv-item-actions  { display: flex; align-items: center; gap: 6px; }
+.inv-receive-btn   { font-size: 12px; padding: 0 10px; height: 30px; line-height: 30px; }
+.inv-cancel-btn    { color: #94a3b8; }
+.inv-cancel-btn:hover { color: #ef4444; }
+
+.inv-thumb-wrap    { margin: 6px 0; }
+.inv-thumb         { max-width: 100%; max-height: 200px; object-fit: contain;
+                     border-radius: 6px; border: 1px solid #e5eaf0;
+                     background: #000; display: block; cursor: zoom-in; }
+
+.inv-dicom-stub    { display: inline-flex; align-items: center; gap: 6px;
+                     background: #1e293b; color: #94a3b8; font-size: 11px; font-weight: 600;
+                     padding: 5px 10px; border-radius: 6px; margin: 4px 0; }
+.inv-dicom-link    { display: inline-flex; align-items: center; gap: 3px;
+                     color: #60a5fa; text-decoration: none; font-weight: 700; }
+.inv-dicom-link:hover { text-decoration: underline; }
+
+.inv-interp        { font-size: 13px; color: #334155; font-style: italic;
+                     background: #f0fdf4; border-left: 3px solid #4ade80;
+                     padding: 6px 10px; border-radius: 0 6px 6px 0; margin: 4px 0; }
+.inv-report-link   { display: inline-flex; align-items: center; gap: 4px; font-size: 12px;
+                     color: #0369a1; text-decoration: none; margin-top: 4px; }
+.inv-report-link:hover { text-decoration: underline; }
+
+// Receive form (inline)
+.inv-receive-form  { background: #f8fafd; border: 1px solid #e5eaf0; border-radius: 8px;
+                     padding: 14px; margin: 0 18px 10px; }
+.inv-receive-title { font-size: 13px; font-weight: 700; color: #1e3a5f; margin-bottom: 10px; }
+.inv-file-label    { display: inline-flex; align-items: center; gap: 6px; cursor: pointer;
+                     background: #f0f9ff; border: 1px solid #bae6fd; border-radius: 8px;
+                     padding: 6px 12px; font-size: 12px; font-weight: 500; color: #0369a1;
+                     margin-bottom: 10px; transition: background .15s; }
+.inv-file-label:hover { background: #e0f2fe; }
+.inv-uploading     { opacity: .7; pointer-events: none; }
+
+// Order form
+.inv-form-section  { padding: 14px 18px; border-top: 1px solid #f1f5f9; }
+.inv-form          { display: flex; flex-direction: column; gap: 10px; }
+.inv-form-title    { font-size: 13px; font-weight: 700; color: #1e3a5f; }
+.inv-full-field    { width: 100%; }
+.inv-form-actions  { display: flex; gap: 10px; justify-content: flex-end; }
+.inv-error         { color: #c62828; font-size: 13px; }
+
+// Empty / cancelled
+.inv-empty         { padding: 32px; text-align: center; color: #94a3b8;
+                     display: flex; flex-direction: column; align-items: center; gap: 8px; }
+.inv-cancelled-row { display: flex; align-items: center; gap: 6px; font-size: 11px;
+                     color: #94a3b8; padding: 8px 18px; border-top: 1px solid #f1f5f9; }

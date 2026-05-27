@@ -1,0 +1,73 @@
+<div class="etm-dialog">
+
+  <div class="etm-header">
+    <i-tabler name="flag-check" size="24"></i-tabler>
+    <h2 class="etm-title">End Treatment Session</h2>
+  </div>
+
+  <mat-dialog-content class="etm-body">
+
+    <!-- Validation failures -->
+    @if (failures().length > 0) {
+      <div class="etm-failures">
+        <div class="etm-failures-title">
+          <i-tabler name="alert-triangle" size="16"></i-tabler>
+          Cannot seal yet — resolve the following:
+        </div>
+        @for (f of failures(); track f.block) {
+          <div class="etm-failure-item">
+            <i-tabler name="x-circle" size="14"></i-tabler>
+            {{ f.message }}
+          </div>
+        }
+      </div>
+    } @else {
+
+      <!-- Soft warning: services performed but no diagnosis -->
+      @if (noDiagnosisWarning()) {
+        <div class="etm-warning">
+          <i-tabler name="alert-circle" size="15"></i-tabler>
+          No diagnosis recorded. Consider adding at least one before sealing.
+        </div>
+      }
+
+      <!-- Summary -->
+      <div class="etm-summary">
+        <div class="etm-summary-row">
+          <span>Services performed</span>
+          <span class="etm-val">{{ store.services().length }}</span>
+        </div>
+        <div class="etm-summary-row">
+          <span>Completed</span>
+          <span class="etm-val">{{ completedCount() }}</span>
+        </div>
+        <div class="etm-summary-row total">
+          <span>Total charge</span>
+          <span class="etm-val">₹{{ store.totalCharges() | number:'1.2-2' }}</span>
+        </div>
+      </div>
+
+      <p class="etm-confirm-text">
+        Sealing the session will lock all charges and move the appointment to Done.
+        This action cannot be undone.
+      </p>
+
+      @if (error()) {
+        <div class="etm-error">{{ error() }}</div>
+      }
+    }
+
+  </mat-dialog-content>
+
+  <mat-dialog-actions align="end">
+    <button mat-stroked-button mat-dialog-close [disabled]="sealing()">Cancel</button>
+    @if (failures().length === 0) {
+      <button mat-flat-button color="primary" [disabled]="sealing()" (click)="seal()">
+        @if (sealing()) { <mat-spinner diameter="18" style="display:inline-block;margin-right:8px"></mat-spinner> }
+        <i-tabler name="flag-check" size="16"></i-tabler>
+        Confirm & End Treatment
+      </button>
+    }
+  </mat-dialog-actions>
+
+</div>

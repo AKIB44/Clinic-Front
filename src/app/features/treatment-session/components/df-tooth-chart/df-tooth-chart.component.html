@@ -1,0 +1,228 @@
+<div class="chart-card">
+  <!-- Header -->
+  <div class="chart-header" (click)="collapsed.set(!collapsed())">
+    <div class="chart-title">
+      <i-tabler name="tooth" size="18"></i-tabler>
+      <span>Tooth Chart</span>
+      <span class="chart-badge">{{ annotatedCount() }}</span>
+    </div>
+    <div class="chart-header-right">
+      @if (saving()) { <mat-spinner diameter="16"></mat-spinner> }
+      @if (saved()) { <span class="saved-hint"><i-tabler name="check" size="14"></i-tabler> Saved</span> }
+      <i-tabler [name]="collapsed() ? 'chevron-down' : 'chevron-up'" size="18"></i-tabler>
+    </div>
+  </div>
+
+  @if (!collapsed()) {
+    <div class="chart-body">
+
+      <!-- Legend -->
+      <div class="legend">
+        @for (entry of conditionEntries; track entry.key) {
+          <span class="legend-pill" [style.color]="entry.color" [style.background]="entry.bg">
+            {{ entry.label }}
+          </span>
+        }
+      </div>
+
+      <!-- Deciduous row label -->
+      <div class="row-label">Deciduous (Primary)</div>
+
+      <!-- Upper deciduous -->
+      <div class="quadrant-row">
+        <div class="quadrant dec">
+          @for (t of upperRightDec; track t) {
+            <div class="tooth-cell" [class.missing]="getData(t).condition === 'missing'"
+                 [style.background]="getBg(t)"
+                 (click)="selectTooth(t)">
+              <div class="tooth-num">{{ t }}</div>
+              <div class="tooth-icon" [style.border-color]="getColor(t)">
+                @if (getData(t).condition !== 'healthy') {
+                  <span class="tooth-dot" [style.background]="getColor(t)"></span>
+                }
+              </div>
+            </div>
+          }
+        </div>
+        <div class="midline-gap"></div>
+        <div class="quadrant dec">
+          @for (t of upperLeftDec; track t) {
+            <div class="tooth-cell" [class.missing]="getData(t).condition === 'missing'"
+                 [style.background]="getBg(t)"
+                 (click)="selectTooth(t)">
+              <div class="tooth-num">{{ t }}</div>
+              <div class="tooth-icon" [style.border-color]="getColor(t)">
+                @if (getData(t).condition !== 'healthy') {
+                  <span class="tooth-dot" [style.background]="getColor(t)"></span>
+                }
+              </div>
+            </div>
+          }
+        </div>
+      </div>
+
+      <!-- Lower deciduous -->
+      <div class="quadrant-row">
+        <div class="quadrant dec">
+          @for (t of lowerRightDec; track t) {
+            <div class="tooth-cell" [class.missing]="getData(t).condition === 'missing'"
+                 [style.background]="getBg(t)"
+                 (click)="selectTooth(t)">
+              <div class="tooth-icon" [style.border-color]="getColor(t)">
+                @if (getData(t).condition !== 'healthy') {
+                  <span class="tooth-dot" [style.background]="getColor(t)"></span>
+                }
+              </div>
+              <div class="tooth-num">{{ t }}</div>
+            </div>
+          }
+        </div>
+        <div class="midline-gap"></div>
+        <div class="quadrant dec">
+          @for (t of lowerLeftDec; track t) {
+            <div class="tooth-cell" [class.missing]="getData(t).condition === 'missing'"
+                 [style.background]="getBg(t)"
+                 (click)="selectTooth(t)">
+              <div class="tooth-icon" [style.border-color]="getColor(t)">
+                @if (getData(t).condition !== 'healthy') {
+                  <span class="tooth-dot" [style.background]="getColor(t)"></span>
+                }
+              </div>
+              <div class="tooth-num">{{ t }}</div>
+            </div>
+          }
+        </div>
+      </div>
+
+      <div class="row-label perm">Permanent</div>
+
+      <!-- Upper permanent -->
+      <div class="quadrant-row">
+        <div class="quadrant">
+          @for (t of upperRightPerm; track t) {
+            <div class="tooth-cell" [class.missing]="getData(t).condition === 'missing'"
+                 [style.background]="getBg(t)"
+                 (click)="selectTooth(t)">
+              <div class="tooth-num">{{ t }}</div>
+              <div class="tooth-icon" [style.border-color]="getColor(t)">
+                @if (getData(t).condition !== 'healthy') {
+                  <span class="tooth-dot" [style.background]="getColor(t)"></span>
+                }
+              </div>
+            </div>
+          }
+        </div>
+        <div class="midline-gap"></div>
+        <div class="quadrant">
+          @for (t of upperLeftPerm; track t) {
+            <div class="tooth-cell" [class.missing]="getData(t).condition === 'missing'"
+                 [style.background]="getBg(t)"
+                 (click)="selectTooth(t)">
+              <div class="tooth-num">{{ t }}</div>
+              <div class="tooth-icon" [style.border-color]="getColor(t)">
+                @if (getData(t).condition !== 'healthy') {
+                  <span class="tooth-dot" [style.background]="getColor(t)"></span>
+                }
+              </div>
+            </div>
+          }
+        </div>
+      </div>
+
+      <!-- Lower permanent -->
+      <div class="quadrant-row">
+        <div class="quadrant">
+          @for (t of lowerRightPerm; track t) {
+            <div class="tooth-cell" [class.missing]="getData(t).condition === 'missing'"
+                 [style.background]="getBg(t)"
+                 (click)="selectTooth(t)">
+              <div class="tooth-icon" [style.border-color]="getColor(t)">
+                @if (getData(t).condition !== 'healthy') {
+                  <span class="tooth-dot" [style.background]="getColor(t)"></span>
+                }
+              </div>
+              <div class="tooth-num">{{ t }}</div>
+            </div>
+          }
+        </div>
+        <div class="midline-gap"></div>
+        <div class="quadrant">
+          @for (t of lowerLeftPerm; track t) {
+            <div class="tooth-cell" [class.missing]="getData(t).condition === 'missing'"
+                 [style.background]="getBg(t)"
+                 (click)="selectTooth(t)">
+              <div class="tooth-icon" [style.border-color]="getColor(t)">
+                @if (getData(t).condition !== 'healthy') {
+                  <span class="tooth-dot" [style.background]="getColor(t)"></span>
+                }
+              </div>
+              <div class="tooth-num">{{ t }}</div>
+            </div>
+          }
+        </div>
+      </div>
+
+      <!-- Detail panel -->
+      @if (selectedTooth() !== null) {
+        <div class="detail-panel">
+          <div class="detail-header">
+            <span class="detail-title">Tooth {{ selectedTooth() }}</span>
+            <button mat-icon-button (click)="selectedTooth.set(null)">
+              <i-tabler name="x" size="16"></i-tabler>
+            </button>
+          </div>
+
+          <div class="detail-section-label">Condition</div>
+          <div class="condition-grid">
+            @for (entry of conditionEntries; track entry.key) {
+              <button class="condition-btn"
+                      [class.active]="getData(selectedTooth()!).condition === entry.key"
+                      [style.border-color]="getData(selectedTooth()!).condition === entry.key ? entry.color : '#e2e8f0'"
+                      [style.color]="getData(selectedTooth()!).condition === entry.key ? entry.color : '#374151'"
+                      [style.background]="getData(selectedTooth()!).condition === entry.key ? entry.bg : '#fff'"
+                      (click)="setCondition(selectedTooth()!, entry.key)">
+                {{ entry.label }}
+              </button>
+            }
+          </div>
+
+          <div class="detail-section-label">Affected Surfaces</div>
+          <div class="surface-chips">
+            @for (s of allSurfaces; track s) {
+              <button class="surface-chip"
+                      [class.active]="getData(selectedTooth()!).surfaces.includes(s)"
+                      (click)="toggleSurface(selectedTooth()!, s)">
+                {{ s | titlecase }}
+              </button>
+            }
+          </div>
+
+          <div class="detail-section-label">Mobility Grade</div>
+          <div class="mobility-row">
+            @for (g of mobilityGrades; track g) {
+              <button class="mobility-btn"
+                      [class.active]="getData(selectedTooth()!).mobility === g.value"
+                      (click)="setMobility(selectedTooth()!, g.value)">
+                {{ g.label }}
+              </button>
+            }
+          </div>
+
+          <div class="detail-section-label">Notes</div>
+          <textarea class="tooth-notes" rows="2" placeholder="Per-tooth clinical note…"
+                    [value]="getData(selectedTooth()!).notes"
+                    [disabled]="store.isSealed()"
+                    (input)="setNotes(selectedTooth()!, $any($event.target).value)"></textarea>
+
+          @if (!store.isSealed()) {
+            <button mat-flat-button color="primary" class="save-btn" (click)="saveChart()">
+              @if (saving()) { <mat-spinner diameter="16"></mat-spinner> }
+              @else { Save Chart }
+            </button>
+          }
+        </div>
+      }
+
+    </div>
+  }
+</div>

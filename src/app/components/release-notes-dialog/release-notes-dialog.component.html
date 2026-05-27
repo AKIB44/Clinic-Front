@@ -1,0 +1,23 @@
+<div class="rn-header">
+  <div class="rn-icon-wrap">
+    <i-tabler name="sparkles" size="22" style="color:#fff"></i-tabler>
+  </div>
+  <div class="rn-titles">
+    <span class="rn-badge">v{{ data.version }}</span>
+    <div class="rn-title">{{ data.title }}</div>
+  </div>
+</div>
+
+<div class="rn-body" [innerHTML]="formattedBody"></div>
+
+<div class="rn-consent">
+  <i-tabler name="info-circle" size="16"></i-tabler>
+  <span>Please review the changes above. Clicking <strong>Got it</strong> confirms you've read this release note.</span>
+</div>
+
+<div class="rn-actions">
+  <button mat-flat-button color="primary" (click)="dialogRef.close(true)">
+    <i-tabler name="check" size="16" style="margin-right:6px"></i-tabler>
+    Got it
+  </button>
+</div>

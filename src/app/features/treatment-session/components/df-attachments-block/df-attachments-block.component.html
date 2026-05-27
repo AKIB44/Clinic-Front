@@ -1,0 +1,62 @@
+<div class="att-card">
+
+  <div class="att-header">
+    <i-tabler name="paperclip" size="18"></i-tabler>
+    <span>Attachments</span>
+    <span class="att-count">{{ store.attachments().length }}</span>
+  </div>
+
+  <!-- List -->
+  @if (store.attachments().length > 0) {
+    <div class="att-list">
+      @for (a of store.attachments(); track a.id) {
+        <div class="att-item">
+          <div class="att-icon">
+            <i-tabler [name]="iconFor(a.content_type)" size="20"></i-tabler>
+          </div>
+          <div class="att-info">
+            <a class="att-filename" [href]="a.url" target="_blank" rel="noopener">{{ a.filename }}</a>
+            @if (a.file_size) {
+              <span class="att-size">{{ formatBytes(a.file_size) }}</span>
+            }
+          </div>
+          @if (!store.isSealed()) {
+            <button mat-icon-button class="att-delete-btn"
+                    [disabled]="deleting() === a.id"
+                    (click)="deleteAttachment(a.id)">
+              @if (deleting() === a.id) {
+                <mat-spinner diameter="16"></mat-spinner>
+              } @else {
+                <i-tabler name="trash" size="16"></i-tabler>
+              }
+            </button>
+          }
+        </div>
+      }
+    </div>
+  } @else {
+    <div class="att-empty">
+      <i-tabler name="cloud-upload" size="32"></i-tabler>
+      <span>No attachments yet</span>
+    </div>
+  }
+
+  <!-- Upload -->
+  @if (!store.isSealed()) {
+    <div class="att-upload-row">
+      <label class="att-upload-label" [class.att-uploading]="uploading()">
+        @if (uploading()) {
+          <mat-spinner diameter="16"></mat-spinner>
+          <span>Uploading…</span>
+        } @else {
+          <i-tabler name="upload" size="16"></i-tabler>
+          <span>Attach file</span>
+        }
+        <input type="file" [accept]="accept" (change)="onFilePicked($event)"
+               [disabled]="uploading()" style="display:none">
+      </label>
+      <span class="att-hint">Images, PDF, Word, Excel · max 50 MB</span>
+    </div>
+  }
+
+</div>

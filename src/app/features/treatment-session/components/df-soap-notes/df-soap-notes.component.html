@@ -1,0 +1,62 @@
+<div class="soap-card">
+  <div class="soap-header">
+    <i-tabler name="notes" size="18"></i-tabler>
+    <span>Clinical Notes (SOAP)</span>
+    @if (saving()) {
+      <mat-spinner diameter="14" class="soap-saving"></mat-spinner>
+    }
+    @if (saved()) {
+      <span class="soap-saved-badge"><i-tabler name="check" size="12"></i-tabler> Saved</span>
+    }
+  </div>
+
+  @if (store.isSealed()) {
+    <div class="soap-sealed-notice">
+      <i-tabler name="lock" size="14"></i-tabler>
+      Session sealed — use Addendum to add notes.
+    </div>
+  }
+
+  <div class="soap-body">
+    <mat-form-field appearance="outline" class="soap-field">
+      <mat-label>S — Subjective (Chief Complaint)</mat-label>
+      <textarea matInput rows="3" [(ngModel)]="s"
+                [disabled]="store.isSealed()"
+                (ngModelChange)="onChange()" placeholder="Patient's description of symptoms, pain, concerns…"></textarea>
+    </mat-form-field>
+
+    <mat-form-field appearance="outline" class="soap-field">
+      <mat-label>O — Objective (Clinical Findings)</mat-label>
+      <textarea matInput rows="3" [(ngModel)]="o"
+                [disabled]="store.isSealed()"
+                (ngModelChange)="onChange()" placeholder="Examination findings, vitals, investigations…"></textarea>
+    </mat-form-field>
+
+    <mat-form-field appearance="outline" class="soap-field">
+      <mat-label>A — Assessment (Diagnosis)</mat-label>
+      <textarea matInput rows="2" [(ngModel)]="a"
+                [disabled]="store.isSealed()"
+                (ngModelChange)="onChange()" placeholder="Working diagnosis and clinical impression…"></textarea>
+    </mat-form-field>
+
+    <mat-form-field appearance="outline" class="soap-field">
+      <mat-label>P — Plan (Treatment)</mat-label>
+      <textarea matInput rows="3" [(ngModel)]="p"
+                [disabled]="store.isSealed()"
+                (ngModelChange)="onChange()" placeholder="Procedures done, medications prescribed, follow-up…"></textarea>
+    </mat-form-field>
+  </div>
+
+  <!-- Post-seal addenda -->
+  @if (store.isSealed() && store.notes().addenda.length > 0) {
+    <div class="soap-addenda">
+      <div class="soap-addenda-title">Addenda</div>
+      @for (addendum of store.notes().addenda; track addendum.timestamp) {
+        <div class="soap-addendum">
+          <div class="addendum-meta">{{ addendum.timestamp | date:'d MMM yyyy, h:mm a' }} — {{ addendum.reason }}</div>
+          <div class="addendum-text">{{ addendum.text }}</div>
+        </div>
+      }
+    </div>
+  }
+</div>

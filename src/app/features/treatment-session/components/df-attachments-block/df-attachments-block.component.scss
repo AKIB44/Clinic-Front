@@ -1,0 +1,33 @@
+.att-card        { background: #fff; border-radius: 12px; box-shadow: 0 1px 4px rgba(0,0,0,.08); overflow: hidden; }
+
+.att-header      { display: flex; align-items: center; gap: 8px; padding: 14px 18px;
+                   background: #f8fafd; border-bottom: 1px solid #e5eaf0;
+                   font-size: 14px; font-weight: 600; color: #1e3a5f; }
+.att-count       { margin-left: auto; background: #e0e7ff; color: #3730a3;
+                   font-size: 11px; font-weight: 700; padding: 2px 8px; border-radius: 20px; }
+
+.att-list        { padding: 4px 0; }
+.att-item        { display: flex; align-items: center; gap: 10px; padding: 10px 18px;
+                   border-bottom: 1px solid #f1f5f9; }
+.att-item:last-child { border-bottom: none; }
+.att-icon        { color: #64748b; flex-shrink: 0; }
+.att-info        { flex: 1; min-width: 0; display: flex; align-items: center; gap: 8px; }
+.att-filename    { font-size: 13px; font-weight: 500; color: #0369a1; text-decoration: none;
+                   white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.att-filename:hover { text-decoration: underline; }
+.att-size        { font-size: 11px; color: #94a3b8; white-space: nowrap; }
+.att-delete-btn  { color: #94a3b8; flex-shrink: 0; }
+.att-delete-btn:hover { color: #ef4444; }
+
+.att-empty       { padding: 32px; text-align: center; color: #94a3b8;
+                   display: flex; flex-direction: column; align-items: center; gap: 8px; }
+
+.att-upload-row  { display: flex; align-items: center; gap: 12px; padding: 12px 18px;
+                   border-top: 1px solid #f1f5f9; }
+.att-upload-label { display: inline-flex; align-items: center; gap: 6px; cursor: pointer;
+                    background: #f0f9ff; border: 1px solid #bae6fd; border-radius: 8px;
+                    padding: 6px 14px; font-size: 13px; font-weight: 500; color: #0369a1;
+                    transition: background .15s; }
+.att-upload-label:hover { background: #e0f2fe; }
+.att-uploading   { opacity: .7; cursor: default; pointer-events: none; }
+.att-hint        { font-size: 11px; color: #94a3b8; }

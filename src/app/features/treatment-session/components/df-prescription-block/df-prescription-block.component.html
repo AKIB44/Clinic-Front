@@ -1,0 +1,119 @@
+<div class="rx-card">
+
+  <!-- Header -->
+  <div class="rx-header">
+    <i-tabler name="pill" size="18"></i-tabler>
+    <span>Prescriptions</span>
+    <span class="rx-count">{{ store.prescriptions().length }}</span>
+    @if (!store.isSealed()) {
+      <button mat-icon-button class="rx-add-icon-btn" (click)="openForm()" title="New prescription">
+        <i-tabler name="plus" size="18"></i-tabler>
+      </button>
+    }
+  </div>
+
+  <!-- Existing prescriptions list -->
+  @if (store.prescriptions().length > 0) {
+    <div class="rx-list">
+      @for (rx of store.prescriptions(); track rx.id) {
+        <div class="rx-item">
+          <div class="rx-item-header">
+            <span class="rx-no">{{ rx.prescription_no }}</span>
+            <span class="rx-indication">{{ rx.indication }}</span>
+          </div>
+          @if (rx.instructions) {
+            <div class="rx-instructions">{{ rx.instructions }}</div>
+          }
+          <div class="rx-drugs">
+            @for (item of rx.items; track item.id) {
+              <div class="rx-drug-row">
+                <span class="rx-drug-name">{{ item.medicine_name }}</span>
+                @if (item.dosage)    { <span class="rx-drug-detail">{{ item.dosage }}</span> }
+                @if (item.frequency) { <span class="rx-drug-detail">{{ item.frequency }}</span> }
+                @if (item.duration)  { <span class="rx-drug-detail">× {{ item.duration }}</span> }
+                @if (item.quantity)  { <span class="rx-drug-detail">Qty: {{ item.quantity }}</span> }
+              </div>
+            }
+          </div>
+          <div class="rx-item-footer">
+            <i-tabler name="clock" size="12"></i-tabler>
+            {{ rx.created_at | date:'d MMM yyyy, h:mm a' }}
+          </div>
+        </div>
+      }
+    </div>
+  }
+
+  <!-- New prescription form -->
+  @if (!store.isSealed() && showForm()) {
+    <div class="rx-form-wrap" [formGroup]="form">
+
+      @if (loading()) {
+        <div class="rx-loading">
+          <mat-spinner diameter="20"></mat-spinner>
+          <span>Loading defaults…</span>
+        </div>
+      }
+
+      <!-- Diagnosis + clinical notes — identical layout to rx master -->
+      <div class="rx-fields">
+        <div class="rx-field">
+          <label>Diagnosis <span class="req">*</span></label>
+          <input formControlName="diagnosis"
+                 placeholder="e.g. Irreversible pulpitis, post-extraction, pericoronitis">
+          @if (form.get('diagnosis')?.invalid && form.get('diagnosis')?.touched) {
+            <div class="field-error">Required, max 500 characters</div>
+          }
+        </div>
+
+        <div class="rx-field full">
+          <label>Clinical notes / Patient instructions</label>
+          <textarea formControlName="clinical_notes" rows="3"
+                    placeholder="Take after meals, avoid alcohol, follow-up in 5 days…"></textarea>
+        </div>
+      </div>
+
+      <!-- Medicines — reuse app-medicine-line-item exactly like rx master -->
+      <div class="rx-col-header">
+        <span>Medicines</span>
+        <span class="rx-col-count">{{ medicines().length }}</span>
+      </div>
+
+      @for (med of medicines(); track med.id) {
+        <app-medicine-line-item
+          [item]="med"
+          (fieldChange)="updateMedicineField(med.id, $event)"
+          (remove)="removeMedicine(med.id)">
+        </app-medicine-line-item>
+      }
+
+      <!-- Medicine search — same component as rx master -->
+      <app-medicine-search (medicineSelected)="addMedicine($event)"></app-medicine-search>
+
+      @if (formError()) {
+        <div class="rx-error">{{ formError() }}</div>
+      }
+
+      <div class="rx-form-actions">
+        <button mat-stroked-button (click)="cancelForm()" [disabled]="saving()">Cancel</button>
+        <button mat-flat-button color="primary"
+                [disabled]="saving() || form.invalid || !medicines().length"
+                (click)="savePrescription()">
+          @if (saving()) {
+            <mat-spinner diameter="16" style="display:inline-block;margin-right:6px"></mat-spinner>
+          }
+          Save Prescription
+        </button>
+      </div>
+
+    </div>
+  }
+
+  @if (store.prescriptions().length === 0 && !showForm()) {
+    <div class="rx-empty">
+      <i-tabler name="pill" size="32"></i-tabler>
+      <span>No prescriptions yet</span>
+    </div>
+  }
+
+</div>
