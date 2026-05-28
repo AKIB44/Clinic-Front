@@ -1,0 +1,246 @@
+@if (shouldShow() || postop()) {
+<div class="postop-card">
+
+  <!-- Header -->
+  <div class="postop-header">
+    <i-tabler name="clipboard-check" size="18"></i-tabler>
+    <span>Post-operative Record</span>
+    @if (postop(); as p) {
+      <span class="postop-badge">
+        {{ p.complications.length }} complication{{ p.complications.length !== 1 ? 's' : '' }}
+      </span>
+    }
+  </div>
+
+  <!-- Summary when closed -->
+  @if (!showForm && postop(); as p) {
+    <div class="postop-summary">
+      @if (p.postop_instructions_given) {
+        <span class="po-chip ok">Instructions given</span>
+      }
+      @if (p.patient_acknowledged_at) {
+        <span class="po-chip ok">Patient acknowledged</span>
+      }
+      @if (p.suture_count) {
+        <span class="po-chip">{{ p.suture_count }} sutures ({{ p.suture_type }})</span>
+      }
+      @if (p.follow_up_date) {
+        <span class="po-chip">Follow-up {{ p.follow_up_date | date:'dd MMM yy' }}</span>
+      }
+      @if (!store.isSealed()) {
+        <button class="po-edit-btn" (click)="openForm()">
+          <i-tabler name="edit" size="13"></i-tabler> Edit
+        </button>
+      }
+    </div>
+  }
+
+  @if (!showForm && !postop() && !store.isSealed()) {
+    <button class="postop-start-btn" (click)="openForm()">
+      <i-tabler name="plus" size="13"></i-tabler>
+      Add Post-op Record
+    </button>
+  }
+
+  <!-- Form -->
+  @if (showForm) {
+    <div class="postop-form">
+
+      <!-- Complications -->
+      <div class="pof-section-title">
+        <i-tabler name="alert-triangle" size="14"></i-tabler> Complications
+      </div>
+
+      @if (complications.length > 0) {
+        <div class="pof-comp-list">
+          @for (c of complications; track $index) {
+            <div class="pof-comp-row">
+              <span class="pof-comp-severity s-{{ c.severity }}">{{ c.severity }}</span>
+              <span class="pof-comp-type">{{ c.type }}</span>
+              @if (c.action_taken) {
+                <span class="pof-comp-action">→ {{ c.action_taken }}</span>
+              }
+              <button class="pof-remove-btn" (click)="removeComplication($index)">
+                <i-tabler name="x" size="11"></i-tabler>
+              </button>
+            </div>
+          }
+        </div>
+      }
+
+      <div class="pof-row">
+        <div class="pof-field">
+          <label>Type</label>
+          <input [(ngModel)]="newCompType" placeholder="e.g. Bleeding, Nerve paresthesia">
+        </div>
+        <div class="pof-field pof-field--sm">
+          <label>Severity</label>
+          <select [(ngModel)]="newCompSeverity">
+            <option value="mild">Mild</option>
+            <option value="moderate">Moderate</option>
+            <option value="severe">Severe</option>
+          </select>
+        </div>
+        <div class="pof-field">
+          <label>Action taken</label>
+          <input [(ngModel)]="newCompAction" placeholder="e.g. Haemostatic gel applied">
+        </div>
+        <button class="pof-add-comp-btn" (click)="addComplication()" [disabled]="!newCompType.trim()">
+          Add
+        </button>
+      </div>
+
+      <!-- Sutures -->
+      <div class="pof-section-title" style="margin-top:8px">
+        <i-tabler name="needle-thread" size="14"></i-tabler> Sutures
+      </div>
+      <div class="pof-row">
+        <div class="pof-field pof-field--sm">
+          <label>Count</label>
+          <input type="number" [(ngModel)]="sutureCount" placeholder="0">
+        </div>
+        <div class="pof-field">
+          <label>Type</label>
+          <select [(ngModel)]="sutureType">
+            <option value="">— none —</option>
+            <option value="resorbable">Resorbable</option>
+            <option value="non-resorbable">Non-resorbable</option>
+          </select>
+        </div>
+        @if (sutureType === 'non-resorbable') {
+          <div class="pof-field">
+            <label>Removal date</label>
+            <input type="date" [(ngModel)]="sutureRemovalDate">
+          </div>
+        }
+      </div>
+
+      <!-- Specimen -->
+      <div class="pof-section-title" style="margin-top:8px">
+        <i-tabler name="test-tube" size="14"></i-tabler> Specimen
+      </div>
+      <label class="pof-check">
+        <input type="checkbox" [(ngModel)]="specimenSent">
+        <span>Specimen sent for histopathology</span>
+      </label>
+      @if (specimenSent) {
+        <div class="pof-row">
+          <div class="pof-field">
+            <label>Lab</label>
+            <input [(ngModel)]="specimenLabId" placeholder="Lab name / ID">
+          </div>
+          <div class="pof-field">
+            <label>Request slip no.</label>
+            <input [(ngModel)]="specimenSlipNo" placeholder="Slip number">
+          </div>
+          <div class="pof-field">
+            <label>Expected report date</label>
+            <input type="date" [(ngModel)]="specimenReportDate">
+          </div>
+        </div>
+      }
+
+      <!-- Recovery vitals (for sedation/GA) -->
+      <div class="pof-section-title" style="margin-top:8px">
+        <i-tabler name="activity-heartbeat" size="14"></i-tabler> Recovery Vitals
+      </div>
+
+      @if (recoveryVitals.length > 0) {
+        <div class="pof-vitals-table">
+          <div class="pvt-header">
+            <span>Time</span><span>BP</span><span>Pulse</span><span>SpO₂</span><span></span>
+          </div>
+          @for (v of recoveryVitals; track $index) {
+            <div class="pvt-row">
+              <span>{{ v.time | date:'HH:mm' }}</span>
+              <span>{{ v.bp_sys }}/{{ v.bp_dia }}</span>
+              <span>{{ v.pulse }}</span>
+              <span>{{ v.spo2 }}%</span>
+              <button class="pof-remove-btn" (click)="removeVital($index)">
+                <i-tabler name="x" size="11"></i-tabler>
+              </button>
+            </div>
+          }
+        </div>
+      }
+
+      <div class="pof-row" style="align-items:flex-end">
+        <div class="pof-field pof-field--sm">
+          <label>BP Sys</label>
+          <input type="number" [(ngModel)]="newVitalBpSys">
+        </div>
+        <div class="pof-field pof-field--sm">
+          <label>BP Dia</label>
+          <input type="number" [(ngModel)]="newVitalBpDia">
+        </div>
+        <div class="pof-field pof-field--sm">
+          <label>Pulse</label>
+          <input type="number" [(ngModel)]="newVitalPulse">
+        </div>
+        <div class="pof-field pof-field--sm">
+          <label>SpO₂</label>
+          <input type="number" [(ngModel)]="newVitalSpo2">
+        </div>
+        <button class="pof-add-comp-btn" (click)="addRecoveryVital()">Record</button>
+      </div>
+
+      <!-- Post-op instructions -->
+      <div class="pof-section-title" style="margin-top:8px">
+        <i-tabler name="notes" size="14"></i-tabler> Post-op Instructions
+      </div>
+      <label class="pof-check">
+        <input type="checkbox" [(ngModel)]="instructionsGiven">
+        <span>Post-op instructions given to patient</span>
+      </label>
+      @if (instructionsGiven) {
+        <div class="pof-field">
+          <label>Instructions</label>
+          <textarea [(ngModel)]="instructionsText" rows="3"
+                    placeholder="e.g. Avoid hot food for 24hrs, take prescribed antibiotics…"></textarea>
+        </div>
+        <div class="pof-field">
+          <label>Patient acknowledged at</label>
+          <input type="datetime-local" [(ngModel)]="patientAcknowledgedAt">
+        </div>
+      }
+
+      <!-- Follow-up -->
+      <div class="pof-section-title" style="margin-top:8px">
+        <i-tabler name="calendar-plus" size="14"></i-tabler> Follow-up
+      </div>
+      <div class="pof-row">
+        <div class="pof-field">
+          <label>Follow-up date</label>
+          <input type="date" [(ngModel)]="followUpDate">
+        </div>
+        <div class="pof-field">
+          <label>Notes</label>
+          <input [(ngModel)]="followUpNotes" placeholder="e.g. Suture removal, implant review">
+        </div>
+      </div>
+
+      <!-- General notes -->
+      <div class="pof-field">
+        <label>Additional notes</label>
+        <textarea [(ngModel)]="notes" rows="2" placeholder="Any other post-op notes…"></textarea>
+      </div>
+
+      @if (saveError()) {
+        <div class="pof-error">{{ saveError() }}</div>
+      }
+
+      <div class="pof-actions">
+        <button class="pof-cancel-btn" (click)="closeForm()" [disabled]="saving()">Cancel</button>
+        <button class="pof-save-btn" [disabled]="saving()" (click)="save()">
+          @if (saving()) {
+            <mat-spinner diameter="14" style="display:inline-block;margin-right:4px"></mat-spinner>
+          }
+          Save Post-op Record
+        </button>
+      </div>
+
+    </div>
+  }
+
+</div>
+}

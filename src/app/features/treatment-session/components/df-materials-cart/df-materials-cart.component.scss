@@ -1,0 +1,104 @@
+.cart-wrap        { border-top: 1px dashed #e2e8f0; margin-top: 8px; padding-top: 8px; }
+
+// Cart item list
+.cart-list        { display: flex; flex-direction: column; gap: 4px; margin-bottom: 6px; }
+
+.cart-row         { display: flex; align-items: center; gap: 6px; flex-wrap: wrap;
+                    padding: 4px 6px; border-radius: 6px; background: #f8fafc;
+                    font-size: 12px; }
+.cart-row--committed { opacity: .75; }
+
+.cart-state-dot   { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; }
+.s-reserved       .cart-state-dot, .cart-state-dot.s-reserved   { background: #f59e0b; }
+.s-committed      .cart-state-dot, .cart-state-dot.s-committed  { background: #22c55e; }
+.s-returned       .cart-state-dot, .cart-state-dot.s-returned   { background: #64748b; }
+.s-wasted         .cart-state-dot, .cart-state-dot.s-wasted     { background: #ef4444; }
+
+.cart-item-name   { font-weight: 600; color: #0f172a; }
+.cart-qty         { color: #64748b; }
+.cart-lot         { display: inline-flex; align-items: center; gap: 3px; font-size: 11px;
+                    color: #475569; background: #e2e8f0; padding: 1px 5px; border-radius: 4px; }
+.cart-expiry      { font-size: 10px; color: #94a3b8; }
+.cart-implant-badge { display: inline-flex; align-items: center; gap: 3px;
+                      font-size: 10px; font-weight: 700; background: #ede9fe; color: #7c3aed;
+                      padding: 1px 5px; border-radius: 4px; }
+
+.cart-state-label { font-size: 10px; font-weight: 700; padding: 1px 5px; border-radius: 4px; }
+.s-reserved  .cart-state-label, .cart-state-label.s-reserved  { background: #fef3c7; color: #92400e; }
+.s-committed .cart-state-label, .cart-state-label.s-committed { background: #dcfce7; color: #166534; }
+.s-returned  .cart-state-label, .cart-state-label.s-returned  { background: #f1f5f9; color: #475569; }
+.s-wasted    .cart-state-label, .cart-state-label.s-wasted    { background: #fee2e2; color: #991b1b; }
+
+.cart-remove-btn  { margin-left: auto; background: none; border: none; cursor: pointer;
+                    color: #94a3b8; padding: 2px; border-radius: 4px; display: flex;
+                    align-items: center; transition: color .15s; }
+.cart-remove-btn:hover { color: #ef4444; }
+.cart-remove-btn:disabled { opacity: .5; cursor: not-allowed; }
+
+// Add button
+.cart-add-btn     { display: inline-flex; align-items: center; gap: 5px;
+                    background: none; border: 1px dashed #cbd5e1; border-radius: 6px;
+                    padding: 4px 10px; font-size: 11px; font-weight: 600; color: #64748b;
+                    cursor: pointer; transition: all .15s; }
+.cart-add-btn:hover { border-color: #22c55e; color: #15803d; background: #f0fdf4; }
+
+// Form
+.cart-form        { background: #f8fafd; border: 1px solid #e5eaf0; border-radius: 8px;
+                    padding: 12px; display: flex; flex-direction: column; gap: 8px; }
+
+// Item search
+.cart-search-wrap { position: relative; }
+.cart-search-input { width: 100%; padding: 7px 10px; font-size: 13px;
+                     border: 1px solid #cbd5e1; border-radius: 6px; outline: none;
+                     box-sizing: border-box; }
+.cart-search-input:focus { border-color: #22c55e; box-shadow: 0 0 0 3px rgba(34,197,94,.1); }
+.cart-search-spinner { position: absolute; right: 10px; top: 50%; transform: translateY(-50%); }
+
+.cart-search-results { position: absolute; z-index: 100; left: 0; right: 0; top: 100%;
+                       background: #fff; border: 1px solid #e2e8f0; border-radius: 8px;
+                       box-shadow: 0 4px 16px rgba(0,0,0,.1); max-height: 220px; overflow-y: auto;
+                       margin-top: 2px; }
+.cart-search-result  { padding: 8px 12px; cursor: pointer; display: flex;
+                        align-items: center; gap: 8px; }
+.cart-search-result:hover { background: #f0fdf4; }
+.cart-result-name    { font-size: 13px; font-weight: 600; color: #0f172a; }
+.cart-result-meta    { font-size: 11px; color: #64748b; }
+.cart-result-implant { font-size: 10px; font-weight: 700; background: #ede9fe; color: #7c3aed;
+                       padding: 1px 5px; border-radius: 4px; margin-left: auto; }
+
+// Selected item bar
+.cart-selected-item { display: flex; align-items: center; gap: 6px; font-size: 13px;
+                      font-weight: 600; color: #0f172a; background: #f0fdf4;
+                      border: 1px solid #bbf7d0; padding: 5px 10px; border-radius: 6px; }
+.cart-selected-name { flex: 1; }
+.cart-deselect      { background: none; border: none; cursor: pointer; color: #64748b;
+                      padding: 0; display: flex; align-items: center; }
+
+// Form fields
+.cart-form-row      { display: flex; gap: 8px; }
+.cart-form-field    { display: flex; flex-direction: column; gap: 3px; flex: 1; }
+.cart-form-field--sm { flex: 0 0 80px; }
+.cart-form-field--required label::after { content: ' *'; color: #ef4444; }
+
+.cart-form-field label { font-size: 11px; font-weight: 600; color: #475569; }
+.cart-form-field input,
+.cart-form-field select { font-size: 13px; border: 1px solid #cbd5e1; border-radius: 6px;
+                           padding: 5px 8px; outline: none; width: 100%; box-sizing: border-box; }
+.cart-form-field input:focus,
+.cart-form-field select:focus { border-color: #22c55e; box-shadow: 0 0 0 2px rgba(34,197,94,.1); }
+
+.cart-scan-check    { display: flex; align-items: center; gap: 6px; font-size: 12px;
+                      color: #475569; cursor: pointer; }
+.cart-scan-warn     { font-size: 11px; color: #d97706; font-style: italic; }
+
+.cart-error         { font-size: 11px; color: #c62828; }
+
+.cart-form-actions  { display: flex; gap: 8px; justify-content: flex-end; margin-top: 4px; }
+.cart-cancel-btn    { background: none; border: 1px solid #e2e8f0; border-radius: 6px;
+                      padding: 5px 12px; font-size: 12px; cursor: pointer; color: #64748b; }
+.cart-cancel-btn:disabled { opacity: .5; }
+.cart-save-btn      { background: #16a34a; color: #fff; border: none; border-radius: 6px;
+                      padding: 5px 14px; font-size: 12px; font-weight: 700; cursor: pointer;
+                      display: inline-flex; align-items: center; transition: background .15s; }
+.cart-save-btn:hover:not(:disabled) { background: #15803d; }
+.cart-save-btn:disabled { opacity: .5; cursor: not-allowed; }

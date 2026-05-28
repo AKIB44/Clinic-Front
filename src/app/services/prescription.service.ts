@@ -6,6 +6,7 @@ import { CreateRxPayload, RxSummary } from '../pages/rx/rx.interfaces';
 
 interface CreateResult { id: number; prescription_no: string; }
 interface PdfUrlResult { url: string | null; }
+interface GenerateResult { url: string; prescription: { id: string; prescription_no: string } }
 
 @Injectable({ providedIn: 'root' })
 export class PrescriptionService {
@@ -45,7 +46,23 @@ export class PrescriptionService {
     );
   }
 
-  getPdfUrl(id: number) {
+  /**
+   * Generate PDF and return the presigned URL in one call.
+   * New backend: URL is included directly in the generate response.
+   * Old backend (pre-restart): falls back to a GET /pdf call.
+   */
+  async generateSync(id: number | string): Promise<string> {
+    const res = await firstValueFrom(
+      this.http.post<GenerateResult>(`${this.base}/prescriptions/${id}/generate`, {})
+    );
+    if (res.url) return res.url;
+    // Fallback: server returned old format without url — fetch it now
+    const pdf = await this.getPdfUrl(id as number);
+    if (!pdf.url) throw new Error('PDF URL not available after generation');
+    return pdf.url;
+  }
+
+  getPdfUrl(id: number | string) {
     return firstValueFrom(
       this.http.get<PdfUrlResult>(`${this.base}/prescriptions/${id}/pdf`)
     );

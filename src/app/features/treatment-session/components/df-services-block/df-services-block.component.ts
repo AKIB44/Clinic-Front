@@ -10,6 +10,7 @@ import { SessionStore } from '../../store/session.store';
 import { SessionApiService } from '../../services/session-api.service';
 import { ServicePerformed, TreatmentPlanItem } from '../../models/session.model';
 import { DfLabOrderComponent } from '../df-lab-order/df-lab-order.component';
+import { DfMaterialsCartComponent } from '../df-materials-cart/df-materials-cart.component';
 import { ClinicServicesService } from '../../../../services/clinic-services.service';
 import { ClinicService } from '../../../../models/clinic.model';
 import { ToastService } from '../../../../services/toast.service';
@@ -17,7 +18,7 @@ import { ToastService } from '../../../../services/toast.service';
 @Component({
   selector: 'df-services-block',
   standalone: true,
-  imports: [CommonModule, FormsModule, MaterialModule, TablerIconsModule, DfLabOrderComponent],
+  imports: [CommonModule, FormsModule, MaterialModule, TablerIconsModule, DfLabOrderComponent, DfMaterialsCartComponent],
   templateUrl: './df-services-block.component.html',
   styleUrl: './df-services-block.component.scss',
 })
@@ -113,12 +114,14 @@ export class DfServicesBlockComponent implements OnInit {
       discount_pct: this.addDiscountPct || 0,
     }).pipe(finalize(() => this.adding.set(false))).subscribe({
       next: ({ service, plan_item }) => {
+        this.adding.set(false);
         this.store.addService({ ...service, service_name: svc.name });
         if (plan_item) this.store.updatePlanItem(plan_item);
         this.cancelPending();
         this.toast.success(`${svc.name} added to session.`);
       },
       error: (err) => {
+        this.adding.set(false);
         const msg = err?.error?.error ?? 'Failed to add service.';
         this.addError.set(msg);
         this.toast.error(msg);
@@ -132,11 +135,13 @@ export class DfServicesBlockComponent implements OnInit {
       .pipe(finalize(() => this.updating.set(null)))
       .subscribe({
         next: ({ service, plan_item }) => {
+          this.updating.set(null);
           this.store.updateService({ ...service, service_name: svc.service_name });
           if (plan_item) this.store.updatePlanItem(plan_item);
           this.toast.success(`${svc.service_name ?? 'Service'} marked as completed.`);
         },
         error: () => {
+          this.updating.set(null);
           this.toast.error('Could not update service status. Please try again.');
         },
       });
@@ -152,11 +157,13 @@ export class DfServicesBlockComponent implements OnInit {
     }).pipe(finalize(() => this.updating.set(null)))
       .subscribe({
         next: ({ service, plan_item }) => {
+          this.updating.set(null);
           this.store.updateService({ ...service, service_name: svc.service_name });
           if (plan_item) this.store.updatePlanItem(plan_item);
           this.toast.success(`${svc.service_name ?? 'Service'} abandoned.`);
         },
         error: () => {
+          this.updating.set(null);
           this.toast.error('Could not abandon service. Please try again.');
         },
       });

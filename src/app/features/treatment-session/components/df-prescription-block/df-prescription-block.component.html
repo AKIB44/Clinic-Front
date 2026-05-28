@@ -16,30 +16,123 @@
   @if (store.prescriptions().length > 0) {
     <div class="rx-list">
       @for (rx of store.prescriptions(); track rx.id) {
-        <div class="rx-item">
-          <div class="rx-item-header">
-            <span class="rx-no">{{ rx.prescription_no }}</span>
-            <span class="rx-indication">{{ rx.indication }}</span>
+
+        <div class="rx-item" [class.rx-item-generating]="pdfState(rx.id).generating">
+
+          <!-- Top row: prescription no + indication + date -->
+          <div class="rx-item-top">
+            <div class="rx-item-left">
+              <span class="rx-no">{{ rx.prescription_no }}</span>
+              <span class="rx-indication">{{ rx.indication }}</span>
+            </div>
+            <span class="rx-date">
+              <i-tabler name="clock" size="12"></i-tabler>
+              {{ rx.created_at | date:'d MMM, h:mm a' }}
+            </span>
           </div>
+
           @if (rx.instructions) {
-            <div class="rx-instructions">{{ rx.instructions }}</div>
+            <div class="rx-instructions">
+              <i-tabler name="info-circle" size="12"></i-tabler>
+              {{ rx.instructions }}
+            </div>
           }
+
+          <!-- Medicine rows -->
           <div class="rx-drugs">
             @for (item of rx.items; track item.id) {
               <div class="rx-drug-row">
-                <span class="rx-drug-name">{{ item.medicine_name }}</span>
-                @if (item.dosage)    { <span class="rx-drug-detail">{{ item.dosage }}</span> }
-                @if (item.frequency) { <span class="rx-drug-detail">{{ item.frequency }}</span> }
-                @if (item.duration)  { <span class="rx-drug-detail">× {{ item.duration }}</span> }
-                @if (item.quantity)  { <span class="rx-drug-detail">Qty: {{ item.quantity }}</span> }
+                <div class="rx-drug-name">
+                  <i-tabler name="circle-dot" size="10"></i-tabler>
+                  {{ item.medicine_name }}
+                  @if (item.generic_name && item.generic_name !== item.medicine_name) {
+                    <span class="rx-generic">({{ item.generic_name }})</span>
+                  }
+                </div>
+                <div class="rx-drug-details">
+                  @if (item.dosage)      { <span class="rx-chip rx-chip-dose">{{ item.dosage }}</span> }
+                  @if (item.frequency)   { <span class="rx-chip">{{ item.frequency }}</span> }
+                  @if (item.duration)    { <span class="rx-chip">{{ item.duration }}</span> }
+                  @if (item.quantity)    { <span class="rx-chip rx-chip-qty">Qty: {{ item.quantity }}</span> }
+                  @if (item.dosage_form) { <span class="rx-chip rx-chip-form">{{ item.dosage_form }}</span> }
+                </div>
+                @if (item.instructions) {
+                  <div class="rx-drug-note">{{ item.instructions }}</div>
+                }
               </div>
             }
           </div>
-          <div class="rx-item-footer">
-            <i-tabler name="clock" size="12"></i-tabler>
-            {{ rx.created_at | date:'d MMM yyyy, h:mm a' }}
+
+          <!-- ── PDF panel ──────────────────────────────────────────────── -->
+          <div class="rx-pdf-panel">
+
+            @if (pdfState(rx.id).generating) {
+              <!-- In-progress bar -->
+              <div class="rx-pdf-progress">
+                <div class="rx-pdf-progress-bar">
+                  <div class="rx-pdf-progress-fill"></div>
+                </div>
+                <span class="rx-pdf-progress-label">
+                  <mat-spinner diameter="12"></mat-spinner>
+                  {{ rx.pdf_generated ? 'Loading PDF…' : 'Generating PDF…' }}
+                </span>
+              </div>
+
+            } @else if (pdfState(rx.id).url) {
+              <!-- PDF ready — preview + download + WhatsApp -->
+              <div class="rx-pdf-ready">
+                <div class="rx-pdf-ready-badge">
+                  <i-tabler name="file-type-pdf" size="15"></i-tabler>
+                  PDF ready
+                </div>
+                <div class="rx-pdf-actions">
+                  <button mat-stroked-button class="rx-pdf-btn" (click)="viewPdf(rx)"
+                          title="Preview in browser">
+                    <i-tabler name="eye" size="14"></i-tabler> Preview
+                  </button>
+                  <a class="rx-download-btn mat-stroked-button"
+                     [href]="pdfState(rx.id).url!" target="_blank" download
+                     title="Download PDF">
+                    <i-tabler name="download" size="14"></i-tabler> Download
+                  </a>
+                  <button mat-stroked-button class="rx-pdf-btn rx-wa-btn" (click)="shareOnWhatsApp(rx)"
+                          title="Send link on WhatsApp">
+                    <i-tabler name="brand-whatsapp" size="14"></i-tabler> Send
+                  </button>
+                </div>
+              </div>
+
+            } @else if (rx.pdf_generated) {
+              <!-- PDF exists but URL not fetched yet this session -->
+              <div class="rx-pdf-exists">
+                <i-tabler name="file-type-pdf" size="15" class="rx-pdf-icon-sm"></i-tabler>
+                <span class="rx-pdf-exists-label">PDF available</span>
+                <button mat-stroked-button class="rx-pdf-btn" (click)="viewPdf(rx)">
+                  <i-tabler name="eye" size="14"></i-tabler> View / Download
+                </button>
+              </div>
+
+            } @else {
+              <!-- No PDF yet -->
+              <button mat-stroked-button class="rx-pdf-btn rx-pdf-generate-btn" (click)="generatePdf(rx)">
+                <i-tabler name="file-type-pdf" size="14"></i-tabler>
+                Generate PDF
+              </button>
+            }
+
+            @if (pdfState(rx.id).error) {
+              <div class="rx-pdf-error">
+                <i-tabler name="alert-circle" size="13"></i-tabler>
+                {{ pdfState(rx.id).error }}
+                <button class="rx-retry-link" (click)="generatePdf(rx)">Retry</button>
+              </div>
+            }
+
           </div>
+          <!-- ── end PDF panel ──────────────────────────────────────────── -->
+
         </div>
+
       }
     </div>
   }
@@ -55,7 +148,6 @@
         </div>
       }
 
-      <!-- Diagnosis + clinical notes — identical layout to rx master -->
       <div class="rx-fields">
         <div class="rx-field">
           <label>Diagnosis <span class="req">*</span></label>
@@ -65,7 +157,6 @@
             <div class="field-error">Required, max 500 characters</div>
           }
         </div>
-
         <div class="rx-field full">
           <label>Clinical notes / Patient instructions</label>
           <textarea formControlName="clinical_notes" rows="3"
@@ -73,7 +164,6 @@
         </div>
       </div>
 
-      <!-- Medicines — reuse app-medicine-line-item exactly like rx master -->
       <div class="rx-col-header">
         <span>Medicines</span>
         <span class="rx-col-count">{{ medicines().length }}</span>
@@ -87,7 +177,6 @@
         </app-medicine-line-item>
       }
 
-      <!-- Medicine search — same component as rx master -->
       <app-medicine-search (medicineSelected)="addMedicine($event)"></app-medicine-search>
 
       @if (formError()) {

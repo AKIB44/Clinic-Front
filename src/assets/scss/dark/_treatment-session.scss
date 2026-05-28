@@ -1,0 +1,408 @@
+// ─────────────────────────────────────────────────────────────────────────────
+// Treatment Session dark-theme overrides
+// Applied when .dark-theme is present on <html>.
+// Uses !important throughout to win over Angular's [_ngcontent-xxx] scoping.
+// ─────────────────────────────────────────────────────────────────────────────
+
+// Palette shortcuts (SCSS vars — not emitted to CSS)
+$dk-page:    #15263a;
+$dk-card:    #111c2d;
+$dk-deep:    #0d1821;   // header/section strips inside cards
+$dk-row:     #152236;   // alternating row / input bg
+$dk-hover:   #1a2d42;
+$dk-border:  #333f55;
+$dk-fborder: #465670;   // form input border
+$dk-t1:      #eaeff4;   // primary text
+$dk-t2:      #c6d1e9;   // secondary text
+$dk-t3:      #7891b5;   // muted text
+$dk-link:    #60a5fa;   // blue link / badge accent
+
+.dark-theme {
+
+  // ── Session canvas shell ─────────────────────────────────────────────────────
+
+  .sc-root { background: $dk-page !important; }
+
+  .sc-topbar {
+    background: $dk-card !important;
+    border-color: $dk-border !important;
+    box-shadow: 0 1px 6px rgba(0,0,0,.4) !important;
+  }
+  .sc-patient-name   { color: $dk-t1 !important; }
+  .sc-patient-sub    { color: $dk-t3 !important; }
+  .sc-status-pill    { }  // keep coloured pills as-is
+  .sc-offline-pill   { background: #2d2100 !important; color: #fbbf24 !important; }
+  .sc-sealed-pill    { background: #0f2d1a !important; color: #4ade80 !important; }
+
+  // Sidebar
+  .sc-sidebar {
+    background: $dk-card !important;
+    border-color: $dk-border !important;
+  }
+  .sc-patient-card {
+    background: linear-gradient(160deg, #16243a 0%, #111c2d 100%) !important;
+    border-color: #2a3d5a !important;
+  }
+  .sc-pc-name   { color: $dk-t1 !important; }
+  .sc-pc-meta,
+  .sc-pc-phone  { color: $dk-t3 !important; }
+
+  .sc-stats-row {
+    background: $dk-deep !important;
+    border-color: $dk-border !important;
+  }
+  .sc-stat-sep   { background: $dk-border !important; }
+  .sc-stat-val   { color: $dk-t1 !important; }
+  .sc-stat-lbl   { color: $dk-t3 !important; }
+
+  .sc-progress-header { color: $dk-t2 !important; }
+  .sc-progress-bar-track { background: $dk-border !important; }
+
+  .sc-steps { }
+  .sc-step:hover { background: $dk-hover !important; }
+  .sc-step-label { color: $dk-t2 !important; }
+  .sc-step-complete .sc-step-label { color: $dk-t1 !important; }
+
+  .sc-content { }   // transparent — cards handle their own bg
+
+  // ── Session block wrapper ───────────────────────────────────────────────────
+
+  .sb-header {
+    background: $dk-card !important;
+    border-color: $dk-border !important;
+  }
+  .sb-header:hover,
+  .sb-wrap.sb-open .sb-header {
+    background: $dk-hover !important;
+    border-color: #4a5d80 !important;
+  }
+  .sb-title   { color: $dk-t1 !important; }
+  .sb-summary { color: $dk-t3 !important; }
+  .sb-badge   { background: #1e3a5f !important; color: $dk-link !important; }
+  .sb-chevron { color: $dk-t3 !important; }
+  .sb-chevron-open { color: $dk-link !important; }
+  .sb-body    { border-color: #4a5d80 !important; }
+
+  // ── Shared card pattern ─────────────────────────────────────────────────────
+  // All block cards: white bg + light header + light borders → dark equivalents
+
+  .exam-card, .svc-card, .dx-card, .inv-card,
+  .att-card, .soap-card, .rx-card {
+    background: $dk-card !important;
+    box-shadow: 0 1px 4px rgba(0,0,0,.4) !important;
+  }
+
+  .chart-card, .tpa-card, .consent-card, .preop-card,
+  .postop-card, .tp-card {
+    background: $dk-card !important;
+    border-color: $dk-border !important;
+    box-shadow: none !important;
+  }
+
+  // Section headers inside cards
+  .exam-header, .svc-header, .dx-header, .inv-header,
+  .att-header, .soap-header, .rx-header {
+    background: $dk-deep !important;
+    border-color: $dk-border !important;
+    color: $dk-t1 !important;
+  }
+
+  // Headers that use colour on the card directly (no separate header class)
+  .tpa-header, .consent-header, .preop-header, .postop-header,
+  .tp-title, .chart-title {
+    color: $dk-t1 !important;
+  }
+  .tp-header, .chart-header {
+    border-color: $dk-border !important;
+    color: $dk-t1 !important;
+  }
+  .tp-header-right, .chart-header-right { color: $dk-t3 !important; }
+
+  // Generic border-bottom separators
+  .rx-item, .inv-item, .att-item, .svc-item {
+    border-color: $dk-border !important;
+  }
+  .rx-form-wrap { border-color: $dk-border !important; }
+  .soap-addenda { border-color: $dk-border !important; }
+
+  // ── Examination block ───────────────────────────────────────────────────────
+
+  .exam-header-left { color: $dk-t1 !important; }
+  .exam-preview     { color: $dk-t3 !important; }
+  .exam-label       { color: $dk-t3 !important; }
+  .exam-saved       { color: #4ade80 !important; }
+
+  .pain-btn {
+    background: $dk-row !important;
+    border-color: $dk-fborder !important;
+    color: $dk-t2 !important;
+  }
+  .pain-btn:hover:not([disabled]) { border-color: $dk-link !important; color: $dk-link !important; }
+
+  // ── Tooth chart ─────────────────────────────────────────────────────────────
+
+  .row-label  { color: $dk-t3 !important; }
+  .saved-hint { color: #4ade80 !important; }
+
+  // ── Diagnosis block ─────────────────────────────────────────────────────────
+
+  .dx-add-area  { border-color: $dk-border !important; }
+  .dx-chip {
+    background: $dk-row !important;
+    border-color: $dk-fborder !important;
+    color: $dk-t2 !important;
+  }
+  .dx-chip:hover { background: #1a2d42 !important; border-color: $dk-link !important; color: $dk-link !important; }
+  .dx-item       { border-color: $dk-border !important; }
+  .dx-text       { color: $dk-t1 !important; }
+  .dx-kind-pill  { background: $dk-row !important; }
+  .dx-icd        { color: $dk-t3 !important; }
+  .dx-empty,
+  .dx-error      { color: $dk-t3 !important; }
+
+  // ── Investigations block ─────────────────────────────────────────────────────
+
+  .inv-section-label { color: $dk-t3 !important; }
+  .inv-item--read    { background: #0e1f18 !important; }
+  .inv-kind-badge    { background: $dk-row !important; color: $dk-t2 !important; }
+  .inv-status-chip   { }  // keep coloured status chips
+
+  // ── TPA block ───────────────────────────────────────────────────────────────
+
+  .tpa-count  { color: $dk-t3 !important; }
+  .tpa-row    { background: $dk-row !important; border-color: $dk-border !important; }
+  .tpa-insurer { color: $dk-t1 !important; }
+  .tpa-meta   { color: $dk-t3 !important; }
+  .tpa-notes-input { background: $dk-row !important; border-color: $dk-fborder !important; color: $dk-t1 !important; }
+
+  // ── Consent block ────────────────────────────────────────────────────────────
+
+  .consent-count     { color: $dk-t3 !important; }
+  .consent-row       { background: #0e2118 !important; border-color: #1a4a35 !important; }
+  .consent-type      { color: $dk-t1 !important; }
+  .consent-template  { color: $dk-t3 !important; }
+  .consent-date      { color: $dk-t3 !important; }
+
+  // Signature canvas wrapper
+  .consent-canvas-wrap { border-color: $dk-fborder !important; background: $dk-deep !important; }
+
+  // ── Pre-op checklist ─────────────────────────────────────────────────────────
+
+  .preop-vital-chip     { background: $dk-row !important; color: $dk-t2 !important; }
+  .preop-vital-chip.ok  { background: #0e2118 !important; color: #4ade80 !important; }
+  .preop-edit-btn {
+    border-color: $dk-fborder !important; color: $dk-t2 !important;
+    background: transparent !important;
+  }
+  .preop-edit-btn:hover { border-color: #a78bfa !important; color: #a78bfa !important; }
+
+  // Form grid inside pre-op
+  .preop-form-section { }
+  .preop-field-label  { color: $dk-t3 !important; }
+  .preop-input {
+    background: $dk-row !important;
+    border-color: $dk-fborder !important;
+    color: $dk-t1 !important;
+  }
+  .preop-warning-row { background: #2d1a00 !important; border-color: #7c4a00 !important; color: #fbbf24 !important; }
+
+  // ── Treatment plan ────────────────────────────────────────────────────────────
+
+  .plan-title    { color: $dk-t2 !important; }
+  .plan-date     { color: $dk-t3 !important; }
+  .priority-label { color: $dk-t3 !important; }
+
+  .tp-item {
+    background: $dk-row !important;
+    border-color: $dk-border !important;
+  }
+  .tp-item-name  { color: $dk-t1 !important; }
+  .tp-item-meta  { color: $dk-t3 !important; }
+  .tp-item-fee   { color: $dk-t2 !important; }
+  .tp-empty      { color: $dk-t3 !important; }
+
+  // ── Services block ────────────────────────────────────────────────────────────
+
+  .svc-total { color: #4ade80 !important; }
+
+  .svc-plan-chip {
+    background: #0e1f38 !important;
+    border-color: #1e3a5f !important;
+    color: $dk-t2 !important;
+  }
+  .svc-plan-chip:hover  { background: #1a2d4a !important; border-color: $dk-link !important; }
+  .svc-plan-chip-name   { color: $dk-link !important; }
+  .svc-plan-chip-teeth  { background: #1e3a5f !important; color: #93c5fd !important; }
+  .svc-plan-chip-price  { color: #93c5fd !important; }
+  .svc-plan-label       { color: $dk-link !important; }
+
+  .svc-item-name  { color: $dk-t1 !important; }
+  .svc-item-meta  { color: $dk-t3 !important; }
+  .svc-item-charge { color: $dk-t2 !important; }
+
+  .svc-completed { background: #0c1f12 !important; }
+  .svc-abandoned { background: #1f0c0c !important; }
+  .svc-partial   { background: #1f1800 !important; }
+
+  .svc-option-price  { color: $dk-link !important; }
+  .svc-confirm-price { color: $dk-link !important; }
+
+  // ── Post-op record ────────────────────────────────────────────────────────────
+
+  .postop-badge  { background: $dk-row !important; color: $dk-t2 !important; }
+  .po-chip       { background: $dk-row !important; color: $dk-t2 !important; }
+  .po-chip.ok    { background: #0e2118 !important; color: #4ade80 !important; }
+  .po-edit-btn   { border-color: $dk-fborder !important; color: $dk-t2 !important; background: transparent !important; }
+  .po-edit-btn:hover { border-color: $dk-link !important; color: $dk-link !important; }
+  .postop-start-btn { border-color: $dk-fborder !important; color: $dk-t3 !important; background: transparent !important; }
+
+  // ── Prescription block ────────────────────────────────────────────────────────
+
+  .rx-count      { background: #1e3a5f !important; color: $dk-link !important; }
+  .rx-no         { background: #1e3a5f !important; color: $dk-link !important; }
+  .rx-indication { color: $dk-t1 !important; }
+  .rx-date       { color: $dk-t3 !important; }
+  .rx-instructions { color: $dk-t3 !important; }
+
+  .rx-drug-row { background: $dk-row !important; border-color: #1e3a5f !important; }
+  .rx-drug-name { color: $dk-t1 !important; }
+  .rx-generic   { color: $dk-t3 !important; }
+
+  .rx-chip        { background: $dk-hover !important; color: $dk-t2 !important; }
+  .rx-chip-dose   { background: #1a1040 !important; color: #c4b5fd !important; }
+  .rx-chip-qty    { background: #0e2118 !important; color: #4ade80 !important; }
+  .rx-chip-form   { background: #211500 !important; color: #fbbf24 !important; }
+  .rx-drug-note   { color: $dk-t3 !important; }
+
+  .rx-pdf-panel      { background: $dk-deep !important; border-color: $dk-border !important; }
+  .rx-pdf-progress-bar { background: $dk-border !important; }
+  .rx-pdf-progress-label { color: $dk-t3 !important; }
+  .rx-pdf-exists-label   { color: $dk-t3 !important; }
+
+  // Form inside prescription block
+  .rx-form-wrap      { }
+  .rx-field label    { color: $dk-t3 !important; }
+  .rx-field input,
+  .rx-field textarea {
+    background: $dk-row !important;
+    border-color: $dk-fborder !important;
+    color: $dk-t1 !important;
+  }
+  .rx-field input:focus,
+  .rx-field textarea:focus {
+    border-color: #818cf8 !important;
+    box-shadow: 0 0 0 3px rgba(129,140,248,.15) !important;
+  }
+  .rx-col-header { color: $dk-t1 !important; }
+  .rx-col-count  { background: #1e3a5f !important; color: $dk-link !important; }
+  .rx-loading    { color: $dk-t3 !important; }
+  .rx-empty      { color: $dk-t3 !important; }
+  .rx-download-btn {
+    color: $dk-t2 !important;
+    border-color: $dk-fborder !important;
+    background: transparent !important;
+  }
+  .rx-download-btn:hover { background: $dk-hover !important; }
+
+  // ── Attachments block ─────────────────────────────────────────────────────────
+
+  .att-icon     { color: $dk-t3 !important; }
+  .att-filename { color: $dk-link !important; }
+  .att-size     { color: $dk-t3 !important; }
+  .att-delete-btn { color: $dk-t3 !important; }
+
+  // Upload zone
+  .att-drop-zone {
+    background: $dk-row !important;
+    border-color: $dk-fborder !important;
+    color: $dk-t3 !important;
+  }
+  .att-drop-zone.dragging { border-color: $dk-link !important; background: #0e1f38 !important; }
+
+  // ── SOAP notes ────────────────────────────────────────────────────────────────
+
+  .soap-sealed-notice { background: #1f1500 !important; color: #fbbf24 !important; border-color: #7c5a00 !important; }
+  .soap-addenda-title { color: $dk-t3 !important; }
+  .soap-addendum      { background: $dk-row !important; }
+  .addendum-meta      { color: $dk-t3 !important; }
+  .addendum-text      { color: $dk-t2 !important; }
+  .soap-saved-badge   { color: #4ade80 !important; }
+
+  // ── End treatment modal ───────────────────────────────────────────────────────
+
+  .etm-dialog .mat-mdc-dialog-container,
+  .etm-dialog .mdc-dialog__surface {
+    background: $dk-card !important;
+  }
+  .etm-header  { color: $dk-t1 !important; }
+  .etm-title   { color: $dk-t1 !important; }
+
+  .etm-failures {
+    background: #1f0c0c !important;
+    border-color: #7f1d1d !important;
+  }
+  .etm-failure-item { color: #fca5a5 !important; }
+
+  .etm-summary { background: $dk-deep !important; }
+  .etm-summary-row { border-color: $dk-border !important; color: $dk-t2 !important; }
+  .etm-summary-row.total { color: $dk-t1 !important; }
+  .etm-val     { color: $dk-t1 !important; }
+
+  .etm-warning {
+    background: #211500 !important;
+    border-color: #7c5a00 !important;
+    color: #fbbf24 !important;
+  }
+  .etm-variance-alert {
+    background: #1f1200 !important;
+    border-color: #92400e !important;
+    color: #fb923c !important;
+  }
+  .etm-confirm-text { color: $dk-t3 !important; }
+  .etm-field label  { color: $dk-t3 !important; }
+  .etm-field textarea {
+    background: $dk-row !important;
+    border-color: $dk-fborder !important;
+    color: $dk-t1 !important;
+  }
+  .etm-field textarea:focus { border-color: #818cf8 !important; }
+
+  // ── Abandon modal ─────────────────────────────────────────────────────────────
+
+  .abandon-dialog .mat-mdc-dialog-container,
+  .abandon-dialog .mdc-dialog__surface {
+    background: $dk-card !important;
+  }
+  .abandon-title { color: $dk-t1 !important; }
+  .abandon-warning {
+    background: #1f1200 !important;
+    border-color: #92400e !important;
+    color: #fb923c !important;
+  }
+  .ab-field label { color: $dk-t3 !important; }
+  .ab-field select,
+  .ab-field textarea {
+    background: $dk-row !important;
+    border-color: $dk-fborder !important;
+    color: $dk-t1 !important;
+  }
+  .ab-field select:focus,
+  .ab-field textarea:focus { border-color: #f87171 !important; }
+
+  // ── Shared form input pattern used across blocks ──────────────────────────────
+  // Angular Material dark overrides are in _dark.scss already;
+  // these handle the custom <input>/<textarea>/<select> elements we render directly.
+
+  .preop-start-btn,
+  .postop-start-btn {
+    border-color: $dk-fborder !important;
+    color: $dk-t3 !important;
+    background: transparent !important;
+  }
+  .preop-start-btn:hover,
+  .postop-start-btn:hover {
+    border-color: $dk-link !important;
+    color: $dk-link !important;
+    background: $dk-hover !important;
+  }
+}

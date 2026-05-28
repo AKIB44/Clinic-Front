@@ -1,0 +1,21 @@
+.abandon-dialog  { }
+.abandon-header  { display: flex; align-items: center; gap: 10px; padding: 20px 24px 0; }
+.abandon-icon    { color: #dc2626; }
+.abandon-title   { margin: 0; font-size: 18px; font-weight: 700; color: #0f172a; }
+.abandon-body    { padding: 16px 24px; display: flex; flex-direction: column; gap: 12px; }
+
+.abandon-warning { display: flex; align-items: center; gap: 6px; background: #fff7ed;
+                   border: 1px solid #fed7aa; border-radius: 8px; padding: 8px 12px;
+                   font-size: 13px; color: #c2410c; font-weight: 500; }
+
+.ab-field        { display: flex; flex-direction: column; gap: 4px; }
+.ab-field--required label::after { content: ' *'; color: #ef4444; }
+.ab-field label  { font-size: 12px; font-weight: 600; color: #475569; }
+.ab-field select,
+.ab-field textarea { font-size: 13px; border: 1px solid #d1d5db; border-radius: 6px;
+                     padding: 7px 10px; outline: none; resize: vertical; width: 100%;
+                     box-sizing: border-box; }
+.ab-field select:focus,
+.ab-field textarea:focus { border-color: #dc2626; box-shadow: 0 0 0 2px rgba(220,38,38,.1); }
+
+.ab-error        { font-size: 12px; color: #c62828; }

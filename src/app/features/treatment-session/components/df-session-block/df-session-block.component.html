@@ -1,0 +1,33 @@
+<div class="sb-wrap" [class.sb-open]="expanded()">
+
+  <div class="sb-header" (click)="toggle()">
+    <div class="sb-accent" [style.background]="accent()"></div>
+
+    <div class="sb-icon" [style.color]="accent()">
+      <i-tabler [name]="icon()" size="18"></i-tabler>
+    </div>
+
+    <div class="sb-info">
+      <div class="sb-title">{{ title() }}</div>
+      @if (!expanded() && summary()) {
+        <div class="sb-summary">{{ summary() }}</div>
+      }
+    </div>
+
+    <div class="sb-meta">
+      @if (badge()) {
+        <span class="sb-badge">{{ badge() }}</span>
+      }
+      <div class="sb-status-dot sb-dot-{{ status() }}"></div>
+      <i-tabler name="chevron-down" size="15" class="sb-chevron"
+                [class.sb-chevron-open]="expanded()"></i-tabler>
+    </div>
+  </div>
+
+  @if (expanded()) {
+    <div class="sb-body" @slide>
+      <ng-content></ng-content>
+    </div>
+  }
+
+</div>

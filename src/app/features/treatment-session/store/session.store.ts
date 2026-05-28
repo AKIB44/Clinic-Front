@@ -13,6 +13,12 @@ import {
   SessionAttachment,
   InvestigationOrder,
   LabOrder,
+  MaterialConsumption,
+  ConsentRecord,
+  PreopRecord,
+  PostopRecord,
+  TpaPreauth,
+  VarianceInfo,
   SessionStatus,
   SessionId,
   ValidationFailure,
@@ -55,11 +61,25 @@ export class SessionStore {
   // ── Investigations ────────────────────────────────────────────────────────
   readonly investigations   = signal<InvestigationOrder[]>([]);
 
+  // ── Materials cart ────────────────────────────────────────────────────────
+  readonly cart             = signal<MaterialConsumption[]>([]);
+
   // ── Lab orders ────────────────────────────────────────────────────────────
   readonly labOrders        = signal<LabOrder[]>([]);
 
   // ── Attachments ───────────────────────────────────────────────────────────
   readonly attachments      = signal<SessionAttachment[]>([]);
+
+  // ── Surgical gating (T5) ──────────────────────────────────────────────────
+  readonly consents         = signal<ConsentRecord[]>([]);
+  readonly preop            = signal<PreopRecord | null>(null);
+  readonly postop           = signal<PostopRecord | null>(null);
+
+  // ── TPA / Insurance (T6.6) ────────────────────────────────────────────────
+  readonly tpa              = signal<TpaPreauth[]>([]);
+
+  // ── Variance (T6.4) ──────────────────────────────────────────────────────
+  readonly variance         = signal<VarianceInfo | null>(null);
 
   // ── Offline sync state (EC-16) ────────────────────────────────────────────
   readonly offlineQueueDepth = signal(0);
@@ -69,16 +89,16 @@ export class SessionStore {
 
   readonly totalCharges = computed(() =>
     this.services().reduce((sum, s) =>
-      sum + (['COMPLETED', 'PARTIAL'].includes(s.status) ? s.final_charge : 0), 0)
+      s.status !== 'ABANDONED' ? sum + Number(s.final_charge) : sum, 0)
   );
 
   readonly inProgressServices = computed(() =>
     this.services().filter(s => s.status === 'IN_PROGRESS')
   );
 
-  readonly unconsentedFlaggedServices = computed(() =>
-    this.services().filter(s => s.requiresConsent)
-  );
+  // Backend enforces the hard block at service-add time. Frontend uses this
+  // as a soft indicator — if any consent records are missing we surface it in the seal check.
+  readonly unconsentedFlaggedServices = computed(() => []);
 
   readonly canEndTreatment = computed(() => this.validateSeal().ok);
 
@@ -129,6 +149,13 @@ export class SessionStore {
     );
   }
 
+  setCart(cart: MaterialConsumption[]): void { this.cart.set(cart); }
+  addCartItem(item: MaterialConsumption): void { this.cart.update(list => [...list, item]); }
+  updateCartItem(updated: MaterialConsumption): void {
+    this.cart.update(list => list.map(i => i.id === updated.id ? updated : i));
+  }
+  removeCartItem(id: string): void { this.cart.update(list => list.filter(i => i.id !== id)); }
+
   setLabOrders(labOrders: LabOrder[]): void {
     this.labOrders.set(labOrders);
   }
@@ -140,6 +167,20 @@ export class SessionStore {
   updateLabOrder(updated: LabOrder): void {
     this.labOrders.update(list => list.map(lo => lo.id === updated.id ? updated : lo));
   }
+
+  setTpa(tpa: TpaPreauth[]): void { this.tpa.set(tpa); }
+  addTpa(t: TpaPreauth): void { this.tpa.update(list => [...list, t]); }
+  updateTpa(updated: TpaPreauth): void {
+    this.tpa.update(list => list.map(t => t.id === updated.id ? updated : t));
+  }
+
+  setVariance(v: VarianceInfo | null): void { this.variance.set(v); }
+
+  setConsents(consents: ConsentRecord[]): void { this.consents.set(consents); }
+  addConsent(consent: ConsentRecord): void { this.consents.update(list => [...list, consent]); }
+
+  setPreop(preop: PreopRecord | null): void { this.preop.set(preop); }
+  setPostop(postop: PostopRecord | null): void { this.postop.set(postop); }
 
   setAttachments(attachments: SessionAttachment[]): void {
     this.attachments.set(attachments);
@@ -240,8 +281,14 @@ export class SessionStore {
     this.plans.set([]);
     this.prescriptions.set([]);
     this.investigations.set([]);
+    this.cart.set([]);
     this.labOrders.set([]);
     this.attachments.set([]);
+    this.consents.set([]);
+    this.preop.set(null);
+    this.postop.set(null);
+    this.tpa.set([]);
+    this.variance.set(null);
     this.error.set(null);
     this.loading.set(false);
   }

@@ -1,0 +1,50 @@
+<div class="abandon-dialog">
+
+  <div class="abandon-header">
+    <i-tabler name="ban" size="22" class="abandon-icon"></i-tabler>
+    <h2 class="abandon-title">Abandon Session</h2>
+  </div>
+
+  <mat-dialog-content class="abandon-body">
+
+    @if (inProgressCount() > 0) {
+      <div class="abandon-warning">
+        <i-tabler name="alert-triangle" size="15"></i-tabler>
+        {{ inProgressCount() }} service{{ inProgressCount() > 1 ? 's' : '' }} still in progress —
+        they will be force-abandoned.
+      </div>
+    }
+
+    <div class="ab-field ab-field--required">
+      <label>Reason for abandoning</label>
+      <select [(ngModel)]="endReason">
+        <option value="">— select reason —</option>
+        @for (r of reasons; track r.value) {
+          <option [value]="r.value">{{ r.label }}</option>
+        }
+      </select>
+    </div>
+
+    <div class="ab-field">
+      <label>Notes (optional)</label>
+      <textarea [(ngModel)]="notes" rows="3"
+                placeholder="Any additional context about why the session is being abandoned…"></textarea>
+    </div>
+
+    @if (error()) {
+      <div class="ab-error">{{ error() }}</div>
+    }
+
+  </mat-dialog-content>
+
+  <mat-dialog-actions align="end">
+    <button mat-stroked-button mat-dialog-close [disabled]="abandoning()">Cancel</button>
+    <button mat-flat-button color="warn" [disabled]="!endReason || abandoning()" (click)="abandon()">
+      @if (abandoning()) {
+        <mat-spinner diameter="16" style="display:inline-block;margin-right:6px"></mat-spinner>
+      }
+      Abandon Session
+    </button>
+  </mat-dialog-actions>
+
+</div>

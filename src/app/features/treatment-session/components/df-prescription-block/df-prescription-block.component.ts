@@ -1,5 +1,5 @@
 import {
-  Component, OnInit, inject, signal, ChangeDetectionStrategy
+  Component, OnInit, inject, signal, ChangeDetectionStrategy, ChangeDetectorRef,
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
@@ -10,9 +10,19 @@ import { SessionStore } from '../../store/session.store';
 import { SessionApiService } from '../../services/session-api.service';
 import { ToastService } from '../../../../services/toast.service';
 import { RxMasterService } from '../../../../services/rx-master.service';
+import { PrescriptionService } from '../../../../services/prescription.service';
 import { MedicineSearchComponent } from '../../.././../pages/rx/medicine-search/medicine-search.component';
 import { MedicineLineItemComponent, FieldChangeEvent } from '../../../../pages/rx/medicine-line-item/medicine-line-item.component';
 import { MedFormItem, RxMedicine } from '../../../../pages/rx/rx.interfaces';
+import { Prescription } from '../../models/session.model';
+
+interface PdfState {
+  generating: boolean;
+  url: string | null;
+  error: string | null;
+}
+
+const IDLE: PdfState = { generating: false, url: null, error: null };
 
 @Component({
   selector: 'df-prescription-block',
@@ -30,13 +40,18 @@ export class DfPrescriptionBlockComponent implements OnInit {
   private api     = inject(SessionApiService);
   private toast   = inject(ToastService);
   private master  = inject(RxMasterService);
+  private rxSvc   = inject(PrescriptionService);
   private fb      = inject(FormBuilder);
+  private cdr     = inject(ChangeDetectorRef);
 
   readonly showForm  = signal(false);
   readonly saving    = signal(false);
   readonly loading   = signal(false);
   readonly formError = signal<string | null>(null);
   readonly medicines = signal<MedFormItem[]>([]);
+
+  // Per-prescription PDF state: key = prescription UUID
+  readonly pdfStates = signal<Record<string, PdfState>>({});
 
   form!: FormGroup;
 
@@ -45,6 +60,75 @@ export class DfPrescriptionBlockComponent implements OnInit {
       diagnosis:      ['', [Validators.required, Validators.maxLength(500)]],
       clinical_notes: ['', [Validators.maxLength(5000)]],
     });
+    this._initPdfStates();
+  }
+
+  private _initPdfStates(): void {
+    const init: Record<string, PdfState> = {};
+    for (const rx of this.store.prescriptions()) {
+      init[rx.id] = { ...IDLE };
+    }
+    this.pdfStates.set(init);
+  }
+
+  pdfState(rxId: string): PdfState {
+    return this.pdfStates()[rxId] ?? IDLE;
+  }
+
+  private _patch(rxId: string, patch: Partial<PdfState>): void {
+    this.pdfStates.update(s => ({
+      ...s,
+      [rxId]: { ...(s[rxId] ?? IDLE), ...patch },
+    }));
+    this.cdr.markForCheck();
+  }
+
+  async generatePdf(rx: Prescription): Promise<void> {
+    if (!rx.id || this.pdfState(rx.id).generating) return;
+
+    this._patch(rx.id, { generating: true, error: null, url: null });
+
+    try {
+      // generateSync: single request → returns presigned URL directly, no polling
+      const url = await this.rxSvc.generateSync(rx.id);
+      this._patch(rx.id, { generating: false, url });
+      this.store.setPrescriptions(
+        this.store.prescriptions().map(p =>
+          p.id === rx.id ? { ...p, pdf_generated: true } : p
+        )
+      );
+      this.toast.success(`PDF ready — ${rx.prescription_no}`);
+    } catch {
+      this._patch(rx.id, { generating: false, error: 'PDF generation failed — retry.' });
+      this.toast.error('PDF generation failed.');
+    }
+  }
+
+  async viewPdf(rx: Prescription): Promise<void> {
+    if (!rx.id) return;
+    const cached = this.pdfState(rx.id).url;
+    if (cached) { window.open(cached, '_blank'); return; }
+
+    this._patch(rx.id, { generating: true, error: null });
+    try {
+      const result = await this.rxSvc.getPdfUrl(rx.id as any);
+      const url = result.url;
+      if (!url) throw new Error('URL not available');
+      this._patch(rx.id, { generating: false, url });
+      window.open(url, '_blank');
+    } catch {
+      this._patch(rx.id, { generating: false, error: 'Could not load PDF.' });
+      this.toast.error('Could not load PDF URL.');
+    }
+  }
+
+  shareOnWhatsApp(rx: Prescription): void {
+    const url = this.pdfState(rx.id).url;
+    const patient = this.store.patient();
+    if (!url || !patient) return;
+    const phone = patient.phone?.replace(/\D/g, '') ?? '';
+    const msg = `Dear ${patient.name}, your prescription ${rx.prescription_no} from DentaFlow is ready. View / download: ${url}`;
+    window.open(`https://wa.me/${phone}?text=${encodeURIComponent(msg)}`, '_blank');
   }
 
   openForm(): void {
@@ -52,8 +136,9 @@ export class DfPrescriptionBlockComponent implements OnInit {
     this.medicines.set([]);
     this.formError.set(null);
 
-    // Pre-load defaults from the first in-progress service if available
-    const firstService = this.store.services().find(s => s.status === 'IN_PROGRESS' || s.status === 'COMPLETED');
+    const firstService = this.store.services().find(
+      s => s.status === 'IN_PROGRESS' || s.status === 'COMPLETED'
+    );
     if (firstService?.catalog_item_id) {
       this.loading.set(true);
       this.master.getDefaults(firstService.catalog_item_id).then(defaults => {
@@ -115,6 +200,7 @@ export class DfPrescriptionBlockComponent implements OnInit {
     }).pipe(finalize(() => this.saving.set(false))).subscribe({
       next: ({ prescription }) => {
         this.store.addPrescription(prescription);
+        this._patch(prescription.id, { ...IDLE });
         this.showForm.set(false);
         this.toast.success(`Prescription ${prescription.prescription_no} saved.`);
       },

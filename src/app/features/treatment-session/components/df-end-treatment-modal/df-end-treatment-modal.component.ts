@@ -1,13 +1,16 @@
-import { Component, inject, signal, computed } from '@angular/core';
+import { Component, OnInit, inject, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { MaterialModule } from '../../../../material.module';
 import { TablerIconsModule } from 'angular-tabler-icons';
 import { MatDialogRef } from '@angular/material/dialog';
 import { Router } from '@angular/router';
+import { catchError, finalize } from 'rxjs/operators';
+import { of } from 'rxjs';
 import { SessionStore } from '../../store/session.store';
 import { SessionApiService } from '../../services/session-api.service';
 import { ToastService } from '../../../../services/toast.service';
+import { VarianceInfo } from '../../models/session.model';
 
 @Component({
   selector: 'df-end-treatment-modal',
@@ -16,15 +19,20 @@ import { ToastService } from '../../../../services/toast.service';
   templateUrl: './df-end-treatment-modal.component.html',
   styleUrl: './df-end-treatment-modal.component.scss',
 })
-export class DfEndTreatmentModalComponent {
+export class DfEndTreatmentModalComponent implements OnInit {
   readonly store    = inject(SessionStore);
   private api       = inject(SessionApiService);
   private dialogRef = inject(MatDialogRef<DfEndTreatmentModalComponent>);
   private router    = inject(Router);
   private toast     = inject(ToastService);
 
-  readonly sealing  = signal(false);
-  readonly error    = signal<string | null>(null);
+  readonly sealing      = signal(false);
+  readonly checkingVar  = signal(false);
+  readonly error        = signal<string | null>(null);
+  readonly variance     = signal<VarianceInfo | null>(null);
+
+  varianceReason    = '';
+  patientAcked      = false;
 
   readonly failures = signal(this.store.validateSealPublic());
 
@@ -32,10 +40,23 @@ export class DfEndTreatmentModalComponent {
     this.store.services().filter(s => s.status === 'COMPLETED' || s.status === 'PARTIAL').length
   );
 
-  // Soft warning: services performed but no diagnoses recorded
   readonly noDiagnosisWarning = computed(() =>
     this.store.services().length > 0 && this.store.diagnoses().length === 0
   );
+
+  readonly varianceBlocked = computed(() => {
+    const v = this.variance();
+    return v?.variance_flag && !this.varianceReason.trim();
+  });
+
+  ngOnInit(): void {
+    const sessionId = this.store.sessionId();
+    if (!sessionId) return;
+    this.checkingVar.set(true);
+    this.api.getVariance(sessionId)
+      .pipe(catchError(() => of(null)), finalize(() => this.checkingVar.set(false)))
+      .subscribe(v => this.variance.set(v));
+  }
 
   seal(): void {
     const sessionId = this.store.sessionId();
@@ -44,7 +65,7 @@ export class DfEndTreatmentModalComponent {
     this.sealing.set(true);
     this.error.set(null);
 
-    this.api.endTreatment(sessionId).subscribe({
+    this.api.endTreatment(sessionId, this.varianceReason || undefined).subscribe({
       next: ({ session }) => {
         this.sealing.set(false);
         this.store.sealedAt.set(session.sealed_at);

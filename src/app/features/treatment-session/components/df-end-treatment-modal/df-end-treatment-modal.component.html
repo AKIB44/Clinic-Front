@@ -23,12 +23,42 @@
       </div>
     } @else {
 
-      <!-- Soft warning: services performed but no diagnosis -->
+      <!-- Soft warning: no diagnosis -->
       @if (noDiagnosisWarning()) {
         <div class="etm-warning">
           <i-tabler name="alert-circle" size="15"></i-tabler>
           No diagnosis recorded. Consider adding at least one before sealing.
         </div>
+      }
+
+      <!-- T6.4 Variance check -->
+      @if (checkingVar()) {
+        <div class="etm-checking">
+          <mat-spinner diameter="14"></mat-spinner> Checking variance…
+        </div>
+      }
+
+      @if (variance(); as v) {
+        @if (v.variance_flag) {
+          <div class="etm-variance-alert">
+            <i-tabler name="trending-up" size="16"></i-tabler>
+            <div>
+              <strong>Variance alert:</strong>
+              Charges <strong>₹{{ v.final_total | number:'1.2-2' }}</strong> exceed accepted estimate
+              <strong>₹{{ v.accepted_estimate | number:'1.2-2' }}</strong>
+              by more than {{ v.threshold_pct }}%.
+            </div>
+          </div>
+          <div class="etm-field etm-field--required">
+            <label>Variance reason</label>
+            <textarea [(ngModel)]="varianceReason" rows="2"
+                      placeholder="Explain why charges exceeded the accepted estimate…"></textarea>
+          </div>
+          <label class="etm-check">
+            <input type="checkbox" [(ngModel)]="patientAcked">
+            <span>Patient has been informed of the variance</span>
+          </label>
+        }
       }
 
       <!-- Summary -->
@@ -38,7 +68,7 @@
           <span class="etm-val">{{ store.services().length }}</span>
         </div>
         <div class="etm-summary-row">
-          <span>Completed</span>
+          <span>Completed / Partial</span>
           <span class="etm-val">{{ completedCount() }}</span>
         </div>
         <div class="etm-summary-row total">
@@ -62,8 +92,13 @@
   <mat-dialog-actions align="end">
     <button mat-stroked-button mat-dialog-close [disabled]="sealing()">Cancel</button>
     @if (failures().length === 0) {
-      <button mat-flat-button color="primary" [disabled]="sealing()" (click)="seal()">
-        @if (sealing()) { <mat-spinner diameter="18" style="display:inline-block;margin-right:8px"></mat-spinner> }
+      <button mat-flat-button color="primary"
+              [disabled]="sealing() || varianceBlocked()"
+              [title]="varianceBlocked() ? 'Provide a variance reason first' : ''"
+              (click)="seal()">
+        @if (sealing()) {
+          <mat-spinner diameter="18" style="display:inline-block;margin-right:8px"></mat-spinner>
+        }
         <i-tabler name="flag-check" size="16"></i-tabler>
         Confirm & End Treatment
       </button>

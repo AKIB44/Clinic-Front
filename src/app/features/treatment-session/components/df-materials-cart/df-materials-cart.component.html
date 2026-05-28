@@ -1,0 +1,161 @@
+@if (cartItems().length > 0 || !store.isSealed()) {
+  <div class="cart-wrap">
+
+    <!-- Cart item list -->
+    @if (cartItems().length > 0) {
+      <div class="cart-list">
+        @for (item of cartItems(); track item.id) {
+          <div class="cart-row" [class.cart-row--committed]="item.state !== 'RESERVED'">
+            <span class="cart-state-dot s-{{ item.state | lowercase }}"></span>
+            <span class="cart-item-name">{{ item.item_name }}</span>
+            <span class="cart-qty">{{ formatQty(item.quantity, item.unit) }}</span>
+            @if (item.lot_number) {
+              <span class="cart-lot">
+                <i-tabler name="barcode" size="11"></i-tabler>
+                {{ item.lot_number }}
+              </span>
+            }
+            @if (item.expiry_date) {
+              <span class="cart-expiry">exp {{ item.expiry_date | date:'MM/yy' }}</span>
+            }
+            @if (item.is_implant) {
+              <span class="cart-implant-badge">
+                <i-tabler name="device-heart-monitor" size="11"></i-tabler>
+                Implant
+              </span>
+            }
+            <span class="cart-state-label s-{{ item.state | lowercase }}">{{ item.state }}</span>
+            @if (item.state === 'RESERVED' && !store.isSealed()) {
+              <button class="cart-remove-btn"
+                      [disabled]="removing() === item.id"
+                      (click)="removeItem(item.id)"
+                      title="Remove">
+                @if (removing() === item.id) {
+                  <mat-spinner diameter="12"></mat-spinner>
+                } @else {
+                  <i-tabler name="x" size="12"></i-tabler>
+                }
+              </button>
+            }
+          </div>
+        }
+      </div>
+    }
+
+    <!-- Add button -->
+    @if (!store.isSealed() && !showForm) {
+      <button class="cart-add-btn" (click)="openForm()">
+        <i-tabler name="package-import" size="13"></i-tabler>
+        Add Material
+      </button>
+    }
+
+    <!-- Add form -->
+    @if (showForm) {
+      <div class="cart-form">
+
+        <!-- Item search -->
+        @if (!selectedItem()) {
+          <div class="cart-search-wrap">
+            <input class="cart-search-input"
+                   [(ngModel)]="itemQuery"
+                   (ngModelChange)="onQueryChange()"
+                   placeholder="Search inventory items…"
+                   autocomplete="off">
+            @if (searching()) {
+              <mat-spinner diameter="14" class="cart-search-spinner"></mat-spinner>
+            }
+            @if (searchResults().length > 0) {
+              <div class="cart-search-results">
+                @for (item of searchResults(); track item.id) {
+                  <div class="cart-search-result" (click)="selectItem(item)">
+                    <span class="cart-result-name">{{ item.name }}</span>
+                    <span class="cart-result-meta">{{ item.category }} · {{ item.unit }}</span>
+                    @if (item.is_implant) {
+                      <span class="cart-result-implant">Implant</span>
+                    }
+                  </div>
+                }
+              </div>
+            }
+          </div>
+        }
+
+        <!-- Item selected — show detail fields -->
+        @if (selectedItem()) {
+          <div class="cart-selected-item">
+            <i-tabler name="package" size="14"></i-tabler>
+            <span class="cart-selected-name">{{ selectedItem()!.name }}</span>
+            <button class="cart-deselect" (click)="selectedItem.set(null); itemQuery = ''">
+              <i-tabler name="x" size="12"></i-tabler>
+            </button>
+          </div>
+
+          <div class="cart-form-row">
+            <!-- Batch select for traceable items -->
+            @if (selectedItem()!.is_traceable && batches().length > 0) {
+              <div class="cart-form-field">
+                <label>Batch</label>
+                <select [(ngModel)]="newBatchId" (ngModelChange)="onBatchSelected()">
+                  <option value="">— select batch —</option>
+                  @for (b of batches(); track b.id) {
+                    <option [value]="b.id">
+                      {{ b.lot_number || 'No lot' }}
+                      @if (b.expiry_date) { · exp {{ b.expiry_date | date:'MM/yy' }} }
+                      · {{ b.qty_on_hand }} {{ b.unit }}
+                    </option>
+                  }
+                </select>
+              </div>
+            }
+
+            <div class="cart-form-field cart-form-field--sm">
+              <label>Qty *</label>
+              <input type="number" [(ngModel)]="newQuantity" min="0.001" step="0.5">
+            </div>
+          </div>
+
+          <!-- Lot + expiry for traceable -->
+          @if (selectedItem()!.is_traceable) {
+            <div class="cart-form-row">
+              <div class="cart-form-field" [class.cart-form-field--required]="selectedItem()!.is_implant">
+                <label>Lot {{ selectedItem()!.is_implant ? '*' : '' }}</label>
+                <input [(ngModel)]="newLotNumber" placeholder="LOT number">
+              </div>
+              <div class="cart-form-field">
+                <label>Expiry</label>
+                <input type="date" [(ngModel)]="newExpiry">
+              </div>
+            </div>
+
+            @if (selectedItem()!.is_implant) {
+              <label class="cart-scan-check">
+                <input type="checkbox" [(ngModel)]="newScanned">
+                <span>Barcode / QR scanned</span>
+                @if (!newScanned) {
+                  <span class="cart-scan-warn">(required for implants)</span>
+                }
+              </label>
+            }
+          }
+
+          @if (addError()) {
+            <div class="cart-error">{{ addError() }}</div>
+          }
+
+          <div class="cart-form-actions">
+            <button class="cart-cancel-btn" (click)="closeForm()" [disabled]="adding()">Cancel</button>
+            <button class="cart-save-btn" [disabled]="adding() || !canAdd()" (click)="addItem()">
+              @if (adding()) {
+                <mat-spinner diameter="14" style="display:inline-block;margin-right:4px"></mat-spinner>
+              }
+              Add to Cart
+            </button>
+          </div>
+        }
+
+      </div>
+    }
+
+  </div>
+}

@@ -1,0 +1,133 @@
+<div class="consent-card">
+
+  <!-- Header -->
+  <div class="consent-header">
+    <i-tabler name="writing-sign" size="18"></i-tabler>
+    <span>Informed Consent</span>
+    <span class="consent-count">{{ store.consents().length }} on file</span>
+  </div>
+
+  <!-- Existing consents list -->
+  @if (store.consents().length > 0) {
+    <div class="consent-list">
+      @for (c of store.consents(); track c.id) {
+        <div class="consent-row">
+          <i-tabler name="circle-check" size="14" class="consent-check"></i-tabler>
+          <div class="consent-info">
+            <span class="consent-type">{{ c.procedure_type }}</span>
+            @if (c.template_title) {
+              <span class="consent-template">{{ c.template_title }}</span>
+            }
+            @if (c.is_minor) {
+              <span class="consent-minor-badge">Minor — {{ c.guardian_name || 'Guardian' }}</span>
+            }
+          </div>
+          <span class="consent-date">{{ c.signed_at | date:'dd MMM yy, HH:mm' }}</span>
+        </div>
+      }
+    </div>
+  }
+
+  <!-- Add button -->
+  @if (!store.isSealed() && !showForm) {
+    <button class="consent-add-btn" (click)="openForm()">
+      <i-tabler name="plus" size="13"></i-tabler>
+      Add Consent
+    </button>
+  }
+
+  <!-- Consent form -->
+  @if (showForm) {
+    <div class="consent-form">
+
+      <div class="cf-row">
+        <div class="cf-field cf-field--required">
+          <label>Procedure / Consent Type</label>
+          <input [(ngModel)]="procedureType" placeholder="e.g. Implant placement, Extraction, Sedation…">
+        </div>
+      </div>
+
+      @if (templates().length > 0) {
+        <div class="cf-row">
+          <div class="cf-field">
+            <label>Template (optional)</label>
+            <select [(ngModel)]="selectedTemplateId">
+              <option value="">— no template —</option>
+              @for (t of templates(); track t.id) {
+                <option [value]="t.id">{{ t.title }}</option>
+              }
+            </select>
+          </div>
+        </div>
+      }
+
+      <!-- Service link -->
+      @if (store.services().length > 0) {
+        <div class="cf-row">
+          <div class="cf-field">
+            <label>Link to service (optional)</label>
+            <select [(ngModel)]="selectedServiceId">
+              <option value="">— general consent —</option>
+              @for (svc of store.services(); track svc.id) {
+                <option [value]="svc.id">{{ svc.service_name || 'Service' }}</option>
+              }
+            </select>
+          </div>
+        </div>
+      }
+
+      <!-- Minor flag -->
+      <label class="cf-check">
+        <input type="checkbox" [(ngModel)]="isMinor">
+        <span>Patient is a minor (guardian consent)</span>
+      </label>
+
+      @if (isMinor) {
+        <div class="cf-row">
+          <div class="cf-field cf-field--required">
+            <label>Guardian name</label>
+            <input [(ngModel)]="guardianName" placeholder="Full name of guardian">
+          </div>
+        </div>
+      }
+
+      <!-- Signature pad -->
+      <div class="cf-sig-section">
+        <div class="cf-sig-label">
+          Patient {{ isMinor ? '/ Guardian ' : '' }}Signature
+          <span class="cf-sig-req">*</span>
+        </div>
+        <div class="cf-sig-wrap">
+          <canvas #sigCanvas width="480" height="160" class="cf-sig-canvas"></canvas>
+          <div class="cf-sig-hint">Sign above</div>
+        </div>
+        <button class="cf-clear-btn" type="button" (click)="clearSignature()">
+          <i-tabler name="eraser" size="13"></i-tabler> Clear
+        </button>
+      </div>
+
+      <div class="cf-row">
+        <div class="cf-field">
+          <label>Notes</label>
+          <textarea [(ngModel)]="notes" rows="2" placeholder="Any additional notes…"></textarea>
+        </div>
+      </div>
+
+      @if (saveError()) {
+        <div class="cf-error">{{ saveError() }}</div>
+      }
+
+      <div class="cf-actions">
+        <button class="cf-cancel-btn" (click)="closeForm()" [disabled]="saving()">Cancel</button>
+        <button class="cf-save-btn" [disabled]="!canSave" (click)="saveConsent()">
+          @if (saving()) {
+            <mat-spinner diameter="14" style="display:inline-block;margin-right:4px"></mat-spinner>
+          }
+          Save Consent
+        </button>
+      </div>
+
+    </div>
+  }
+
+</div>

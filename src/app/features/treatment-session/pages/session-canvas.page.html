@@ -1,74 +1,268 @@
-<div class="session-canvas">
+<div class="sc-root">
 
-  <!-- Header bar -->
-  <div class="session-header">
-    <div class="session-header-left">
-      <button mat-icon-button (click)="goBack()" title="Back to schedule">
+  <!-- ── Sticky top bar ──────────────────────────────────────────────────── -->
+  <div class="sc-topbar">
+
+    <div class="sc-topbar-left">
+      <button mat-icon-button (click)="goBack()" class="sc-back-btn" title="Back to schedule">
         <i-tabler name="arrow-left" size="20"></i-tabler>
       </button>
-      <div class="session-patient">
-        @if (store.patient()) {
-          <div class="session-patient-name">{{ store.patient()!.name }}</div>
-          <div class="session-patient-sub">
-            {{ store.patient()!.phone }}
-            @if (store.patient()!.age) { · {{ store.patient()!.age }} yrs }
-            @if (store.patient()!.gender) { · {{ store.patient()!.gender }} }
+
+      @if (store.patient()) {
+        <div class="sc-patient-quick">
+          <div class="sc-avatar">{{ patientInitials() }}</div>
+          <div>
+            <div class="sc-patient-name">{{ store.patient()!.name }}</div>
+            <div class="sc-patient-sub">
+              {{ store.patient()!.phone }}
+              @if (store.patient()!.age) { · {{ store.patient()!.age }} yrs }
+              @if (store.patient()!.gender) { · {{ store.patient()!.gender }} }
+            </div>
           </div>
-        }
+        </div>
+      }
+
+      <div class="sc-status-pill sc-s-{{ store.status() | lowercase }}">
+        {{ store.status() | titlecase }}
       </div>
     </div>
 
-    <div class="session-header-right">
-      <div class="session-status-pill s-{{ store.status() | lowercase }}">
-        {{ store.status() | titlecase }}
-      </div>
-      @if (!store.isSealed() && store.sessionId()) {
-        <button mat-flat-button color="warn"
-                [disabled]="!store.canEndTreatment()"
-                [title]="store.canEndTreatment() ? 'End treatment session' : 'Complete or abandon all in-progress services first'"
-                (click)="openEndTreatment()">
-          <i-tabler name="flag-check" size="16"></i-tabler>
-          End Treatment
-        </button>
-      }
-      @if (store.isSealed()) {
-        <div class="session-sealed-badge">
-          <i-tabler name="lock" size="14"></i-tabler>
-          Session Sealed
+    <div class="sc-topbar-right">
+      @if (store.offlineQueueDepth() > 0) {
+        <div class="sc-offline-pill" title="{{ store.offlineQueueDepth() }} change(s) pending sync">
+          <i-tabler name="wifi-off" size="13"></i-tabler>
+          {{ store.offlineQueueDepth() }} unsynced
         </div>
+      }
+
+      @if (!store.isSealed() && store.sessionId()) {
+        @if (store.status() === 'PAUSED') {
+          <button mat-stroked-button (click)="resumeSession()" [disabled]="pausing()" class="sc-action-btn">
+            @if (pausing()) { <mat-spinner diameter="13" style="display:inline-block;margin-right:4px"></mat-spinner> }
+            <i-tabler name="player-play" size="14"></i-tabler> Resume
+          </button>
+        } @else {
+          <button mat-stroked-button (click)="pauseSession()" [disabled]="pausing()" class="sc-action-btn">
+            @if (pausing()) { <mat-spinner diameter="13" style="display:inline-block;margin-right:4px"></mat-spinner> }
+            <i-tabler name="player-pause" size="14"></i-tabler> Pause
+          </button>
+        }
+
+        <button mat-stroked-button color="warn" (click)="openAbandon()" class="sc-action-btn">
+          <i-tabler name="ban" size="14"></i-tabler> Abandon
+        </button>
+
+        @if (store.status() !== 'PAUSED') {
+          <button mat-flat-button color="warn"
+                  class="sc-end-btn"
+                  [disabled]="!store.canEndTreatment()"
+                  [title]="store.canEndTreatment() ? 'End treatment session' : 'Complete or abandon all in-progress services first'"
+                  (click)="openEndTreatment()">
+            <i-tabler name="flag-check" size="15"></i-tabler> End Treatment
+          </button>
+        }
+      }
+
+      @if (store.isSealed()) {
+        <div class="sc-sealed-pill">
+          <i-tabler name="lock" size="13"></i-tabler> Session Sealed
+        </div>
+        <button mat-stroked-button (click)="reopenSession()" [disabled]="reopening()" class="sc-action-btn">
+          @if (reopening()) { <mat-spinner diameter="13" style="display:inline-block;margin-right:4px"></mat-spinner> }
+          <i-tabler name="lock-open" size="14"></i-tabler> Reopen
+        </button>
       }
     </div>
   </div>
 
-  <!-- Loading -->
+  <!-- ── Loading ─────────────────────────────────────────────────────────── -->
   @if (store.loading()) {
-    <div class="session-loading">
+    <div class="sc-loading">
       <mat-spinner diameter="36"></mat-spinner>
       <span>Loading session…</span>
     </div>
   }
 
-  <!-- Error -->
+  <!-- ── Error ───────────────────────────────────────────────────────────── -->
   @if (store.error()) {
-    <div class="session-error">
-      <i-tabler name="alert-triangle" size="24"></i-tabler>
+    <div class="sc-error">
+      <i-tabler name="alert-triangle" size="28"></i-tabler>
       <p>{{ store.error() }}</p>
       <button mat-stroked-button (click)="goBack()">Go Back</button>
     </div>
   }
 
-  <!-- Canvas -->
+  <!-- ── Two-column layout ───────────────────────────────────────────────── -->
   @if (!store.loading() && !store.error() && store.sessionId()) {
-    <div class="session-body">
-      <df-examination-block />
-      <df-tooth-chart />
-      <df-diagnosis-block />
-      <df-investigations-block />
-      <df-treatment-plan />
-      <df-services-block />
-      <df-prescription-block />
-      <df-attachments-block />
-      <df-soap-notes />
+    <div class="sc-layout">
+
+      <!-- ── Sidebar ───────────────────────────────────────────────────── -->
+      <aside class="sc-sidebar">
+
+        <!-- Patient card -->
+        <div class="sc-patient-card">
+          <div class="sc-pc-avatar">{{ patientInitials() }}</div>
+          <div class="sc-pc-name">{{ store.patient()?.name }}</div>
+          @if (store.patient()?.age || store.patient()?.gender) {
+            <div class="sc-pc-meta">
+              @if (store.patient()!.age) { {{ store.patient()!.age }} yrs }
+              @if (store.patient()!.age && store.patient()!.gender) { · }
+              @if (store.patient()!.gender) { {{ store.patient()!.gender | titlecase }} }
+            </div>
+          }
+          <div class="sc-pc-phone">{{ store.patient()?.phone }}</div>
+        </div>
+
+        <!-- Session stats -->
+        <div class="sc-stats-row">
+          <div class="sc-stat">
+            <div class="sc-stat-val">{{ elapsedLabel() }}</div>
+            <div class="sc-stat-lbl">Elapsed</div>
+          </div>
+          <div class="sc-stat-sep"></div>
+          <div class="sc-stat">
+            <div class="sc-stat-val">{{ totalChargesLabel() }}</div>
+            <div class="sc-stat-lbl">Charges</div>
+          </div>
+          <div class="sc-stat-sep"></div>
+          <div class="sc-stat">
+            <div class="sc-stat-val">{{ store.services().length }}</div>
+            <div class="sc-stat-lbl">Services</div>
+          </div>
+        </div>
+
+        <!-- Overall progress -->
+        <div class="sc-progress-wrap">
+          <div class="sc-progress-header">
+            <span>Progress</span>
+            <span class="sc-progress-pct">{{ completedCount() }}/{{ progressSteps().length }}</span>
+          </div>
+          <div class="sc-progress-bar-track">
+            <div class="sc-progress-bar-fill" [style.width.%]="progressPct()"></div>
+          </div>
+        </div>
+
+        <!-- Vertical progress steps -->
+        <div class="sc-steps">
+          @for (step of progressSteps(); track step.key) {
+            <div class="sc-step sc-step-{{ step.status }}">
+              <div class="sc-step-dot" [style.background]="step.status === 'empty' ? '#cbd5e1' : step.accent"></div>
+              <div class="sc-step-icon" [style.color]="step.status === 'empty' ? '#94a3b8' : step.accent">
+                <i-tabler [name]="step.icon" size="14"></i-tabler>
+              </div>
+              <span class="sc-step-label">{{ step.label }}</span>
+              @if (step.status === 'complete') {
+                <i-tabler name="check" size="12" class="sc-step-check"></i-tabler>
+              }
+              @if (step.status === 'active') {
+                <div class="sc-step-pulse" [style.background]="step.accent"></div>
+              }
+            </div>
+          }
+        </div>
+
+      </aside>
+
+      <!-- ── Main blocks ────────────────────────────────────────────────── -->
+      <main class="sc-content">
+
+        <df-session-block title="Examination & Chief Complaint"
+          icon="stethoscope" accent="#6366f1"
+          [status]="examStatus()"
+          [summary]="examSummary()"
+          [startOpen]="true">
+          <df-examination-block />
+        </df-session-block>
+
+        <df-session-block title="Tooth Chart"
+          icon="tooth" accent="#06b6d4"
+          [status]="chartStatus()"
+          [summary]="chartStatus() === 'complete' ? 'Chart annotated' : null">
+          <df-tooth-chart />
+        </df-session-block>
+
+        <df-session-block title="Diagnosis"
+          icon="brain" accent="#8b5cf6"
+          [status]="diagnosisStatus()"
+          [summary]="diagnosisSummary()"
+          [badge]="store.diagnoses().length > 0 ? store.diagnoses().length + '' : null">
+          <df-diagnosis-block />
+        </df-session-block>
+
+        <df-session-block title="Investigations & Lab Orders"
+          icon="flask" accent="#f59e0b"
+          [status]="investigationsStatus()"
+          [badge]="store.investigations().length > 0 ? store.investigations().length + '' : null">
+          <df-investigations-block />
+        </df-session-block>
+
+        <df-session-block title="TPA / Insurance"
+          icon="shield-check" accent="#10b981"
+          [status]="tpaStatus()"
+          [badge]="store.tpa().length > 0 ? store.tpa().length + '' : null"
+          [summary]="store.tpa().length > 0 ? store.tpa().length + ' preauth record(s)' : null">
+          <df-tpa-block />
+        </df-session-block>
+
+        <df-session-block title="Consent Records"
+          icon="file-certificate" accent="#ef4444"
+          [status]="consentStatus()"
+          [badge]="store.consents().length > 0 ? store.consents().length + '' : null">
+          <df-consent-block />
+        </df-session-block>
+
+        <df-session-block title="Pre-op Checklist"
+          icon="clipboard-check" accent="#f97316"
+          [status]="preopStatus()"
+          [summary]="preopStatus() === 'complete' ? 'Pre-op vitals recorded' : null">
+          <df-preop-checklist />
+        </df-session-block>
+
+        <df-session-block title="Treatment Plan"
+          icon="layout-list" accent="#3b82f6"
+          [status]="plansStatus()"
+          [badge]="store.plans().length > 0 ? store.plans().length + '' : null">
+          <df-treatment-plan />
+        </df-session-block>
+
+        <df-session-block title="Services Performed"
+          icon="tool" accent="#22c55e"
+          [status]="servicesStatus()"
+          [summary]="servicesSummary()"
+          [badge]="store.services().length > 0 ? store.services().length + '' : null"
+          [startOpen]="true">
+          <df-services-block />
+        </df-session-block>
+
+        <df-session-block title="Post-op Record"
+          icon="heart-rate-monitor" accent="#ec4899"
+          [status]="postopStatus()"
+          [summary]="postopStatus() === 'complete' ? 'Post-op record saved' : null">
+          <df-postop-record />
+        </df-session-block>
+
+        <df-session-block title="Prescription"
+          icon="pill" accent="#14b8a6"
+          [status]="prescriptionsStatus()"
+          [badge]="store.prescriptions().length > 0 ? store.prescriptions().length + '' : null">
+          <df-prescription-block />
+        </df-session-block>
+
+        <df-session-block title="Attachments"
+          icon="paperclip" accent="#64748b"
+          [status]="attachmentsStatus()"
+          [badge]="store.attachments().length > 0 ? store.attachments().length + '' : null">
+          <df-attachments-block />
+        </df-session-block>
+
+        <df-session-block title="SOAP Notes"
+          icon="notes" accent="#a855f7"
+          [status]="soapStatus()"
+          [summary]="store.notes().subjective ? store.notes().subjective.slice(0,60) + '…' : null">
+          <df-soap-notes />
+        </df-session-block>
+
+      </main>
     </div>
   }
 

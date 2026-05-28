@@ -7,24 +7,172 @@
                      padding: 2px 8px; border-radius: 20px; }
 .rx-add-icon-btn   { margin-left: auto; }
 
-// Prescription list
-.rx-list           { padding: 8px 0; }
-.rx-item           { padding: 14px 18px; border-bottom: 1px solid #f1f5f9; }
-.rx-item:last-child { border-bottom: none; }
-.rx-item-header    { display: flex; align-items: center; gap: 10px; margin-bottom: 6px; }
-.rx-no             { font-size: 11px; font-weight: 700; color: #6366f1;
-                     background: #eef2ff; padding: 2px 8px; border-radius: 10px; }
-.rx-indication     { font-size: 14px; font-weight: 600; color: #0f172a; }
-.rx-instructions   { font-size: 12px; color: #64748b; margin-bottom: 8px; font-style: italic; }
-.rx-drugs          { display: flex; flex-direction: column; gap: 4px; }
-.rx-drug-row       { display: flex; align-items: center; gap: 8px; font-size: 13px; flex-wrap: wrap; }
-.rx-drug-name      { font-weight: 600; color: #0f172a; }
-.rx-drug-detail    { color: #64748b; background: #f8fafc; padding: 1px 6px;
-                     border-radius: 6px; font-size: 12px; }
-.rx-item-footer    { display: flex; align-items: center; gap: 4px;
-                     font-size: 11px; color: #94a3b8; margin-top: 8px; }
+// ── Prescription list ──────────────────────────────────────────────────────────
+.rx-list            { padding: 8px 0; }
 
-// Form — matches rx master prescription-form layout
+.rx-item {
+  padding: 14px 18px 12px;
+  border-bottom: 1px solid #f1f5f9;
+  transition: background .15s;
+}
+.rx-item:last-child    { border-bottom: none; }
+.rx-item-generating    { background: #fafbff; }
+
+.rx-item-top {
+  display: flex; align-items: flex-start; justify-content: space-between;
+  gap: 10px; margin-bottom: 8px; flex-wrap: wrap;
+}
+.rx-item-left  { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+
+.rx-no {
+  font-size: 11px; font-weight: 700; color: #6366f1;
+  background: #eef2ff; padding: 2px 8px; border-radius: 10px;
+  white-space: nowrap;
+}
+.rx-indication { font-size: 14px; font-weight: 600; color: #0f172a; }
+.rx-date {
+  display: flex; align-items: center; gap: 4px;
+  font-size: 11px; color: #94a3b8; flex-shrink: 0;
+}
+
+.rx-instructions {
+  display: flex; align-items: flex-start; gap: 5px;
+  font-size: 12px; color: #64748b; font-style: italic;
+  margin-bottom: 10px; line-height: 1.5;
+}
+
+// Medicine rows
+.rx-drugs         { display: flex; flex-direction: column; gap: 6px; margin-bottom: 12px; }
+
+.rx-drug-row {
+  padding: 8px 10px; background: #f8fafc; border-radius: 8px;
+  border-left: 3px solid #e0e7ff;
+}
+
+.rx-drug-name {
+  display: flex; align-items: center; gap: 5px;
+  font-size: 13px; font-weight: 600; color: #0f172a; margin-bottom: 4px;
+}
+.rx-generic      { font-weight: 400; color: #64748b; font-size: 12px; }
+
+.rx-drug-details { display: flex; flex-wrap: wrap; gap: 5px; }
+
+.rx-chip         { font-size: 11px; padding: 2px 7px; border-radius: 6px;
+                   background: #f1f5f9; color: #475569; font-weight: 500; }
+.rx-chip-dose    { background: #ede9fe; color: #6d28d9; }
+.rx-chip-qty     { background: #dcfce7; color: #15803d; }
+.rx-chip-form    { background: #fef3c7; color: #92400e; }
+
+.rx-drug-note    { font-size: 11px; color: #94a3b8; font-style: italic; margin-top: 4px; }
+
+// ── PDF panel ──────────────────────────────────────────────────────────────────
+.rx-pdf-panel {
+  margin-top: 4px;
+  padding: 10px 12px;
+  background: #f8fafd;
+  border: 1px solid #e5eaf0;
+  border-radius: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+// Progress bar (shown while generating)
+.rx-pdf-progress {
+  display: flex; flex-direction: column; gap: 6px;
+}
+
+.rx-pdf-progress-bar {
+  height: 4px; background: #e2e8f0; border-radius: 10px; overflow: hidden;
+}
+
+.rx-pdf-progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #6366f1, #a5b4fc, #6366f1);
+  background-size: 200% 100%;
+  border-radius: 10px;
+  animation: rx-shimmer 1.4s linear infinite;
+}
+
+@keyframes rx-shimmer {
+  0%   { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+.rx-pdf-progress-label {
+  display: flex; align-items: center; gap: 7px;
+  font-size: 12px; color: #64748b; font-weight: 500;
+}
+
+// PDF ready state
+.rx-pdf-ready {
+  display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
+}
+
+.rx-pdf-ready-badge {
+  display: flex; align-items: center; gap: 5px;
+  font-size: 12px; font-weight: 600; color: #15803d;
+  background: #dcfce7; padding: 3px 10px; border-radius: 20px;
+}
+
+.rx-pdf-actions {
+  display: flex; align-items: center; gap: 6px; flex-wrap: wrap;
+}
+
+// PDF exists (not yet fetched)
+.rx-pdf-exists {
+  display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
+}
+.rx-pdf-icon-sm    { color: #e53935; flex-shrink: 0; }
+.rx-pdf-exists-label { font-size: 12px; color: #64748b; font-weight: 500; }
+
+// Shared button styles
+.rx-pdf-btn {
+  font-size: 12px !important;
+  padding: 4px 12px !important;
+  height: 30px !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 5px !important;
+  line-height: 1 !important;
+}
+
+.rx-pdf-generate-btn {
+  border-color: #6366f1 !important;
+  color: #6366f1 !important;
+}
+.rx-pdf-generate-btn:hover { background: #eef2ff !important; }
+
+.rx-wa-btn {
+  color: #128c7e !important;
+  border-color: #128c7e !important;
+}
+.rx-wa-btn:hover { background: #f0fdf4 !important; }
+
+// Download as link styled as button
+.rx-download-btn {
+  display: inline-flex; align-items: center; gap: 5px;
+  font-size: 12px; font-weight: 500;
+  color: #1e3a5f; border: 1px solid #cbd5e1; border-radius: 4px;
+  padding: 4px 12px; height: 30px; text-decoration: none;
+  transition: background .15s, border-color .15s;
+  box-sizing: border-box; background: transparent;
+}
+.rx-download-btn:hover {
+  background: #f8fafd; border-color: #94a3b8; color: #0f172a;
+}
+
+// Error
+.rx-pdf-error {
+  display: flex; align-items: center; gap: 6px;
+  font-size: 11px; color: #c62828;
+}
+.rx-retry-link {
+  background: none; border: none; color: #6366f1; font-size: 11px;
+  cursor: pointer; text-decoration: underline; padding: 0;
+}
+
+// ── New prescription form ──────────────────────────────────────────────────────
 .rx-form-wrap      { padding: 16px 18px; border-top: 1px solid #f1f5f9; }
 
 .rx-loading        { display: flex; align-items: center; gap: 10px; font-size: 13px;

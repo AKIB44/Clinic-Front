@@ -212,6 +212,7 @@ export interface Prescription {
   instructions: string | null;
   items: RxLineItem[];
   created_at: string;
+  pdf_generated: boolean;
 }
 
 // ── Investigations (T3.1) ────────────────────────────────────────────────────
@@ -244,6 +245,56 @@ export interface InvestigationOrder {
   updated_at: string;
 }
 
+// ── Inventory / Materials Cart (T4.x) ────────────────────────────────────────
+
+export type CartItemState = 'RESERVED' | 'COMMITTED' | 'RETURNED' | 'WASTED';
+
+export interface InventoryItem {
+  id: string;
+  name: string;
+  generic_name: string | null;
+  category: string;
+  unit: string;
+  is_traceable: boolean;
+  is_implant: boolean;
+  reorder_point: number;
+  reorder_quantity: number;
+}
+
+export interface InventoryBatch {
+  id: string;
+  lot_number: string | null;
+  expiry_date: string | null;
+  unit: string;
+  supplier: string | null;
+  received_at: string;
+  qty_on_hand: number;
+}
+
+export interface MaterialConsumption {
+  id: string;
+  session_id: string;
+  service_id: string;
+  clinic_id: string;
+  inventory_item_id: string;
+  batch_id: string | null;
+  quantity: number;
+  unit: string;
+  lot_number: string | null;
+  expiry_date: string | null;
+  scanned: boolean;
+  state: CartItemState;
+  return_reason: string | null;
+  waste_reason: string | null;
+  // joined from inventory_item
+  item_name: string;
+  item_category: string;
+  is_implant: boolean;
+  is_traceable: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
 // ── Lab Orders (T3.3) ────────────────────────────────────────────────────────
 
 export type LabOrderStatus =
@@ -268,6 +319,99 @@ export interface LabOrder {
   updated_at: string;
 }
 
+// ── Surgical Gating (T5) ─────────────────────────────────────────────────────
+
+export interface ConsentTemplate {
+  id: string;
+  procedure_type: string;
+  title: string;
+  body_html: string;
+  version: number;
+}
+
+export interface ConsentRecord {
+  id: string;
+  session_id: string;
+  patient_id: string;
+  template_id: string | null;
+  template_title: string | null;
+  template_body: string | null;
+  procedure_type: string;
+  service_id: string | null;
+  patient_signature_url: string;
+  witness_signature_url: string | null;
+  signature_hash: string | null;
+  is_minor: boolean;
+  guardian_name: string | null;
+  signed_at: string;
+  notes: string | null;
+}
+
+export interface PreopRecord {
+  id: string;
+  session_id: string;
+  bp_systolic: number | null;
+  bp_diastolic: number | null;
+  pulse: number | null;
+  spo2: number | null;
+  temperature: number | null;
+  blood_sugar: number | null;
+  inr_value: number | null;
+  allergies_confirmed_at: string | null;
+  medical_clearance_url: string | null;
+  antibiotic_prophylaxis_given: boolean;
+  antibiotic_drug: string | null;
+  antibiotic_dose: string | null;
+  antibiotic_given_at: string | null;
+  npo_hours: number | null;
+  anaesthesia_plan: 'local' | 'sedation' | 'ga';
+  anaesthesia_agent: string | null;
+  anaesthesia_dose: string | null;
+  surgical_site_marked: boolean;
+  override_reason: string | null;
+  is_complete: boolean;
+  notes: string | null;
+  completed_at: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface PostopComplication {
+  type: string;
+  severity: 'mild' | 'moderate' | 'severe';
+  action_taken: string;
+}
+
+export interface RecoveryVital {
+  time: string;
+  bp_sys: number | null;
+  bp_dia: number | null;
+  pulse: number | null;
+  spo2: number | null;
+}
+
+export interface PostopRecord {
+  id: string;
+  session_id: string;
+  complications: PostopComplication[];
+  suture_count: number | null;
+  suture_type: 'resorbable' | 'non-resorbable' | null;
+  suture_removal_date: string | null;
+  specimen_sent: boolean;
+  specimen_lab_id: string | null;
+  specimen_request_slip_no: string | null;
+  specimen_expected_report_date: string | null;
+  recovery_vitals: RecoveryVital[];
+  postop_instructions_given: boolean;
+  postop_instructions_text: string | null;
+  patient_acknowledged_at: string | null;
+  follow_up_date: string | null;
+  follow_up_notes: string | null;
+  notes: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
 // ── Attachments (T2.6) ───────────────────────────────────────────────────────
 
 export interface SessionAttachment {
@@ -287,6 +431,38 @@ export interface ValidationFailure {
   block: string;
   message: string;
   blockId?: string;
+}
+
+// ── TPA / Insurance (T6.6) ───────────────────────────────────────────────────
+
+export type TpaStatus = 'PENDING' | 'APPROVED' | 'PARTIALLY_APPROVED' | 'REJECTED' | 'CANCELLED';
+
+export interface TpaPreauth {
+  id: string;
+  session_id: string;
+  insurer_name: string;
+  policy_number: string | null;
+  preauth_number: string | null;
+  approved_amount: number | null;
+  approved_services: unknown[];
+  copay_pct: number;
+  copay_flat: number;
+  status: TpaStatus;
+  submitted_at: string | null;
+  responded_at: string | null;
+  rejection_reason: string | null;
+  notes: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+// ── Variance info (T6.4) ─────────────────────────────────────────────────────
+
+export interface VarianceInfo {
+  final_total: number;
+  accepted_estimate: number;
+  variance_flag: boolean;
+  threshold_pct: number;
 }
 
 export function emptyNote(): ClinicalNote {

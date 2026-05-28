@@ -18,6 +18,15 @@ import {
   InvestigationKind,
   LabOrder,
   LabOrderStatus,
+  MaterialConsumption,
+  InventoryItem,
+  InventoryBatch,
+  ConsentRecord,
+  ConsentTemplate,
+  PreopRecord,
+  PostopRecord,
+  TpaPreauth,
+  VarianceInfo,
 } from '../models/session.model';
 
 export interface StartTreatmentResponse {
@@ -243,6 +252,63 @@ export class SessionApiService {
     );
   }
 
+  /** GET /inventory/items?q= */
+  searchInventoryItems(q: string): Observable<{ items: InventoryItem[] }> {
+    return this.http.get<{ items: InventoryItem[] }>(
+      `${this.base}/inventory/items`, { params: { q, limit: '20' } }
+    );
+  }
+
+  /** GET /inventory/items/:id/batches */
+  getItemBatches(itemId: string): Observable<{ batches: InventoryBatch[] }> {
+    return this.http.get<{ batches: InventoryBatch[] }>(
+      `${this.base}/inventory/items/${itemId}/batches`
+    );
+  }
+
+  /** GET /sessions/:id/cart */
+  getCart(sessionId: string): Observable<{ cart: MaterialConsumption[] }> {
+    return this.http.get<{ cart: MaterialConsumption[] }>(
+      `${this.base}/sessions/${sessionId}/cart`
+    );
+  }
+
+  /** POST /sessions/:id/cart */
+  addCartItem(sessionId: string, payload: {
+    service_id: string;
+    inventory_item_id: string;
+    batch_id?: string | null;
+    quantity: number;
+    unit: string;
+    lot_number?: string;
+    expiry_date?: string;
+    scanned?: boolean;
+  }): Observable<{ cart_item: MaterialConsumption }> {
+    return this.http.post<{ cart_item: MaterialConsumption }>(
+      `${this.base}/sessions/${sessionId}/cart`, payload
+    );
+  }
+
+  /** PATCH /sessions/:id/cart/:itemId */
+  updateCartItem(sessionId: string, itemId: string, payload: {
+    quantity?: number;
+    lot_number?: string | null;
+    expiry_date?: string | null;
+    scanned?: boolean;
+    batch_id?: string | null;
+  }): Observable<{ cart_item: MaterialConsumption }> {
+    return this.http.patch<{ cart_item: MaterialConsumption }>(
+      `${this.base}/sessions/${sessionId}/cart/${itemId}`, payload
+    );
+  }
+
+  /** DELETE /sessions/:id/cart/:itemId */
+  removeCartItem(sessionId: string, itemId: string): Observable<{ removed: boolean }> {
+    return this.http.delete<{ removed: boolean }>(
+      `${this.base}/sessions/${sessionId}/cart/${itemId}`
+    );
+  }
+
   /** GET /sessions/:id/lab-orders */
   getLabOrders(sessionId: string): Observable<{ lab_orders: LabOrder[] }> {
     return this.http.get<{ lab_orders: LabOrder[] }>(
@@ -317,6 +383,135 @@ export class SessionApiService {
     return this.http.post<{ session: ClinicalSession }>(
       `${this.base}/sessions/${sessionId}/end-treatment`,
       varianceReason ? { variance_reason: varianceReason } : {}
+    );
+  }
+
+  // ── T5 Surgical gating ─────────────────────────────────────────────────────
+
+  /** GET /sessions/:id/consents */
+  getConsents(sessionId: string): Observable<{ consents: ConsentRecord[] }> {
+    return this.http.get<{ consents: ConsentRecord[] }>(
+      `${this.base}/sessions/${sessionId}/consents`
+    );
+  }
+
+  /** POST /sessions/:id/consents/sign — presign signature image upload */
+  signConsent(sessionId: string): Observable<{ upload_url: string; s3_key: string }> {
+    return this.http.post<{ upload_url: string; s3_key: string }>(
+      `${this.base}/sessions/${sessionId}/consents/sign`, {}
+    );
+  }
+
+  /** POST /sessions/:id/consents — save consent record */
+  addConsent(sessionId: string, payload: {
+    procedure_type: string;
+    service_id?: string;
+    template_id?: string;
+    patient_signature_url: string;
+    witness_signature_url?: string;
+    is_minor?: boolean;
+    guardian_name?: string;
+    notes?: string;
+  }): Observable<{ consent: ConsentRecord }> {
+    return this.http.post<{ consent: ConsentRecord }>(
+      `${this.base}/sessions/${sessionId}/consents`, payload
+    );
+  }
+
+  /** GET /consent-templates */
+  getConsentTemplates(): Observable<{ templates: ConsentTemplate[] }> {
+    return this.http.get<{ templates: ConsentTemplate[] }>(
+      `${this.base}/consent-templates`
+    );
+  }
+
+  /** GET /sessions/:id/preop */
+  getPreop(sessionId: string): Observable<{ preop: PreopRecord | null }> {
+    return this.http.get<{ preop: PreopRecord | null }>(
+      `${this.base}/sessions/${sessionId}/preop`
+    );
+  }
+
+  /** POST /sessions/:id/preop — upsert pre-op record */
+  savePreop(sessionId: string, payload: Partial<PreopRecord>): Observable<{ preop: PreopRecord }> {
+    return this.http.post<{ preop: PreopRecord }>(
+      `${this.base}/sessions/${sessionId}/preop`, payload
+    );
+  }
+
+  /** GET /sessions/:id/postop */
+  getPostop(sessionId: string): Observable<{ postop: PostopRecord | null }> {
+    return this.http.get<{ postop: PostopRecord | null }>(
+      `${this.base}/sessions/${sessionId}/postop`
+    );
+  }
+
+  /** POST /sessions/:id/postop — upsert post-op record */
+  savePostop(sessionId: string, payload: Partial<PostopRecord>): Observable<{ postop: PostopRecord }> {
+    return this.http.post<{ postop: PostopRecord }>(
+      `${this.base}/sessions/${sessionId}/postop`, payload
+    );
+  }
+
+  // ── T6 Edge Cases ──────────────────────────────────────────────────────────
+
+  /** POST /sessions/:id/pause */
+  pauseSession(sessionId: string): Observable<{ session: ClinicalSession }> {
+    return this.http.post<{ session: ClinicalSession }>(
+      `${this.base}/sessions/${sessionId}/pause`, {}
+    );
+  }
+
+  /** POST /sessions/:id/resume */
+  resumeSession(sessionId: string): Observable<{ session: ClinicalSession }> {
+    return this.http.post<{ session: ClinicalSession }>(
+      `${this.base}/sessions/${sessionId}/resume`, {}
+    );
+  }
+
+  /** POST /sessions/:id/abandon */
+  abandonSession(sessionId: string, payload: {
+    end_reason: string;
+    notes?: string;
+    force?: boolean;
+  }): Observable<{ session: ClinicalSession }> {
+    return this.http.post<{ session: ClinicalSession }>(
+      `${this.base}/sessions/${sessionId}/abandon`, payload
+    );
+  }
+
+  /** POST /sessions/:id/reopen */
+  reopenSession(sessionId: string): Observable<{ session: ClinicalSession }> {
+    return this.http.post<{ session: ClinicalSession }>(
+      `${this.base}/sessions/${sessionId}/reopen`, {}
+    );
+  }
+
+  /** GET /sessions/:id/variance */
+  getVariance(sessionId: string): Observable<VarianceInfo> {
+    return this.http.get<VarianceInfo>(
+      `${this.base}/sessions/${sessionId}/variance`
+    );
+  }
+
+  /** GET /sessions/:id/tpa */
+  getTpa(sessionId: string): Observable<{ tpa: TpaPreauth[] }> {
+    return this.http.get<{ tpa: TpaPreauth[] }>(
+      `${this.base}/sessions/${sessionId}/tpa`
+    );
+  }
+
+  /** POST /sessions/:id/tpa */
+  addTpa(sessionId: string, payload: Partial<TpaPreauth>): Observable<{ tpa: TpaPreauth }> {
+    return this.http.post<{ tpa: TpaPreauth }>(
+      `${this.base}/sessions/${sessionId}/tpa`, payload
+    );
+  }
+
+  /** PATCH /tpa/:id */
+  updateTpa(tpaId: string, payload: Partial<TpaPreauth>): Observable<{ tpa: TpaPreauth }> {
+    return this.http.patch<{ tpa: TpaPreauth }>(
+      `${this.base}/tpa/${tpaId}`, payload
     );
   }
 }
