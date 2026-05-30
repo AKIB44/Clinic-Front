@@ -31,6 +31,36 @@ export interface Chair {
   clinic_id: string;
   name: string;
   is_active: boolean;
+  operational_status: 'operational' | 'under_service' | 'out_of_order';
+  service_interval_days: number;
+  last_serviced_at: string | null;
+  next_service_due: string | null;
+  service_status: 'ok' | 'due_soon' | 'overdue' | 'no_schedule';
+  created_at: string;
+}
+
+export interface ChairServiceLog {
+  id: string;
+  chair_id: string;
+  chair_name?: string;
+  clinic_id: string;
+  service_type: string;
+  serviced_at: string;
+  serviced_by: string | null;
+  notes: string | null;
+  cost: number | null;
+  next_due_date: string | null;
+  created_at: string;
+}
+
+export interface LogServicePayload {
+  service_type: string;
+  serviced_at: string;
+  serviced_by?: string;
+  notes?: string;
+  cost?: number | null;
+  operational_status?: string;
+  next_due_date?: string;
 }
 
 export interface StaffUser {

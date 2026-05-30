@@ -24,23 +24,45 @@
 
     <!-- ── Header ──────────────────────────────────────────────────────────── -->
     <section class="patient-header">
-      <div class="avatar">{{ initials() }}</div>
-      <div class="patient-title">
-        <h1>{{ p.name }}</h1>
-        <div class="patient-meta">
-          <span><i-tabler name="phone" size="15"></i-tabler>{{ p.phone }}</span>
-          @if (p.email) {
-            <span><i-tabler name="mail" size="15"></i-tabler>{{ p.email }}</span>
-          }
-          @if (p.dob) {
-            <span><i-tabler name="calendar" size="15"></i-tabler>{{ p.dob | date:'dd MMM yyyy' }}</span>
-          }
-          @if (p.gender) {
-            <span><i-tabler name="user" size="15"></i-tabler>{{ p.gender | titlecase }}</span>
-          }
-          @if (p.age) {
-            <span><i-tabler name="clock" size="15"></i-tabler>{{ p.age }} yrs</span>
-          }
+      <div class="patient-header__left">
+        <div class="avatar">{{ initials() }}</div>
+        <div class="patient-title">
+          <h1>{{ p.name }}</h1>
+          <div class="patient-meta">
+            <span><i-tabler name="phone" size="14"></i-tabler>{{ p.phone }}</span>
+            @if (p.email) {
+              <span><i-tabler name="mail" size="14"></i-tabler>{{ p.email }}</span>
+            }
+            @if (p.gender) {
+              <span><i-tabler name="user" size="14"></i-tabler>{{ p.gender | titlecase }}</span>
+            }
+            @if (p.age) {
+              <span><i-tabler name="clock" size="14"></i-tabler>{{ p.age }} yrs</span>
+            }
+            @if (p.dob) {
+              <span><i-tabler name="calendar" size="14"></i-tabler>{{ p.dob | date:'dd MMM yyyy' }}</span>
+            }
+          </div>
+        </div>
+      </div>
+
+      <!-- Stat chips -->
+      <div class="header-stats">
+        <div class="stat-chip">
+          <span class="stat-val">{{ allAppts().length }}</span>
+          <span class="stat-label">Appointments</span>
+        </div>
+        <div class="stat-chip">
+          <span class="stat-val">{{ record()?.sessions?.length ?? 0 }}</span>
+          <span class="stat-label">Sessions</span>
+        </div>
+        <div class="stat-chip stat-chip--primary">
+          <span class="stat-val">₹{{ (record()?.billing?.total_billed ?? 0) | number:'1.0-0' }}</span>
+          <span class="stat-label">Total Billed</span>
+        </div>
+        <div class="stat-chip">
+          <span class="stat-val">{{ activePlansCount() }}</span>
+          <span class="stat-label">Active Plans</span>
         </div>
       </div>
     </section>
@@ -49,6 +71,7 @@
     <nav class="pt-tabs" aria-label="Patient record sections">
       <button type="button" class="pt-tab" [class.on]="activeTab() === 'overview'"
         (click)="activeTab.set('overview')">Overview</button>
+
       <button type="button" class="pt-tab" [class.on]="activeTab() === 'appointments'"
         (click)="activeTab.set('appointments')">
         Appointments
@@ -56,43 +79,107 @@
           <span class="pt-badge">{{ allAppts().length }}</span>
         }
       </button>
+
+      <button type="button" class="pt-tab" [class.on]="activeTab() === 'sessions'"
+        (click)="activeTab.set('sessions')">
+        Clinical Sessions
+        @if ((record()?.sessions?.length ?? 0) > 0) {
+          <span class="pt-badge">{{ record()?.sessions?.length }}</span>
+        }
+      </button>
+
+      <button type="button" class="pt-tab" [class.on]="activeTab() === 'plans'"
+        (click)="activeTab.set('plans')">
+        Treatment Plans
+        @if (activePlansCount() > 0) {
+          <span class="pt-badge pt-badge--warn">{{ activePlansCount() }}</span>
+        }
+      </button>
+
       <button type="button" class="pt-tab" [class.on]="activeTab() === 'prescriptions'"
         (click)="activeTab.set('prescriptions')">Prescriptions</button>
+
+      <button type="button" class="pt-tab" [class.on]="activeTab() === 'billing'"
+        (click)="activeTab.set('billing')">Billing</button>
     </nav>
 
-    <!-- ── Overview ────────────────────────────────────────────────────────── -->
+    <!-- ══════════════════════════════════════════════════════════════════════ -->
+    <!-- Overview                                                               -->
+    <!-- ══════════════════════════════════════════════════════════════════════ -->
     @if (activeTab() === 'overview') {
       <section class="overview-grid">
+
+        <!-- Demographics -->
         <div class="info-panel">
-          <h2>Demographics</h2>
+          <h2><i-tabler name="id" size="16"></i-tabler> Demographics</h2>
           <dl>
-            @if (p.age) {
-              <div><dt>Age</dt><dd>{{ p.age }} yrs</dd></div>
-            }
-            @if (p.gender) {
-              <div><dt>Sex</dt><dd>{{ p.gender | titlecase }}</dd></div>
-            }
-            @if (p.dob) {
-              <div><dt>Date of Birth</dt><dd>{{ p.dob | date:'dd MMM yyyy' }}</dd></div>
-            }
-            @if (p.address) {
-              <div><dt>Address</dt><dd>{{ p.address }}</dd></div>
-            }
+            @if (p.age) { <div><dt>Age</dt><dd>{{ p.age }} yrs</dd></div> }
+            @if (p.gender) { <div><dt>Sex</dt><dd>{{ p.gender | titlecase }}</dd></div> }
+            @if (p.dob) { <div><dt>Date of Birth</dt><dd>{{ p.dob | date:'dd MMM yyyy' }}</dd></div> }
+            @if (p.address) { <div><dt>Address</dt><dd>{{ p.address }}</dd></div> }
             @if (!p.age && !p.gender && !p.dob && !p.address) {
               <div><dt>—</dt><dd>No demographics recorded</dd></div>
             }
           </dl>
         </div>
 
+        <!-- Clinical History -->
         <div class="info-panel">
-          <h2>Clinical History</h2>
+          <h2><i-tabler name="notes-medical" size="16"></i-tabler> Clinical History</h2>
           <p>{{ p.clinical_history || 'No clinical history recorded.' }}</p>
         </div>
 
-        <!-- Visit summary per service -->
+        <!-- Recent Sessions -->
+        @if ((record()?.sessions?.length ?? 0) > 0) {
+          <div class="info-panel">
+            <h2><i-tabler name="stethoscope" size="16"></i-tabler> Recent Sessions</h2>
+            @for (sess of (record()?.sessions ?? []).slice(0, 3); track sess.id) {
+              <div class="recent-sess-row">
+                <div class="recent-sess-date">{{ formatDate(sess.started_at) }}</div>
+                <div class="recent-sess-body">
+                  @if (sess.doctor_name) {
+                    <span class="recent-sess-doc">Dr. {{ sess.doctor_name }}</span>
+                  }
+                  @if (sess.services_performed.length > 0) {
+                    <span class="recent-sess-svcs">{{ sessionSvcNames(sess) }}</span>
+                  }
+                </div>
+                <span class="recent-sess-charge">
+                  @if (+sess.session_charge > 0) { ₹{{ +sess.session_charge | number:'1.0-0' }} }
+                </span>
+              </div>
+            }
+            @if ((record()?.sessions?.length ?? 0) > 3) {
+              <button class="link-btn" type="button" (click)="activeTab.set('sessions')">
+                View all {{ record()?.sessions?.length }} sessions →
+              </button>
+            }
+          </div>
+        }
+
+        <!-- Lab Orders summary -->
+        @if ((record()?.lab_orders?.length ?? 0) > 0) {
+          <div class="info-panel">
+            <h2><i-tabler name="flask" size="16"></i-tabler> Lab Orders</h2>
+            @for (lo of (record()?.lab_orders ?? []).slice(0, 3); track lo.id) {
+              <div class="recent-sess-row">
+                <div class="recent-sess-date">{{ formatDate(lo.created_at) }}</div>
+                <div class="recent-sess-body">
+                  @if (lo.service_name) { <span class="recent-sess-doc">{{ lo.service_name }}</span> }
+                  @if (lo.shade) { <span class="recent-sess-svcs">Shade: {{ lo.shade }}</span> }
+                </div>
+                <span class="lab-status-chip" [class]="labStatusClass(lo.status)">
+                  {{ labStatusLabel[lo.status] || lo.status }}
+                </span>
+              </div>
+            }
+          </div>
+        }
+
+        <!-- Visits by Service -->
         @if (services().length && allAppts().length) {
           <div class="info-panel svc-summary-panel">
-            <h2>Visits by Service</h2>
+            <h2><i-tabler name="chart-bar" size="16"></i-tabler> Visits by Service</h2>
             <div class="svc-summary-list">
               @for (s of services(); track s.id) {
                 @if (apptCountFor(s.id) > 0) {
@@ -105,14 +192,15 @@
             </div>
           </div>
         }
+
       </section>
     }
 
-    <!-- ── Appointments ─────────────────────────────────────────────────────── -->
+    <!-- ══════════════════════════════════════════════════════════════════════ -->
+    <!-- Appointments                                                           -->
+    <!-- ══════════════════════════════════════════════════════════════════════ -->
     @if (activeTab() === 'appointments') {
       <section class="appt-section">
-
-        <!-- Service filter -->
         @if (services().length > 1) {
           <div class="appt-filter">
             <mat-form-field appearance="outline" class="appt-svc-select">
@@ -130,12 +218,12 @@
         }
 
         @if (filteredAppts().length === 0) {
-          <div class="appt-empty">
-            <i-tabler name="calendar-off" size="36"></i-tabler>
+          <div class="empty-state">
+            <i-tabler name="calendar-off" size="40"></i-tabler>
             <p>No appointments found.</p>
           </div>
         } @else {
-          <div class="appt-count">{{ filteredAppts().length }} appointment{{ filteredAppts().length !== 1 ? 's' : '' }}</div>
+          <div class="section-count">{{ filteredAppts().length }} appointment{{ filteredAppts().length !== 1 ? 's' : '' }}</div>
           <div class="appt-list">
             @for (a of filteredAppts(); track a.id) {
               <div class="appt-card">
@@ -147,14 +235,12 @@
                   </div>
                   @if (a.notes) {
                     <div class="appt-notes">
-                      <i-tabler name="notes" size="12"></i-tabler>
-                      {{ a.notes }}
+                      <i-tabler name="notes" size="12"></i-tabler>{{ a.notes }}
                     </div>
                   }
                   @if (a.cancel_reason) {
                     <div class="appt-cancel-reason">
-                      <i-tabler name="alert-triangle" size="12"></i-tabler>
-                      {{ a.cancel_reason }}
+                      <i-tabler name="alert-triangle" size="12"></i-tabler>{{ a.cancel_reason }}
                     </div>
                   }
                 </div>
@@ -163,8 +249,7 @@
                     {{ statusLabel[a.status] || a.status }}
                   </span>
                   <div class="appt-duration">
-                    <i-tabler name="clock" size="12"></i-tabler>
-                    {{ a.duration_minutes }} min
+                    <i-tabler name="clock" size="12"></i-tabler>{{ a.duration_minutes }} min
                   </div>
                   @if (a.booking_source) {
                     <div class="appt-source">{{ a.booking_source }}</div>
@@ -177,10 +262,279 @@
       </section>
     }
 
-    <!-- ── Prescriptions ────────────────────────────────────────────────────── -->
+    <!-- ══════════════════════════════════════════════════════════════════════ -->
+    <!-- Clinical Sessions                                                      -->
+    <!-- ══════════════════════════════════════════════════════════════════════ -->
+    @if (activeTab() === 'sessions') {
+      <section class="sessions-section">
+
+        @if ((record()?.sessions?.length ?? 0) === 0) {
+          <div class="empty-state">
+            <i-tabler name="stethoscope" size="40"></i-tabler>
+            <p>No clinical sessions recorded yet.</p>
+          </div>
+        } @else {
+          <div class="section-count">{{ record()?.sessions?.length }} session{{ (record()?.sessions?.length ?? 0) !== 1 ? 's' : '' }}</div>
+
+          @for (sess of (record()?.sessions ?? []); track sess.id) {
+            <div class="session-card">
+
+              <!-- Session header -->
+              <div class="session-header">
+                <div class="session-header-left">
+                  <div class="session-date">
+                    <i-tabler name="calendar" size="15"></i-tabler>
+                    {{ formatDate(sess.started_at) }}
+                  </div>
+                  @if (sess.doctor_name) {
+                    <div class="session-doctor">
+                      <i-tabler name="stethoscope" size="14"></i-tabler>
+                      Dr. {{ sess.doctor_name }}
+                    </div>
+                  }
+                </div>
+                <div class="session-header-right">
+                  <span class="session-status-chip" [class]="sessionStatusClass(sess.status)">
+                    {{ sessionStatusLabel[sess.status] || sess.status }}
+                  </span>
+                  @if (+sess.session_charge > 0) {
+                    <span class="session-charge">₹{{ +sess.session_charge | number:'1.0-0' }}</span>
+                  }
+                </div>
+              </div>
+
+              <!-- Diagnoses -->
+              @if (sess.diagnoses.length > 0) {
+                <div class="session-section">
+                  <div class="session-section-title">
+                    <i-tabler name="stethoscope" size="13"></i-tabler> Diagnoses
+                  </div>
+                  <div class="diagnosis-list">
+                    @for (d of sess.diagnoses; track d.id) {
+                      <div class="diagnosis-row">
+                        <span class="diagnosis-text">{{ d.diagnosis_text }}</span>
+                        @if (d.icd10_code) { <span class="icd-chip">{{ d.icd10_code }}</span> }
+                        @if (toothDisplay(d.tooth_numbers)) {
+                          <span class="tooth-tag">T: {{ toothDisplay(d.tooth_numbers) }}</span>
+                        }
+                      </div>
+                    }
+                  </div>
+                </div>
+              }
+
+              <!-- Procedures -->
+              @if (sess.services_performed.length > 0) {
+                <div class="session-section">
+                  <div class="session-section-title">
+                    <i-tabler name="tool" size="13"></i-tabler> Procedures
+                  </div>
+                  <div class="procedure-table">
+                    <div class="procedure-header">
+                      <span>Procedure</span>
+                      <span>Tooth</span>
+                      <span>Qty</span>
+                      <span>Charge</span>
+                      <span>Status</span>
+                    </div>
+                    @for (sp of sess.services_performed; track sp.id) {
+                      <div class="procedure-row">
+                        <span class="proc-name">{{ sp.service_name }}</span>
+                        <span class="proc-tooth muted">{{ toothDisplay(sp.tooth_numbers) || '—' }}</span>
+                        <span class="muted">{{ sp.quantity }}</span>
+                        <span class="proc-charge">
+                          @if (sp.final_charge != null) { ₹{{ sp.final_charge | number:'1.0-0' }} }
+                          @else { <span class="muted">—</span> }
+                        </span>
+                        <span class="proc-status" [class]="'proc-s-' + sp.status">{{ sp.status | titlecase }}</span>
+                      </div>
+                    }
+                  </div>
+                </div>
+              }
+
+            </div>
+          }
+        }
+      </section>
+    }
+
+    <!-- ══════════════════════════════════════════════════════════════════════ -->
+    <!-- Treatment Plans                                                        -->
+    <!-- ══════════════════════════════════════════════════════════════════════ -->
+    @if (activeTab() === 'plans') {
+      <section class="plans-section">
+
+        @if ((record()?.treatment_plans?.length ?? 0) === 0) {
+          <div class="empty-state">
+            <i-tabler name="clipboard-list" size="40"></i-tabler>
+            <p>No treatment plans on record.</p>
+          </div>
+        } @else {
+          <div class="section-count">{{ record()?.treatment_plans?.length }} plan{{ (record()?.treatment_plans?.length ?? 0) !== 1 ? 's' : '' }}</div>
+
+          @for (plan of (record()?.treatment_plans ?? []); track plan.id) {
+            <div class="plan-card">
+
+              <div class="plan-header">
+                <div>
+                  <span class="plan-title">{{ plan.title }}</span>
+                  <span class="plan-date muted">Created {{ formatDate(plan.created_at) }}</span>
+                </div>
+                @if (plan.items.length > 0 && planCostMax(plan.items) > 0) {
+                  <span class="plan-cost-range">
+                    ₹{{ planCostMin(plan.items) | number:'1.0-0' }} – ₹{{ planCostMax(plan.items) | number:'1.0-0' }}
+                  </span>
+                }
+              </div>
+
+              @if (plan.items.length > 0) {
+                <div class="plan-items">
+                  @for (item of plan.items; track item.id) {
+                    <div class="plan-item-row">
+                      <span class="plan-item-status-dot" [class]="planItemStatusClass(item.status)"></span>
+                      <span class="plan-item-name">{{ item.service_name }}</span>
+                      @if (toothDisplay(item.tooth_numbers)) {
+                        <span class="tooth-tag">{{ toothDisplay(item.tooth_numbers) }}</span>
+                      }
+                      <span class="plan-item-cost muted">
+                        @if (item.cost_min != null || item.cost_max != null) {
+                          ₹{{ (item.cost_min ?? 0) | number:'1.0-0' }}
+                          @if (item.cost_max && item.cost_max !== item.cost_min) {
+                            – ₹{{ item.cost_max | number:'1.0-0' }}
+                          }
+                        } @else { — }
+                      </span>
+                      <span class="plan-item-status-label" [class]="'pis-' + item.status">
+                        {{ planItemStatusLabel[item.status] || item.status }}
+                      </span>
+                    </div>
+                  }
+                </div>
+              } @else {
+                <p class="muted" style="font-size:13px; margin:8px 0 0">No items in this plan.</p>
+              }
+
+            </div>
+          }
+        }
+      </section>
+    }
+
+    <!-- ══════════════════════════════════════════════════════════════════════ -->
+    <!-- Prescriptions                                                          -->
+    <!-- ══════════════════════════════════════════════════════════════════════ -->
     @if (activeTab() === 'prescriptions') {
       <section class="history-panel">
         <app-rx-history-tab [patientId]="p.id"></app-rx-history-tab>
+      </section>
+    }
+
+    <!-- ══════════════════════════════════════════════════════════════════════ -->
+    <!-- Billing                                                                -->
+    <!-- ══════════════════════════════════════════════════════════════════════ -->
+    @if (activeTab() === 'billing') {
+      <section class="billing-section">
+
+        <!-- Summary cards -->
+        <div class="billing-summary-row">
+          <div class="billing-stat-card billing-stat-card--primary">
+            <div class="billing-stat-val">₹{{ (record()?.billing?.total_billed ?? 0) | number:'1.0-0' }}</div>
+            <div class="billing-stat-label">Total Billed</div>
+          </div>
+          <div class="billing-stat-card">
+            <div class="billing-stat-val">{{ record()?.billing?.session_count ?? 0 }}</div>
+            <div class="billing-stat-label">Clinical Sessions</div>
+          </div>
+          <div class="billing-stat-card">
+            <div class="billing-stat-val">{{ record()?.billing?.procedure_count ?? 0 }}</div>
+            <div class="billing-stat-label">Procedures</div>
+          </div>
+          <div class="billing-stat-card">
+            <div class="billing-stat-val">{{ allAppts().length }}</div>
+            <div class="billing-stat-label">Appointments</div>
+          </div>
+        </div>
+
+        <!-- Per-session breakdown -->
+        @if (sessionsWithCharge().length > 0) {
+          <h3 class="billing-section-title">Session Breakdown</h3>
+          <div class="billing-table-wrap">
+            <table class="billing-table">
+              <thead>
+                <tr>
+                  <th>Date</th>
+                  <th>Doctor</th>
+                  <th>Procedures</th>
+                  <th>Status</th>
+                  <th class="text-right">Amount</th>
+                </tr>
+              </thead>
+              <tbody>
+                @for (sess of sessionsWithCharge(); track sess.id) {
+                  <tr>
+                    <td>{{ formatDate(sess.started_at) }}</td>
+                    <td>{{ sess.doctor_name ? 'Dr. ' + sess.doctor_name : '—' }}</td>
+                    <td>
+                      @if (sess.services_performed.length > 0) {
+                        {{ sessionSvcNames(sess) }}
+                      } @else { — }
+                    </td>
+                    <td>
+                      <span class="session-status-chip" [class]="sessionStatusClass(sess.status)">
+                        {{ sessionStatusLabel[sess.status] || sess.status }}
+                      </span>
+                    </td>
+                    <td class="text-right billing-amount">₹{{ +sess.session_charge | number:'1.0-0' }}</td>
+                  </tr>
+                }
+              </tbody>
+              <tfoot>
+                <tr class="billing-total-row">
+                  <td colspan="4"><strong>Total</strong></td>
+                  <td class="text-right billing-amount"><strong>₹{{ (record()?.billing?.total_billed ?? 0) | number:'1.0-0' }}</strong></td>
+                </tr>
+              </tfoot>
+            </table>
+          </div>
+        } @else {
+          <div class="empty-state" style="margin-top:24px">
+            <i-tabler name="receipt" size="40"></i-tabler>
+            <p>No billing records yet.</p>
+          </div>
+        }
+
+        <!-- Lab order costs -->
+        @if (labOrdersWithCost().length > 0) {
+          <h3 class="billing-section-title">Lab Order Costs</h3>
+          <div class="billing-table-wrap">
+            <table class="billing-table">
+              <thead>
+                <tr>
+                  <th>Date</th>
+                  <th>Service</th>
+                  <th>Status</th>
+                  <th class="text-right">Lab Cost</th>
+                </tr>
+              </thead>
+              <tbody>
+                @for (lo of labOrdersWithCost(); track lo.id) {
+                  <tr>
+                    <td>{{ formatDate(lo.created_at) }}</td>
+                    <td>{{ lo.service_name || '—' }}</td>
+                    <td>
+                      <span class="lab-status-chip" [class]="labStatusClass(lo.status)">
+                        {{ labStatusLabel[lo.status] || lo.status }}
+                      </span>
+                    </td>
+                    <td class="text-right billing-amount">₹{{ lo.lab_cost | number:'1.0-0' }}</td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+        }
+
       </section>
     }
 

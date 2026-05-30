@@ -1,0 +1,673 @@
+<div class="master-page">
+
+  <!-- ── Header ──────────────────────────────────────────────────────────────── -->
+  <div class="page-header">
+    <div>
+      <h1 class="page-title">Inventory Management</h1>
+      <p class="page-subtitle">Track stock levels, receive goods and manage your item catalog</p>
+    </div>
+  </div>
+
+  <mat-tab-group animationDuration="200ms" class="inv-tabs"
+                 [(selectedIndex)]="selectedTabIndex"
+                 (selectedIndexChange)="onTabChange($event)">
+
+    <!-- ══════════════════════════════════════════════════════════════════════ -->
+    <!-- Tab 1 — Dashboard                                                     -->
+    <!-- ══════════════════════════════════════════════════════════════════════ -->
+    <mat-tab label="Dashboard">
+      <div class="tab-content">
+
+        <!-- Stat cards -->
+        <div class="stat-cards">
+          <div class="stat-card">
+            <div class="stat-icon stat-icon--total">
+              <mat-icon>inventory_2</mat-icon>
+            </div>
+            <div class="stat-body">
+              <span class="stat-value">{{ totalItems }}</span>
+              <span class="stat-label">Total Items</span>
+            </div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-icon stat-icon--ok">
+              <mat-icon>check_circle</mat-icon>
+            </div>
+            <div class="stat-body">
+              <span class="stat-value stat-value--ok">{{ inStock }}</span>
+              <span class="stat-label">In Stock</span>
+            </div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-icon stat-icon--warn">
+              <mat-icon>warning</mat-icon>
+            </div>
+            <div class="stat-body">
+              <span class="stat-value stat-value--warn">{{ lowStock }}</span>
+              <span class="stat-label">Low Stock</span>
+            </div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-icon stat-icon--err">
+              <mat-icon>remove_circle</mat-icon>
+            </div>
+            <div class="stat-body">
+              <span class="stat-value stat-value--err">{{ outOfStock }}</span>
+              <span class="stat-label">Out of Stock</span>
+            </div>
+          </div>
+          @if (inventoryValue() > 0) {
+            <div class="stat-card">
+              <div class="stat-icon stat-icon--value">
+                <mat-icon>currency_rupee</mat-icon>
+              </div>
+              <div class="stat-body">
+                <span class="stat-value stat-value--value">{{ inventoryValue() | number:'1.0-0' }}</span>
+                <span class="stat-label">Inventory Value (₹)</span>
+              </div>
+            </div>
+          }
+        </div>
+
+        <!-- Search -->
+        <mat-form-field appearance="outline" class="stock-search">
+          <mat-label>Search items</mat-label>
+          <mat-icon matPrefix class="prefix-icon">search</mat-icon>
+          <input matInput [(ngModel)]="stockFilter" placeholder="Name, category…">
+          @if (stockFilter) {
+            <button mat-icon-button matSuffix (click)="stockFilter = ''">
+              <mat-icon>close</mat-icon>
+            </button>
+          }
+        </mat-form-field>
+
+        <!-- Loading -->
+        @if (loading()) {
+          <div class="center-loader"><mat-spinner diameter="40"></mat-spinner></div>
+        } @else {
+
+          <div class="master-card">
+            <table mat-table [dataSource]="filteredStock" class="master-table">
+
+              <!-- Name -->
+              <ng-container matColumnDef="name">
+                <th mat-header-cell *matHeaderCellDef>Item</th>
+                <td mat-cell *matCellDef="let row">
+                  <span class="item-name">{{ row.name }}</span>
+                  @if (row.generic_name) {
+                    <span class="item-generic">{{ row.generic_name }}</span>
+                  }
+                </td>
+              </ng-container>
+
+              <!-- Category -->
+              <ng-container matColumnDef="category">
+                <th mat-header-cell *matHeaderCellDef>Category</th>
+                <td mat-cell *matCellDef="let row">
+                  <span class="cat-chip">{{ categories[row.category] ?? row.category }}</span>
+                </td>
+              </ng-container>
+
+              <!-- Stock -->
+              <ng-container matColumnDef="stock">
+                <th mat-header-cell *matHeaderCellDef>Stock</th>
+                <td mat-cell *matCellDef="let row">
+                  <span class="qty">{{ row.qty_on_hand }} {{ row.unit }}</span>
+                </td>
+              </ng-container>
+
+              <!-- Status -->
+              <ng-container matColumnDef="status">
+                <th mat-header-cell *matHeaderCellDef>Status</th>
+                <td mat-cell *matCellDef="let row">
+                  <span class="status-chip" [class]="'status-chip--' + stockStatus(row)">
+                    @if (stockStatus(row) === 'in-stock') { In Stock }
+                    @else if (stockStatus(row) === 'low')  { Low Stock }
+                    @else                                  { Out of Stock }
+                  </span>
+                </td>
+              </ng-container>
+
+              <!-- Reorder -->
+              <ng-container matColumnDef="reorder">
+                <th mat-header-cell *matHeaderCellDef>Reorder At</th>
+                <td mat-cell *matCellDef="let row">
+                  {{ row.reorder_point }} {{ row.unit }}
+                </td>
+              </ng-container>
+
+              <!-- Expiring -->
+              <ng-container matColumnDef="expiring">
+                <th mat-header-cell *matHeaderCellDef>Expiring Soon</th>
+                <td mat-cell *matCellDef="let row">
+                  @if (row.expiring_soon_batches > 0) {
+                    <span class="expiry-badge">{{ row.expiring_soon_batches }} batch{{ row.expiring_soon_batches > 1 ? 'es' : '' }}</span>
+                  } @else {
+                    <span class="no-expiry">—</span>
+                  }
+                </td>
+              </ng-container>
+
+              <tr mat-header-row *matHeaderRowDef="stockColumns"></tr>
+              <tr mat-row *matRowDef="let row; columns: stockColumns;"
+                  [class.row-low]="stockStatus(row) === 'low'"
+                  [class.row-out]="stockStatus(row) === 'out'"></tr>
+
+              <!-- Empty state -->
+              <tr class="mat-row" *matNoDataRow>
+                <td class="no-data-cell" [attr.colspan]="stockColumns.length">
+                  <mat-icon>inventory_2</mat-icon>
+                  <p>No items found. Add items in the Item Catalog tab.</p>
+                </td>
+              </tr>
+            </table>
+          </div>
+        }
+      </div>
+    </mat-tab>
+
+    <!-- ══════════════════════════════════════════════════════════════════════ -->
+    <!-- Tab 2 — Item Catalog                                                  -->
+    <!-- ══════════════════════════════════════════════════════════════════════ -->
+    <mat-tab label="Item Catalog">
+      <div class="tab-content">
+
+        <div class="toolbar-row">
+          <span class="toolbar-info">{{ items().length }} item{{ items().length !== 1 ? 's' : '' }} in catalog</span>
+          <button mat-flat-button color="primary" (click)="openAddItem()">
+            <mat-icon>add</mat-icon> Add Item
+          </button>
+        </div>
+
+        <div class="master-card">
+          <table mat-table [dataSource]="items()" class="master-table">
+
+            <!-- Name -->
+            <ng-container matColumnDef="name">
+              <th mat-header-cell *matHeaderCellDef>Name</th>
+              <td mat-cell *matCellDef="let row">
+                <span class="item-name">{{ row.name }}</span>
+                @if (row.generic_name) {
+                  <span class="item-generic">{{ row.generic_name }}</span>
+                }
+              </td>
+            </ng-container>
+
+            <!-- Category -->
+            <ng-container matColumnDef="category">
+              <th mat-header-cell *matHeaderCellDef>Category</th>
+              <td mat-cell *matCellDef="let row">
+                <span class="cat-chip">{{ categories[row.category] ?? row.category }}</span>
+              </td>
+            </ng-container>
+
+            <!-- Unit -->
+            <ng-container matColumnDef="unit">
+              <th mat-header-cell *matHeaderCellDef>Unit</th>
+              <td mat-cell *matCellDef="let row">{{ row.unit }}</td>
+            </ng-container>
+
+            <!-- Reorder -->
+            <ng-container matColumnDef="reorder">
+              <th mat-header-cell *matHeaderCellDef>Reorder At / Qty</th>
+              <td mat-cell *matCellDef="let row">
+                {{ row.reorder_point }} / {{ row.reorder_quantity }} {{ row.unit }}
+              </td>
+            </ng-container>
+
+            <!-- Traceable -->
+            <ng-container matColumnDef="traceable">
+              <th mat-header-cell *matHeaderCellDef>Traceable</th>
+              <td mat-cell *matCellDef="let row">
+                @if (row.is_traceable) {
+                  <mat-icon class="flag-yes" matTooltip="Batch traceable">verified</mat-icon>
+                } @else {
+                  <span class="flag-no">—</span>
+                }
+              </td>
+            </ng-container>
+
+            <!-- Actions -->
+            <ng-container matColumnDef="actions">
+              <th mat-header-cell *matHeaderCellDef></th>
+              <td mat-cell *matCellDef="let row">
+                <button mat-icon-button matTooltip="Edit" (click)="openEditItem(row)">
+                  <mat-icon>edit</mat-icon>
+                </button>
+              </td>
+            </ng-container>
+
+            <tr mat-header-row *matHeaderRowDef="itemColumns"></tr>
+            <tr mat-row *matRowDef="let row; columns: itemColumns;"></tr>
+
+            <tr class="mat-row" *matNoDataRow>
+              <td class="no-data-cell" [attr.colspan]="itemColumns.length">
+                <mat-icon>add_box</mat-icon>
+                <p>No items yet. Click "Add Item" to get started.</p>
+              </td>
+            </tr>
+          </table>
+        </div>
+      </div>
+    </mat-tab>
+
+    <!-- ══════════════════════════════════════════════════════════════════════ -->
+    <!-- Tab 3 — Receive Stock                                                 -->
+    <!-- ══════════════════════════════════════════════════════════════════════ -->
+    <mat-tab label="Receive Stock">
+      <div class="tab-content">
+
+        <div class="receive-card">
+          <h3 class="receive-title">Log Incoming Stock</h3>
+          <p class="receive-sub">Record a new goods receipt and update stock levels instantly.</p>
+
+          <mat-divider class="receive-divider"></mat-divider>
+
+          <form [formGroup]="receiveForm" class="receive-form" (ngSubmit)="submitReceive()">
+
+            <!-- Item -->
+            <mat-form-field appearance="outline" class="full">
+              <mat-label>Item</mat-label>
+              <mat-select formControlName="item_id" (selectionChange)="onItemSelected($event.value)">
+                @for (item of items(); track item.id) {
+                  <mat-option [value]="item.id">{{ item.name }}</mat-option>
+                }
+              </mat-select>
+              <mat-error>Select an item</mat-error>
+            </mat-form-field>
+
+            <div class="two-col">
+              <!-- Quantity -->
+              <mat-form-field appearance="outline">
+                <mat-label>Quantity Received</mat-label>
+                <input matInput type="number" formControlName="initial_quantity" min="0.001" step="any">
+                <mat-error>Enter a quantity greater than 0</mat-error>
+              </mat-form-field>
+
+              <!-- Unit -->
+              <mat-form-field appearance="outline">
+                <mat-label>Unit</mat-label>
+                <mat-select formControlName="unit">
+                  @for (u of units; track u) {
+                    <mat-option [value]="u">{{ u }}</mat-option>
+                  }
+                </mat-select>
+              </mat-form-field>
+            </div>
+
+            <div class="two-col">
+              <!-- Lot Number -->
+              <mat-form-field appearance="outline">
+                <mat-label>Lot / Batch Number</mat-label>
+                <input matInput formControlName="lot_number" placeholder="Optional">
+              </mat-form-field>
+
+              <!-- Unit Cost -->
+              <mat-form-field appearance="outline">
+                <mat-label>Unit Cost (₹)</mat-label>
+                <span matTextPrefix>₹&nbsp;</span>
+                <input matInput type="number" formControlName="unit_cost" min="0" step="any" placeholder="Optional">
+              </mat-form-field>
+            </div>
+
+            <div class="two-col">
+              <!-- Expiry Date -->
+              <mat-form-field appearance="outline">
+                <mat-label>Expiry Date</mat-label>
+                <input matInput [matDatepicker]="expiryPicker" formControlName="expiry_date">
+                <mat-datepicker-toggle matIconSuffix [for]="expiryPicker"></mat-datepicker-toggle>
+                <mat-datepicker #expiryPicker></mat-datepicker>
+              </mat-form-field>
+
+              <!-- Supplier -->
+              <mat-form-field appearance="outline">
+                <mat-label>Supplier</mat-label>
+                <input matInput formControlName="supplier" placeholder="Optional">
+              </mat-form-field>
+            </div>
+
+            <!-- Received At -->
+            <mat-form-field appearance="outline" style="max-width: 300px">
+              <mat-label>Received On</mat-label>
+              <input matInput [matDatepicker]="receivedPicker" formControlName="received_at"
+                     placeholder="Defaults to today">
+              <mat-datepicker-toggle matIconSuffix [for]="receivedPicker"></mat-datepicker-toggle>
+              <mat-datepicker #receivedPicker></mat-datepicker>
+            </mat-form-field>
+
+            <div class="receive-actions">
+              <button mat-flat-button color="primary" type="submit"
+                      [disabled]="receiveForm.invalid || saving()">
+                @if (saving()) { <mat-spinner diameter="18" class="btn-spinner"></mat-spinner> }
+                @else          { <mat-icon>move_to_inbox</mat-icon> }
+                Receive Stock
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </mat-tab>
+
+    <!-- ══════════════════════════════════════════════════════════════════════ -->
+    <!-- Tab 4 — Alerts                                                        -->
+    <!-- ══════════════════════════════════════════════════════════════════════ -->
+    <mat-tab>
+      <ng-template mat-tab-label>
+        <span [matBadge]="alertCount() || null" matBadgeColor="warn" matBadgeSize="small" matBadgeOverlap="false">
+          Alerts
+        </span>
+      </ng-template>
+      <div class="tab-content">
+
+        @if (alerts().length === 0) {
+          <div class="alerts-empty">
+            <mat-icon>check_circle</mat-icon>
+            <p>All items are sufficiently stocked. No alerts at this time.</p>
+          </div>
+        } @else {
+          <div class="alerts-info">
+            {{ alertCount() }} item{{ alertCount() !== 1 ? 's' : '' }} need attention
+          </div>
+
+          <div class="alert-list">
+            @for (alert of alerts(); track alert.id) {
+              <div class="alert-card" [class.alert-card--out]="alert.alert_type === 'OUT_OF_STOCK'">
+                <div class="alert-card__left">
+                  <mat-icon class="alert-icon" [class.alert-icon--out]="alert.alert_type === 'OUT_OF_STOCK'">
+                    {{ alert.alert_type === 'OUT_OF_STOCK' ? 'remove_circle' : 'warning' }}
+                  </mat-icon>
+                </div>
+                <div class="alert-card__body">
+                  <div class="alert-name">{{ alert.name }}</div>
+                  @if (alert.generic_name) {
+                    <div class="alert-generic">{{ alert.generic_name }}</div>
+                  }
+                  <div class="alert-meta">
+                    <span class="alert-status-chip"
+                          [class.alert-status-chip--out]="alert.alert_type === 'OUT_OF_STOCK'"
+                          [class.alert-status-chip--low]="alert.alert_type === 'LOW_STOCK'">
+                      {{ alertLabel(alert) }}
+                    </span>
+                    <span class="alert-qty">
+                      {{ alert.qty_on_hand }} / {{ alert.reorder_point }} {{ alert.unit }} on hand
+                    </span>
+                    @if (alert.shortage > 0) {
+                      <span class="alert-shortage">Need {{ alert.shortage }} {{ alert.unit }}</span>
+                    }
+                  </div>
+                </div>
+                <div class="alert-card__actions">
+                  <button mat-stroked-button (click)="orderNow(alert)" matTooltip="Pre-fill Receive Stock">
+                    <mat-icon>move_to_inbox</mat-icon> Order Now
+                  </button>
+                  <button mat-flat-button color="primary"
+                          (click)="openCreatePO([alert])" matTooltip="Create Purchase Order">
+                    <mat-icon>shopping_cart</mat-icon> Create PO
+                  </button>
+                </div>
+              </div>
+            }
+          </div>
+        }
+
+      </div>
+    </mat-tab>
+
+    <!-- ══════════════════════════════════════════════════════════════════════ -->
+    <!-- Tab 5 — Reports                                                       -->
+    <!-- ══════════════════════════════════════════════════════════════════════ -->
+    <mat-tab label="Reports">
+      <div class="tab-content">
+
+        <!-- Filter bar -->
+        <div class="reports-filters">
+          <mat-form-field appearance="outline" class="filter-item">
+            <mat-label>Item</mat-label>
+            <mat-select [(ngModel)]="movFilter.item_id">
+              <mat-option value="">All Items</mat-option>
+              @for (item of items(); track item.id) {
+                <mat-option [value]="item.id">{{ item.name }}</mat-option>
+              }
+            </mat-select>
+          </mat-form-field>
+
+          <mat-form-field appearance="outline" class="filter-item">
+            <mat-label>Type</mat-label>
+            <mat-select [(ngModel)]="movFilter.type">
+              <mat-option value="">All Types</mat-option>
+              <mat-option value="GOODS_RECEIPT">Receipts</mat-option>
+              <mat-option value="CONSUMPTION">Consumption</mat-option>
+            </mat-select>
+          </mat-form-field>
+
+          <mat-form-field appearance="outline" class="filter-item filter-item--date">
+            <mat-label>From</mat-label>
+            <input matInput [matDatepicker]="fromPicker" [(ngModel)]="movFilter.from">
+            <mat-datepicker-toggle matIconSuffix [for]="fromPicker"></mat-datepicker-toggle>
+            <mat-datepicker #fromPicker></mat-datepicker>
+          </mat-form-field>
+
+          <mat-form-field appearance="outline" class="filter-item filter-item--date">
+            <mat-label>To</mat-label>
+            <input matInput [matDatepicker]="toPicker" [(ngModel)]="movFilter.to">
+            <mat-datepicker-toggle matIconSuffix [for]="toPicker"></mat-datepicker-toggle>
+            <mat-datepicker #toPicker></mat-datepicker>
+          </mat-form-field>
+
+          <button mat-flat-button color="primary" (click)="applyMovFilter()">
+            <mat-icon>filter_list</mat-icon> Apply
+          </button>
+        </div>
+
+        <!-- Summary stats -->
+        @if (!loadingMoves() && movements().length > 0) {
+          <div class="reports-summary">
+            <div class="rsummary-item">
+              <span class="rsummary-value rsummary-value--in">{{ totalReceived | number:'1.0-2' }}</span>
+              <span class="rsummary-label">Units Received</span>
+            </div>
+            <div class="rsummary-sep"></div>
+            <div class="rsummary-item">
+              <span class="rsummary-value rsummary-value--out">{{ totalConsumed | number:'1.0-2' }}</span>
+              <span class="rsummary-label">Units Consumed</span>
+            </div>
+            <div class="rsummary-sep"></div>
+            <div class="rsummary-item">
+              <span class="rsummary-value">{{ movements().length }}</span>
+              <span class="rsummary-label">Movements</span>
+            </div>
+          </div>
+        }
+
+        <!-- Loading -->
+        @if (loadingMoves()) {
+          <div class="center-loader"><mat-spinner diameter="40"></mat-spinner></div>
+        } @else {
+          <div class="master-card">
+            <table mat-table [dataSource]="movements()" class="master-table">
+
+              <!-- Date -->
+              <ng-container matColumnDef="date">
+                <th mat-header-cell *matHeaderCellDef>Date & Time</th>
+                <td mat-cell *matCellDef="let row">
+                  <span class="mov-date">{{ row.created_at | date:'dd MMM yyyy' }}</span>
+                  <span class="mov-time">{{ row.created_at | date:'HH:mm' }}</span>
+                </td>
+              </ng-container>
+
+              <!-- Item -->
+              <ng-container matColumnDef="item">
+                <th mat-header-cell *matHeaderCellDef>Item</th>
+                <td mat-cell *matCellDef="let row">
+                  <span class="item-name">{{ row.item_name }}</span>
+                  @if (row.lot_number) {
+                    <span class="item-generic">Lot: {{ row.lot_number }}</span>
+                  }
+                </td>
+              </ng-container>
+
+              <!-- Type -->
+              <ng-container matColumnDef="type">
+                <th mat-header-cell *matHeaderCellDef>Type</th>
+                <td mat-cell *matCellDef="let row">
+                  <span class="mov-chip" [class]="movTypeClass(row.movement_type)">
+                    {{ movTypeLabel(row.movement_type) }}
+                  </span>
+                </td>
+              </ng-container>
+
+              <!-- Qty -->
+              <ng-container matColumnDef="qty">
+                <th mat-header-cell *matHeaderCellDef>Qty Change</th>
+                <td mat-cell *matCellDef="let row">
+                  <span class="mov-qty" [class.mov-qty--pos]="row.direction > 0" [class.mov-qty--neg]="row.direction < 0">
+                    {{ row.direction > 0 ? '+' : '−' }}{{ row.quantity | number:'1.0-3' }} {{ row.unit }}
+                  </span>
+                </td>
+              </ng-container>
+
+              <!-- Cost -->
+              <ng-container matColumnDef="cost">
+                <th mat-header-cell *matHeaderCellDef>Unit Cost</th>
+                <td mat-cell *matCellDef="let row">
+                  @if (row.unit_cost != null) {
+                    <span class="mov-cost">₹{{ row.unit_cost | number:'1.0-2' }}</span>
+                  } @else {
+                    <span class="no-expiry">—</span>
+                  }
+                </td>
+              </ng-container>
+
+              <!-- Source -->
+              <ng-container matColumnDef="source">
+                <th mat-header-cell *matHeaderCellDef>Source</th>
+                <td mat-cell *matCellDef="let row">
+                  <span class="source-label">{{ row.source_type }}</span>
+                </td>
+              </ng-container>
+
+              <tr mat-header-row *matHeaderRowDef="movColumns"></tr>
+              <tr mat-row *matRowDef="let row; columns: movColumns;"></tr>
+
+              <tr class="mat-row" *matNoDataRow>
+                <td class="no-data-cell" [attr.colspan]="movColumns.length">
+                  <mat-icon>timeline</mat-icon>
+                  <p>No movements in this period. Adjust filters and click Apply.</p>
+                </td>
+              </tr>
+            </table>
+          </div>
+        }
+      </div>
+    </mat-tab>
+
+    <!-- ══════════════════════════════════════════════════════════════════════ -->
+    <!-- Tab 6 — Purchase Orders                                               -->
+    <!-- ══════════════════════════════════════════════════════════════════════ -->
+    <mat-tab label="Purchase Orders">
+      <div class="tab-content">
+
+        <div class="toolbar-row">
+          <span class="toolbar-info">{{ pos().length }} purchase order{{ pos().length !== 1 ? 's' : '' }}</span>
+          <div class="toolbar-actions">
+            @if (alertCount() > 0) {
+              <button mat-stroked-button (click)="openCreatePO(alerts())">
+                <mat-icon>notification_important</mat-icon> From Alerts ({{ alertCount() }})
+              </button>
+            }
+            <button mat-flat-button color="primary" (click)="openCreatePO()">
+              <mat-icon>add</mat-icon> New PO
+            </button>
+          </div>
+        </div>
+
+        @if (loadingPOs()) {
+          <div class="center-loader"><mat-spinner diameter="40"></mat-spinner></div>
+        } @else {
+          <div class="master-card">
+            <table mat-table [dataSource]="pos()" class="master-table">
+
+              <!-- PO Number -->
+              <ng-container matColumnDef="po_number">
+                <th mat-header-cell *matHeaderCellDef>PO Number</th>
+                <td mat-cell *matCellDef="let row">
+                  <span class="item-name">{{ row.po_number }}</span>
+                </td>
+              </ng-container>
+
+              <!-- Supplier -->
+              <ng-container matColumnDef="supplier">
+                <th mat-header-cell *matHeaderCellDef>Supplier</th>
+                <td mat-cell *matCellDef="let row">
+                  {{ row.supplier || '—' }}
+                </td>
+              </ng-container>
+
+              <!-- Status -->
+              <ng-container matColumnDef="status">
+                <th mat-header-cell *matHeaderCellDef>Status</th>
+                <td mat-cell *matCellDef="let row">
+                  <span class="po-status-chip" [class]="poStatusClass(row.status)">
+                    {{ poStatusLabel(row.status) }}
+                  </span>
+                </td>
+              </ng-container>
+
+              <!-- Lines -->
+              <ng-container matColumnDef="lines">
+                <th mat-header-cell *matHeaderCellDef>Lines</th>
+                <td mat-cell *matCellDef="let row">{{ row.line_count }}</td>
+              </ng-container>
+
+              <!-- Created -->
+              <ng-container matColumnDef="created">
+                <th mat-header-cell *matHeaderCellDef>Created</th>
+                <td mat-cell *matCellDef="let row">
+                  <span class="mov-date">{{ row.created_at | date:'dd MMM yyyy' }}</span>
+                </td>
+              </ng-container>
+
+              <!-- Actions -->
+              <ng-container matColumnDef="actions">
+                <th mat-header-cell *matHeaderCellDef></th>
+                <td mat-cell *matCellDef="let row">
+                  <div class="po-actions">
+                    @if (row.status === 'draft') {
+                      <button mat-stroked-button color="primary" (click)="changePOStatus(row, 'send')">
+                        Send
+                      </button>
+                    }
+                    @if (row.status === 'sent') {
+                      <button mat-flat-button color="primary" (click)="changePOStatus(row, 'receive')">
+                        <mat-icon>move_to_inbox</mat-icon> Receive
+                      </button>
+                    }
+                    @if (row.status === 'draft' || row.status === 'sent') {
+                      <button mat-icon-button color="warn" matTooltip="Cancel PO" (click)="changePOStatus(row, 'cancel')">
+                        <mat-icon>cancel</mat-icon>
+                      </button>
+                    }
+                    @if (row.status === 'received') {
+                      <mat-icon class="flag-yes" matTooltip="Received — stock updated">check_circle</mat-icon>
+                    }
+                  </div>
+                </td>
+              </ng-container>
+
+              <tr mat-header-row *matHeaderRowDef="poColumns"></tr>
+              <tr mat-row *matRowDef="let row; columns: poColumns;"></tr>
+
+              <tr class="mat-row" *matNoDataRow>
+                <td class="no-data-cell" [attr.colspan]="poColumns.length">
+                  <mat-icon>shopping_cart</mat-icon>
+                  <p>No purchase orders yet. Create one to start tracking reorders.</p>
+                </td>
+              </tr>
+            </table>
+          </div>
+        }
+      </div>
+    </mat-tab>
+
+  </mat-tab-group>
+</div>

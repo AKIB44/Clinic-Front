@@ -1,5 +1,5 @@
 .patient-record-page {
-  max-width: 1120px;
+  max-width: 1200px;
   margin: 0 auto;
   padding: 18px;
 }
@@ -12,10 +12,12 @@
   gap: 6px;
   margin-bottom: 12px;
   text-decoration: none;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0;
 
-  &:hover {
-    color: #0d7a5f;
-  }
+  &:hover { color: #0d7a5f; }
 }
 
 .patient-loading,
@@ -27,23 +29,30 @@
   padding: 18px;
 }
 
-.patient-loading {
-  color: #64748b;
-}
+.patient-loading { color: #64748b; }
+.patient-error   { background: #fee2e2; color: #b42318; }
 
-.patient-error {
-  background: #fee2e2;
-  color: #b42318;
-}
+// ── Header ─────────────────────────────────────────────────────────────────────
 
 .patient-header {
-  align-items: center;
   background: #fff;
   border: 1px solid #e6edf5;
-  border-radius: 8px;
+  border-radius: 12px;
   display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 20px;
+  flex-wrap: wrap;
+  box-shadow: 0 1px 4px rgba(0,0,0,.05);
+}
+
+.patient-header__left {
+  display: flex;
+  align-items: center;
   gap: 14px;
-  padding: 16px;
+  flex: 1;
+  min-width: 0;
 }
 
 .avatar {
@@ -52,12 +61,12 @@
   border-radius: 50%;
   color: #0d7a5f;
   display: flex;
-  flex: 0 0 52px;
-  font-size: 17px;
+  flex: 0 0 56px;
+  font-size: 18px;
   font-weight: 800;
-  height: 52px;
+  height: 56px;
   justify-content: center;
-  width: 52px;
+  width: 56px;
 }
 
 .patient-title {
@@ -65,31 +74,66 @@
 
   h1 {
     color: #102a43;
-    font-size: 24px;
+    font-size: 22px;
     line-height: 1.2;
-    margin: 0 0 7px;
+    margin: 0 0 6px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
   }
 }
 
 .patient-meta {
   display: flex;
   flex-wrap: wrap;
-  gap: 10px 16px;
+  gap: 8px 14px;
 
   span {
     align-items: center;
     color: #52606d;
     display: inline-flex;
     font-size: 13px;
-    gap: 5px;
+    gap: 4px;
   }
 }
+
+// ── Stat chips ─────────────────────────────────────────────────────────────────
+
+.header-stats {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  flex-shrink: 0;
+}
+
+.stat-chip {
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  padding: 10px 16px;
+  text-align: center;
+  min-width: 90px;
+
+  &--primary {
+    background: #e6f7f1;
+    border-color: #b7e4d3;
+
+    .stat-val { color: #0d7a5f; }
+  }
+}
+
+.stat-val   { display: block; font-size: 18px; font-weight: 700; color: #102a43; line-height: 1.1; }
+.stat-label { display: block; font-size: 11px; color: #94a3b8; margin-top: 2px; white-space: nowrap; }
+
+// ── Tabs ───────────────────────────────────────────────────────────────────────
 
 .pt-tabs {
   border-bottom: 1px solid #d9e2ec;
   display: flex;
-  gap: 4px;
-  margin-top: 16px;
+  gap: 2px;
+  margin-top: 18px;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
 }
 
 .pt-tab {
@@ -100,13 +144,67 @@
   cursor: pointer;
   font-size: 13px;
   font-weight: 700;
-  padding: 10px 12px;
+  padding: 10px 14px;
+  white-space: nowrap;
+  display: flex;
+  align-items: center;
+  gap: 6px;
 
   &.on {
     border-bottom-color: #0d7a5f;
     color: #0d7a5f;
   }
 }
+
+.pt-badge {
+  background: var(--primary, #0d7a5f);
+  border-radius: 10px;
+  color: #fff;
+  font-size: 10px;
+  font-weight: 700;
+  padding: 1px 6px;
+
+  &--warn { background: #f59e0b; }
+}
+
+.muted { color: #94a3b8; }
+
+.link-btn {
+  background: none;
+  border: none;
+  color: #0d7a5f;
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: 600;
+  padding: 6px 0 0;
+  display: block;
+}
+
+.section-count {
+  color: #829ab1;
+  font-size: .8rem;
+  font-weight: 600;
+  margin: 14px 0 8px;
+}
+
+.empty-state {
+  align-items: center;
+  background: #fff;
+  border: 1px solid #e6edf5;
+  border-radius: 8px;
+  color: #9e9e9e;
+  display: flex;
+  flex-direction: column;
+  font-size: .9rem;
+  gap: 10px;
+  margin-top: 14px;
+  padding: 56px 24px;
+  text-align: center;
+
+  p { margin: 0; color: #94a3b8; }
+}
+
+// ── Overview ───────────────────────────────────────────────────────────────────
 
 .overview-grid {
   display: grid;
@@ -119,16 +217,19 @@
 .history-panel {
   background: #fff;
   border: 1px solid #e6edf5;
-  border-radius: 8px;
+  border-radius: 10px;
 }
 
 .info-panel {
-  padding: 14px;
+  padding: 16px;
 
   h2 {
+    align-items: center;
     color: #102a43;
+    display: flex;
     font-size: 14px;
-    margin: 0 0 10px;
+    gap: 6px;
+    margin: 0 0 12px;
   }
 
   p {
@@ -144,7 +245,7 @@
     margin: 0;
   }
 
-  div {
+  > dl > div {
     display: grid;
     gap: 2px;
   }
@@ -168,21 +269,72 @@
   overflow: hidden;
 }
 
-// ── Appointments tab ──────────────────────────────────────────────────────────
+// ── Recent sessions in overview ────────────────────────────────────────────────
 
-.pt-badge {
-  background: var(--primary, #0d7a5f);
-  border-radius: 10px;
-  color: #fff;
-  font-size: 10px;
+.recent-sess-row {
+  align-items: flex-start;
+  border-bottom: 1px solid #f0f4f8;
+  display: flex;
+  gap: 10px;
+  padding: 8px 0;
+
+  &:last-child { border-bottom: 0; }
+}
+
+.recent-sess-date {
+  color: #829ab1;
+  flex-shrink: 0;
+  font-size: 12px;
+  min-width: 84px;
+}
+
+.recent-sess-body {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.recent-sess-doc  { color: #334e68; font-size: 12px; font-weight: 600; }
+.recent-sess-svcs { color: #64748b; font-size: 12px; em { color: #94a3b8; font-style: normal; } }
+
+.recent-sess-charge {
+  color: #0d7a5f;
+  flex-shrink: 0;
+  font-size: 12px;
   font-weight: 700;
-  margin-left: 5px;
-  padding: 1px 6px;
 }
 
-.appt-section {
-  margin-top: 14px;
+// ── Visits by service (overview) ───────────────────────────────────────────────
+
+.svc-summary-panel { grid-column: 1 / -1; }
+
+.svc-summary-list  { display: flex; flex-direction: column; gap: 6px; }
+
+.svc-summary-row {
+  align-items: center;
+  border-bottom: 1px solid #f0f4f8;
+  display: flex;
+  justify-content: space-between;
+  padding-bottom: 6px;
+
+  &:last-child { border-bottom: 0; }
+
+  .svc-summary-name { color: #334e68; font-size: .85rem; }
+
+  .svc-summary-count {
+    background: #e6f7f1;
+    border-radius: 10px;
+    color: #0d7a5f;
+    font-size: .75rem;
+    font-weight: 700;
+    padding: 2px 9px;
+  }
 }
+
+// ── Appointments ───────────────────────────────────────────────────────────────
+
+.appt-section { margin-top: 14px; }
 
 .appt-filter {
   margin-bottom: 12px;
@@ -193,32 +345,7 @@
   }
 }
 
-.appt-count {
-  color: #829ab1;
-  font-size: .8rem;
-  font-weight: 600;
-  margin-bottom: 8px;
-}
-
-.appt-empty {
-  align-items: center;
-  background: #fff;
-  border: 1px solid #e6edf5;
-  border-radius: 8px;
-  color: #9e9e9e;
-  display: flex;
-  flex-direction: column;
-  font-size: .9rem;
-  gap: 10px;
-  padding: 48px 24px;
-  text-align: center;
-}
-
-.appt-list {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
+.appt-list { display: flex; flex-direction: column; gap: 8px; }
 
 .appt-card {
   align-items: flex-start;
@@ -231,48 +358,17 @@
   padding: 14px 16px;
   transition: border-color .15s, box-shadow .15s;
 
-  &:hover {
-    border-color: #b3d9ce;
-    box-shadow: 0 2px 8px rgba(0,0,0,.07);
-  }
+  &:hover { border-color: #b3d9ce; box-shadow: 0 2px 8px rgba(0,0,0,.07); }
 }
 
 .appt-card-left {
   flex: 1;
   min-width: 0;
 
-  .appt-service {
-    color: #102a43;
-    font-size: .93rem;
-    font-weight: 700;
-    margin-bottom: 4px;
-  }
-
-  .appt-date {
-    align-items: center;
-    color: #52606d;
-    display: flex;
-    font-size: .78rem;
-    gap: 4px;
-  }
-
-  .appt-notes {
-    align-items: flex-start;
-    color: #627d98;
-    display: flex;
-    font-size: .75rem;
-    gap: 4px;
-    margin-top: 5px;
-  }
-
-  .appt-cancel-reason {
-    align-items: flex-start;
-    color: #b42318;
-    display: flex;
-    font-size: .75rem;
-    gap: 4px;
-    margin-top: 4px;
-  }
+  .appt-service   { color: #102a43; font-size: .93rem; font-weight: 700; margin-bottom: 4px; }
+  .appt-date      { align-items: center; color: #52606d; display: flex; font-size: .78rem; gap: 4px; }
+  .appt-notes     { align-items: flex-start; color: #627d98; display: flex; font-size: .75rem; gap: 4px; margin-top: 5px; }
+  .appt-cancel-reason { align-items: flex-start; color: #b42318; display: flex; font-size: .75rem; gap: 4px; margin-top: 4px; }
 }
 
 .appt-card-right {
@@ -283,14 +379,7 @@
   gap: 6px;
 
   .appt-duration,
-  .appt-source {
-    color: #829ab1;
-    display: flex;
-    align-items: center;
-    font-size: .72rem;
-    gap: 3px;
-  }
-
+  .appt-source { color: #829ab1; display: flex; align-items: center; font-size: .72rem; gap: 3px; }
   .appt-source { text-transform: capitalize; }
 }
 
@@ -309,50 +398,335 @@
   &.s-cancelled   { background: #f5f5f5; color: #757575; }
 }
 
-// ── Visits by service summary ──────────────────────────────────────────────────
+// ── Clinical Sessions ──────────────────────────────────────────────────────────
 
-.svc-summary-panel { grid-column: 1 / -1; }
+.sessions-section { margin-top: 14px; display: flex; flex-direction: column; gap: 12px; }
 
-.svc-summary-list {
+.session-card {
+  background: #fff;
+  border: 1.5px solid #e6edf5;
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.session-header {
+  align-items: center;
+  background: #f8fafc;
+  border-bottom: 1px solid #e6edf5;
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px 16px;
+  flex-wrap: wrap;
+}
+
+.session-header-left {
   display: flex;
   flex-direction: column;
+  gap: 4px;
+}
+
+.session-date {
+  align-items: center;
+  color: #334e68;
+  display: flex;
+  font-size: 14px;
+  font-weight: 700;
+  gap: 5px;
+}
+
+.session-doctor {
+  align-items: center;
+  color: #64748b;
+  display: flex;
+  font-size: 12px;
+  gap: 4px;
+}
+
+.session-header-right {
+  align-items: center;
+  display: flex;
+  gap: 10px;
+}
+
+.session-status-chip {
+  border-radius: 6px;
+  font-size: 11px;
+  font-weight: 700;
+  padding: 3px 10px;
+
+  &.ss-open     { background: #fef3c7; color: #92400e; }
+  &.ss-done     { background: #dcfce7; color: #14532d; }
+  &.ss-sealed   { background: #e0f2fe; color: #075985; }
+  &.ss-cancelled{ background: #f1f5f9; color: #64748b; }
+}
+
+.session-charge {
+  color: #0d7a5f;
+  font-size: 15px;
+  font-weight: 700;
+}
+
+.session-section {
+  padding: 12px 16px;
+  border-bottom: 1px solid #f0f4f8;
+
+  &:last-child { border-bottom: 0; }
+}
+
+.session-section-title {
+  align-items: center;
+  color: #64748b;
+  display: flex;
+  font-size: 11px;
+  font-weight: 700;
+  gap: 4px;
+  letter-spacing: .04em;
+  margin-bottom: 8px;
+  text-transform: uppercase;
+}
+
+// Diagnoses
+.diagnosis-list { display: flex; flex-direction: column; gap: 6px; }
+
+.diagnosis-row {
+  align-items: center;
+  display: flex;
+  flex-wrap: wrap;
   gap: 6px;
 }
 
-.svc-summary-row {
-  align-items: center;
+.diagnosis-text { color: #334e68; font-size: 13px; }
+
+.icd-chip {
+  background: #e0e7ff;
+  border-radius: 4px;
+  color: #3730a3;
+  font-size: 11px;
+  font-weight: 600;
+  padding: 1px 6px;
+}
+
+.tooth-tag {
+  background: #f1f5f9;
+  border-radius: 4px;
+  color: #475569;
+  font-size: 11px;
+  padding: 1px 6px;
+}
+
+// Procedures table
+.procedure-table { display: flex; flex-direction: column; gap: 0; }
+
+.procedure-header {
+  display: grid;
+  grid-template-columns: 2fr 1fr .5fr 1fr 1fr;
+  gap: 8px;
+  padding: 4px 0 6px;
   border-bottom: 1px solid #f0f4f8;
-  display: flex;
-  justify-content: space-between;
-  padding-bottom: 6px;
+  font-size: 11px;
+  font-weight: 700;
+  color: #94a3b8;
+  text-transform: uppercase;
+  letter-spacing: .04em;
+}
+
+.procedure-row {
+  display: grid;
+  grid-template-columns: 2fr 1fr .5fr 1fr 1fr;
+  gap: 8px;
+  padding: 6px 0;
+  font-size: 13px;
+  border-bottom: 1px solid #f8fafc;
+  align-items: center;
 
   &:last-child { border-bottom: 0; }
+}
 
-  .svc-summary-name {
-    color: #334e68;
-    font-size: .85rem;
-  }
+.proc-name   { color: #0f172a; font-weight: 500; }
+.proc-tooth  { font-size: 12px; }
+.proc-charge { color: #0f172a; font-weight: 600; }
 
-  .svc-summary-count {
+.proc-status {
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: capitalize;
+
+  &.proc-s-completed { color: #16a34a; }
+  &.proc-s-pending   { color: #d97706; }
+  &.proc-s-cancelled { color: #94a3b8; }
+}
+
+// ── Treatment Plans ────────────────────────────────────────────────────────────
+
+.plans-section { margin-top: 14px; display: flex; flex-direction: column; gap: 14px; }
+
+.plan-card {
+  background: #fff;
+  border: 1.5px solid #e6edf5;
+  border-radius: 12px;
+  overflow: hidden;
+  padding: 16px;
+}
+
+.plan-header {
+  align-items: center;
+  display: flex;
+  gap: 10px;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  margin-bottom: 8px;
+}
+
+.plan-title     { color: #0f172a; font-size: 14px; font-weight: 700; margin-right: 8px; }
+.plan-date      { font-size: 12px; }
+.plan-cost-range{ color: #0d7a5f; font-size: 13px; font-weight: 700; }
+
+.plan-items { display: flex; flex-direction: column; gap: 0; margin-top: 10px; }
+
+.plan-item-row {
+  align-items: center;
+  border-bottom: 1px solid #f8fafc;
+  display: flex;
+  gap: 8px;
+  padding: 8px 0;
+  font-size: 13px;
+
+  &:last-child { border-bottom: 0; }
+}
+
+.plan-item-status-dot {
+  border-radius: 50%;
+  flex-shrink: 0;
+  height: 8px;
+  width: 8px;
+
+  &.pi-done     { background: #22c55e; }
+  &.pi-progress { background: #f59e0b; }
+  &.pi-pending  { background: #cbd5e1; }
+  &.pi-skipped  { background: #e2e8f0; }
+}
+
+.plan-item-name  { color: #0f172a; flex: 1; font-weight: 500; }
+.plan-item-cost  { flex-shrink: 0; font-size: 12px; }
+
+.plan-item-status-label {
+  flex-shrink: 0;
+  font-size: 11px;
+  font-weight: 600;
+
+  &.pis-DONE, &.pis-PARTIAL    { color: #16a34a; }
+  &.pis-IN_PROGRESS, &.pis-ACCEPTED { color: #d97706; }
+  &.pis-PROPOSED               { color: #94a3b8; }
+  &.pis-DECLINED, &.pis-CANCELLED   { color: #cbd5e1; }
+}
+
+// ── Lab status chip ────────────────────────────────────────────────────────────
+
+.lab-status-chip {
+  border-radius: 6px;
+  font-size: 11px;
+  font-weight: 700;
+  padding: 2px 8px;
+  white-space: nowrap;
+
+  &.ls-pending   { background: #fef9c3; color: #92400e; }
+  &.ls-progress  { background: #fef3c7; color: #78350f; }
+  &.ls-ready     { background: #dcfce7; color: #14532d; }
+  &.ls-done      { background: #e0f2fe; color: #075985; }
+  &.ls-cancelled { background: #f1f5f9; color: #64748b; }
+}
+
+// ── Billing ────────────────────────────────────────────────────────────────────
+
+.billing-section { margin-top: 14px; }
+
+.billing-summary-row {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-bottom: 24px;
+}
+
+.billing-stat-card {
+  background: #fff;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  flex: 1;
+  min-width: 120px;
+  padding: 16px 20px;
+  text-align: center;
+
+  &--primary {
     background: #e6f7f1;
-    border-radius: 10px;
-    color: #0d7a5f;
-    font-size: .75rem;
-    font-weight: 700;
-    padding: 2px 9px;
+    border-color: #b7e4d3;
+
+    .billing-stat-val { color: #0d7a5f; }
   }
 }
 
-@media (max-width: 780px) {
-  .patient-record-page {
-    padding: 12px;
+.billing-stat-val   { font-size: 22px; font-weight: 700; color: #102a43; }
+.billing-stat-label { color: #94a3b8; font-size: 12px; margin-top: 4px; }
+
+.billing-section-title {
+  color: #334e68;
+  font-size: 14px;
+  font-weight: 700;
+  margin: 20px 0 10px;
+}
+
+.billing-table-wrap {
+  background: #fff;
+  border: 1px solid #e6edf5;
+  border-radius: 10px;
+  overflow: hidden;
+  margin-bottom: 20px;
+}
+
+.billing-table {
+  border-collapse: collapse;
+  width: 100%;
+
+  th {
+    background: #f8fafc;
+    border-bottom: 1px solid #e6edf5;
+    color: #64748b;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: .04em;
+    padding: 10px 16px;
+    text-align: left;
+    text-transform: uppercase;
   }
 
-  .patient-header {
-    align-items: flex-start;
+  td {
+    border-bottom: 1px solid #f0f4f8;
+    color: #334e68;
+    font-size: 13px;
+    padding: 12px 16px;
+    vertical-align: middle;
   }
 
-  .overview-grid {
-    grid-template-columns: 1fr;
-  }
+  tr:last-child td { border-bottom: 0; }
+}
+
+.billing-total-row {
+  td { background: #f8fafc; font-size: 14px; }
+}
+
+.billing-amount { color: #0f172a; font-weight: 700; }
+.text-right     { text-align: right; }
+
+// ── Responsive ─────────────────────────────────────────────────────────────────
+
+@media (max-width: 820px) {
+  .patient-record-page { padding: 12px; }
+  .patient-header { flex-direction: column; align-items: flex-start; }
+  .header-stats { width: 100%; }
+  .overview-grid { grid-template-columns: 1fr; }
+  .svc-summary-panel { grid-column: 1; }
+  .procedure-header,
+  .procedure-row { grid-template-columns: 2fr 1fr 1fr 1fr; }
+  .procedure-header span:nth-child(3),
+  .procedure-row span:nth-child(3) { display: none; }
 }

@@ -12,8 +12,8 @@
     </button>
   }
 
-  <!-- ── Desktop nav links ──────────────────────────────────────────────── -->
-  <div class="d-none d-lg-flex">
+  <!-- ── Desktop nav links (Apps / Chat / Calendar / Email hidden — to be enabled later) ── -->
+  <!-- <div class="d-none d-lg-flex">
     <button mat-button [matMenuTriggerFor]="appsmenu" aria-label="Apps">
       <div class="d-flex align-items-center">
         Apps <i-tabler name="chevron-down" class="icon-16 m-l-4"></i-tabler>
@@ -57,7 +57,7 @@
     <a mat-button [routerLink]="['/apps/chat']">Chat</a>
     <a mat-button [routerLink]="['/apps/calendar']">Calendar</a>
     <a mat-button [routerLink]="['/apps/email/inbox']">Email</a>
-  </div>
+  </div> -->
 
   <span class="flex-1-auto"></span>
 
@@ -66,7 +66,8 @@
     <i-tabler name="grid-dots" class="icon-20 d-flex"></i-tabler>
   </button>
 
-  <!-- ── Shortcuts dropdown ─────────────────────────────────────────────── -->
+  <!-- ── Shortcuts dropdown — hidden, to be enabled later ─────────────── -->
+  @if (false) {
   <button mat-icon-button [matMenuTriggerFor]="shortcutsMenu" aria-label="Shortcuts">
     <i-tabler class="d-flex" name="layout-grid-add"></i-tabler>
     <div class="pulse">
@@ -141,6 +142,23 @@
       </div>
     </div>
   </mat-menu>
+  }
+
+  <!-- ── Inventory Alert Bell ─────────────────────────────────────────── -->
+  @if (canSeeInventoryAlerts && alertsSvc.alertCount() > 0) {
+    <button mat-icon-button
+            [routerLink]="['/master/inventory']"
+            [queryParams]="{ tab: 'alerts' }"
+            matTooltip="Inventory alerts — {{ alertsSvc.alertCount() }} item(s) need attention"
+            aria-label="Inventory alerts"
+            class="d-flex justify-content-center">
+      <mat-icon [matBadge]="alertsSvc.alertCount()"
+                matBadgeColor="warn"
+                matBadgeSize="small">
+        notifications
+      </mat-icon>
+    </button>
+  }
 
   <!-- ── Clinic Switcher ────────────────────────────────────────────────── -->
   <app-clinic-switcher></app-clinic-switcher>

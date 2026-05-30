@@ -6,6 +6,9 @@
 /out-tsc
 /bazel-out
 /e2e/test-output/
+/e2e/.auth/
+/test-results/
+/playwright-report/
 
 # Node
 /node_modules

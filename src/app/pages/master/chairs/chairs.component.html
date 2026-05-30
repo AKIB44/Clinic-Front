@@ -1,44 +1,232 @@
 <div class="master-page">
+
+  <!-- ── Header ──────────────────────────────────────────────────────────────── -->
   <div class="page-header">
     <div>
       <h1 class="page-title">Chairs &amp; Rooms</h1>
-      <p class="page-subtitle">Manage treatment chairs in your clinic</p>
+      <p class="page-subtitle">Manage treatment chairs and track their servicing schedule</p>
     </div>
-    <button mat-flat-button color="primary" (click)="openDialog()">
+    <button mat-flat-button color="primary" (click)="openChairDialog()">
       <i-tabler name="plus" size="18"></i-tabler>
       Add Chair
     </button>
   </div>
 
-  @if (loading) {
-    <div class="center-loader"><mat-spinner diameter="40"></mat-spinner></div>
-  } @else {
-    <div class="chairs-grid">
-      @for (chair of chairs; track chair.id) {
-        <div class="chair-card" [class.inactive]="!chair.is_active">
-          <div class="chair-icon">
-            <i-tabler name="armchair" size="36"></i-tabler>
-          </div>
-          <div class="chair-name">{{ chair.name }}</div>
-          <span class="status-chip" [class.active]="chair.is_active" [class.inactive]="!chair.is_active">
-            <span class="dot"></span>{{ chair.is_active ? 'Active' : 'Inactive' }}
-          </span>
-          <div class="chair-actions">
-            <button mat-icon-button matTooltip="Edit" (click)="openDialog(chair)">
-              <i-tabler name="pencil" size="15"></i-tabler>
-            </button>
-            <button mat-icon-button matTooltip="Delete" color="warn" (click)="delete(chair)">
-              <i-tabler name="trash" size="15"></i-tabler>
-            </button>
-          </div>
+  <mat-tab-group animationDuration="200ms"
+                 [(selectedIndex)]="selectedTabIndex"
+                 (selectedIndexChange)="onTabChange($event)">
+
+    <!-- ══════════════════════════════════════════════════════════════════════ -->
+    <!-- Tab 1 — Chairs                                                        -->
+    <!-- ══════════════════════════════════════════════════════════════════════ -->
+    <mat-tab label="Chairs">
+
+      @if (loading) {
+        <div class="center-loader"><mat-spinner diameter="40"></mat-spinner></div>
+      } @else {
+        <div class="chairs-grid">
+          @for (chair of chairs; track chair.id) {
+            <div class="chair-card" [class.inactive]="!chair.is_active">
+
+              <!-- Op-status badge -->
+              <div class="ops-badge" [class]="opsStatusClass(chair.operational_status)">
+                {{ opsStatusLabel(chair.operational_status) }}
+              </div>
+
+              <!-- Icon -->
+              <div class="chair-icon">
+                <i-tabler name="armchair" size="38"></i-tabler>
+              </div>
+
+              <!-- Name -->
+              <div class="chair-name">{{ chair.name }}</div>
+
+              <!-- Active chip -->
+              <span class="status-chip" [class.active]="chair.is_active" [class.inactive]="!chair.is_active">
+                <span class="dot"></span>{{ chair.is_active ? 'Active' : 'Inactive' }}
+              </span>
+
+              <!-- Service info -->
+              <div class="svc-info">
+                <div class="svc-row">
+                  <span class="svc-label">Last service</span>
+                  <span class="svc-val">
+                    {{ chair.last_serviced_at ? (chair.last_serviced_at | date:'dd MMM yyyy') : '—' }}
+                  </span>
+                </div>
+                <div class="svc-row">
+                  <span class="svc-label">Next due</span>
+                  <span class="svc-val svc-due" [class]="svcStatusClass(chair.service_status)">
+                    {{ chair.next_service_due ? (chair.next_service_due | date:'dd MMM yyyy') : 'Not set' }}
+                  </span>
+                </div>
+                <div class="svc-status-chip" [class]="svcStatusClass(chair.service_status)">
+                  {{ svcStatusLabel(chair.service_status) }}
+                </div>
+              </div>
+
+              <!-- Actions -->
+              <div class="chair-actions">
+                <button mat-stroked-button color="primary" (click)="openServiceDialog(chair)"
+                        matTooltip="Log a service event">
+                  <i-tabler name="tool" size="15"></i-tabler> Log Service
+                </button>
+                <button mat-icon-button matTooltip="Edit" (click)="openChairDialog(chair)">
+                  <i-tabler name="pencil" size="15"></i-tabler>
+                </button>
+                <button mat-icon-button matTooltip="Delete" color="warn" (click)="delete(chair)">
+                  <i-tabler name="trash" size="15"></i-tabler>
+                </button>
+              </div>
+            </div>
+          }
+
+          @if (chairs.length === 0) {
+            <div class="empty-chairs">
+              <i-tabler name="armchair" size="44"></i-tabler>
+              <p>No chairs configured yet.</p>
+            </div>
+          }
         </div>
       }
-      @if (chairs.length === 0) {
-        <div class="empty-chairs">
-          <i-tabler name="armchair" size="44"></i-tabler>
-          <p>No chairs configured yet.</p>
-        </div>
-      }
-    </div>
-  }
+    </mat-tab>
+
+    <!-- ══════════════════════════════════════════════════════════════════════ -->
+    <!-- Tab 2 — Service History                                               -->
+    <!-- ══════════════════════════════════════════════════════════════════════ -->
+    <mat-tab label="Service History">
+      <div class="tab-content">
+
+        @if (loadingLogs) {
+          <div class="center-loader"><mat-spinner diameter="40"></mat-spinner></div>
+        } @else {
+          <div class="master-card">
+            <table mat-table [dataSource]="logs" class="master-table">
+
+              <!-- Chair -->
+              <ng-container matColumnDef="chair">
+                <th mat-header-cell *matHeaderCellDef>Chair</th>
+                <td mat-cell *matCellDef="let row">
+                  <span class="log-chair">{{ row.chair_name }}</span>
+                </td>
+              </ng-container>
+
+              <!-- Type -->
+              <ng-container matColumnDef="type">
+                <th mat-header-cell *matHeaderCellDef>Service Type</th>
+                <td mat-cell *matCellDef="let row">
+                  <span class="log-type-chip">{{ row.service_type }}</span>
+                </td>
+              </ng-container>
+
+              <!-- Date -->
+              <ng-container matColumnDef="date">
+                <th mat-header-cell *matHeaderCellDef>Serviced On</th>
+                <td mat-cell *matCellDef="let row">{{ row.serviced_at | date:'dd MMM yyyy' }}</td>
+              </ng-container>
+
+              <!-- By -->
+              <ng-container matColumnDef="by">
+                <th mat-header-cell *matHeaderCellDef>Serviced By</th>
+                <td mat-cell *matCellDef="let row">{{ row.serviced_by || '—' }}</td>
+              </ng-container>
+
+              <!-- Cost -->
+              <ng-container matColumnDef="cost">
+                <th mat-header-cell *matHeaderCellDef>Cost</th>
+                <td mat-cell *matCellDef="let row">
+                  @if (row.cost != null) { <span class="log-cost">₹{{ row.cost | number:'1.0-2' }}</span> }
+                  @else { <span class="muted">—</span> }
+                </td>
+              </ng-container>
+
+              <!-- Next due -->
+              <ng-container matColumnDef="next_due">
+                <th mat-header-cell *matHeaderCellDef>Next Due</th>
+                <td mat-cell *matCellDef="let row">
+                  {{ row.next_due_date ? (row.next_due_date | date:'dd MMM yyyy') : '—' }}
+                </td>
+              </ng-container>
+
+              <tr mat-header-row *matHeaderRowDef="logColumns"></tr>
+              <tr mat-row *matRowDef="let row; columns: logColumns;"
+                  [matTooltip]="row.notes || ''" matTooltipPosition="above"></tr>
+
+              <tr class="mat-row" *matNoDataRow>
+                <td class="no-data-cell" [attr.colspan]="logColumns.length">
+                  <i-tabler name="history" size="40"></i-tabler>
+                  <p>No service logs yet. Log a service from the Chairs tab.</p>
+                </td>
+              </tr>
+            </table>
+          </div>
+        }
+      </div>
+    </mat-tab>
+
+    <!-- ══════════════════════════════════════════════════════════════════════ -->
+    <!-- Tab 3 — Due for Service                                               -->
+    <!-- ══════════════════════════════════════════════════════════════════════ -->
+    <mat-tab>
+      <ng-template mat-tab-label>
+        <span [matBadge]="dueCount || null" matBadgeColor="warn" matBadgeSize="small" matBadgeOverlap="false">
+          Due for Service
+        </span>
+      </ng-template>
+      <div class="tab-content">
+
+        @if (loadingDue) {
+          <div class="center-loader"><mat-spinner diameter="40"></mat-spinner></div>
+        } @else if (dueChairs.length === 0) {
+          <div class="due-empty">
+            <i-tabler name="circle-check" size="52"></i-tabler>
+            <p>All chairs are up to date. No service due within the next 30 days.</p>
+          </div>
+        } @else {
+          <div class="due-list">
+            @for (chair of dueChairs; track chair.id) {
+              <div class="due-card" [class.due-card--overdue]="chair.service_status === 'overdue'">
+
+                <div class="due-card__icon">
+                  <i-tabler name="armchair"
+                            size="32"
+                            [class.text-warn]="chair.service_status === 'due_soon'"
+                            [class.text-err]="chair.service_status === 'overdue'">
+                  </i-tabler>
+                </div>
+
+                <div class="due-card__body">
+                  <div class="due-chair-name">{{ chair.name }}</div>
+                  <div class="due-meta">
+                    <span class="svc-status-chip" [class]="svcStatusClass(chair.service_status)">
+                      {{ svcStatusLabel(chair.service_status) }}
+                    </span>
+                    <span class="due-date-text">
+                      @if (chair.next_service_due) {
+                        Next due: {{ chair.next_service_due | date:'dd MMM yyyy' }}
+                      } @else {
+                        No service date set — interval {{ chair.service_interval_days }} days
+                      }
+                    </span>
+                    @if (chair.last_serviced_at) {
+                      <span class="due-date-text muted">
+                        Last serviced: {{ chair.last_serviced_at | date:'dd MMM yyyy' }}
+                      </span>
+                    }
+                  </div>
+                </div>
+
+                <div class="due-card__actions">
+                  <button mat-flat-button color="primary" (click)="openServiceDialog(chair)">
+                    <i-tabler name="tool" size="16"></i-tabler> Log Service
+                  </button>
+                </div>
+              </div>
+            }
+          </div>
+        }
+      </div>
+    </mat-tab>
+
+  </mat-tab-group>
 </div>

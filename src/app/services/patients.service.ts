@@ -34,6 +34,79 @@ export interface PatientDetail {
   appointments: PatientAppointment[];
 }
 
+export interface ServicePerformed {
+  id: string;
+  service_name: string;
+  tooth_numbers: string[] | null;
+  quantity: number;
+  base_price: number | null;
+  final_charge: number | null;
+  status: string;
+}
+
+export interface PatientDiagnosis {
+  id: string;
+  diagnosis_text: string;
+  icd10_code: string | null;
+  tooth_numbers: string[] | null;
+}
+
+export interface PatientSession {
+  id: string;
+  status: string;
+  started_at: string;
+  ended_at: string | null;
+  sealed_at: string | null;
+  doctor_name: string | null;
+  services_performed: ServicePerformed[];
+  diagnoses: PatientDiagnosis[];
+  session_charge: number;
+}
+
+export interface TreatmentPlanItem {
+  id: string;
+  service_name: string;
+  cost_min: number | null;
+  cost_max: number | null;
+  status: string;
+  tooth_numbers: string[] | null;
+}
+
+export interface PatientTreatmentPlan {
+  id: string;
+  title: string;
+  created_at: string;
+  items: TreatmentPlanItem[];
+}
+
+export interface PatientLabOrder {
+  id: string;
+  service_name: string | null;
+  shade: string | null;
+  specifications: string | null;
+  pickup_date: string | null;
+  expected_delivery_date: string | null;
+  lab_cost: number | null;
+  status: string;
+  session_date: string | null;
+  created_at: string;
+}
+
+export interface BillingSummary {
+  session_count: number;
+  total_billed: number;
+  procedure_count: number;
+}
+
+export interface PatientFullRecord {
+  patient: Patient;
+  appointments: PatientAppointment[];
+  sessions: PatientSession[];
+  treatment_plans: PatientTreatmentPlan[];
+  lab_orders: PatientLabOrder[];
+  billing: BillingSummary;
+}
+
 @Injectable({ providedIn: 'root' })
 export class PatientsService {
   private readonly http = inject(HttpClient);
@@ -63,5 +136,9 @@ export class PatientsService {
     const params: Record<string, string> = {};
     if (serviceId) params['service_id'] = serviceId;
     return this.http.get<PatientDetail>(`${this.base}/${id}`, { params });
+  }
+
+  getFullRecord(id: string): Observable<PatientFullRecord> {
+    return this.http.get<PatientFullRecord>(`${this.base}/${id}/record`);
   }
 }

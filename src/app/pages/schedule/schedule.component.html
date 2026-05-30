@@ -16,24 +16,30 @@
 
   <!-- ── Header toolbar ───────────────────────────────────────────────── -->
   <div class="board-header">
-    <h1 class="board-title">Today's Schedule</h1>
+    <div class="header-left">
+      <div class="board-title-block">
+        <i-tabler name="layout-kanban" size="20" class="board-title-icon"></i-tabler>
+        <div>
+          <h1 class="board-title">Schedule</h1>
+          <div class="board-subtitle">Appointment board · {{ dateLabel }}</div>
+        </div>
+      </div>
+    </div>
 
     <!-- Date navigator -->
     <div class="date-nav">
-      <button mat-icon-button (click)="prevDay()" matTooltip="Previous day">
-        <i-tabler name="chevron-left" size="18"></i-tabler>
+      <button mat-icon-button class="date-nav-btn" (click)="prevDay()" matTooltip="Previous day">
+        <i-tabler name="chevron-left" size="16"></i-tabler>
       </button>
-
-      <span class="date-label" (click)="picker.open()" matTooltip="Pick a date">
+      <button class="date-label-btn" (click)="picker.open()" matTooltip="Pick a date">
+        <i-tabler name="calendar" size="14"></i-tabler>
         {{ dateLabel }}
-      </span>
-
-      <button mat-icon-button (click)="nextDay()" matTooltip="Next day">
-        <i-tabler name="chevron-right" size="18"></i-tabler>
       </button>
-
-      <button mat-icon-button (click)="goToday()" matTooltip="Go to today">
-        <i-tabler name="calendar-today" size="18"></i-tabler>
+      <button mat-icon-button class="date-nav-btn" (click)="nextDay()" matTooltip="Next day">
+        <i-tabler name="chevron-right" size="16"></i-tabler>
+      </button>
+      <button mat-icon-button class="date-nav-today" (click)="goToday()" matTooltip="Go to today">
+        <i-tabler name="calendar-today" size="15"></i-tabler>
       </button>
     </div>
 
@@ -48,60 +54,107 @@
 
     <span class="spacer"></span>
 
-    <!-- Chair filter — dynamic from API -->
+    <!-- Chair filter -->
     @if (chairs.length > 1) {
-      <mat-button-toggle-group class="chair-toggle" [(ngModel)]="selectedChairId">
-        <mat-button-toggle value="all">All Chairs</mat-button-toggle>
+      <div class="chair-filter">
+        <button class="chair-chip" [class.chair-chip-active]="selectedChairId === 'all'"
+                (click)="selectedChairId = 'all'">All</button>
         @for (ch of chairs; track ch.id) {
-          <mat-button-toggle [value]="ch.id">{{ ch.name }}</mat-button-toggle>
+          <button class="chair-chip" [class.chair-chip-active]="selectedChairId === ch.id"
+                  (click)="selectedChairId = ch.id">{{ ch.name }}</button>
         }
-      </mat-button-toggle-group>
+      </div>
     }
   </div>
 
   <!-- ── Error banner ──────────────────────────────────────────────────── -->
   @if (error) {
     <div class="board-error">
-      <i-tabler name="alert-circle" size="18"></i-tabler>
+      <i-tabler name="alert-circle" size="16"></i-tabler>
       {{ error }}
     </div>
   }
 
-  <!-- ── Summary strip (click = filter columns; counts = full day + chair, excluding cancelled) ─ -->
+  <!-- ── Summary strip ─────────────────────────────────────────────────── -->
   @if (!loading && !columnsLoading) {
-    <div class="summary-strip" role="toolbar" aria-label="Filter appointments by status">
-      <button type="button" class="stat-chip total"
-              [class.stat-chip-selected]="statFilter === 'all'"
+    <div class="summary-strip">
+      <button type="button" class="stat-card stat-total"
+              [class.stat-card-active]="statFilter === 'all'"
               (click)="setStatFilter('all')">
-        <i-tabler name="calendar" size="14"></i-tabler>
-        {{ totalCount }} Total
+        <div class="stat-icon-wrap">
+          <i-tabler name="calendar" size="16"></i-tabler>
+        </div>
+        <div class="stat-body">
+          <div class="stat-count">{{ totalCount }}</div>
+          <div class="stat-label">Total</div>
+        </div>
       </button>
-      <button type="button" class="stat-chip active"
-              [class.stat-chip-selected]="statFilter === 'active'"
+
+      <button type="button" class="stat-card stat-active"
+              [class.stat-card-active]="statFilter === 'active'"
               (click)="setStatFilter('active')">
-        <i-tabler name="activity" size="14"></i-tabler>
-        {{ activeCount }} Active
+        <div class="stat-icon-wrap">
+          <i-tabler name="activity" size="16"></i-tabler>
+        </div>
+        <div class="stat-body">
+          <div class="stat-count">{{ activeCount }}</div>
+          <div class="stat-label">Active</div>
+        </div>
       </button>
-      <button type="button" class="stat-chip done"
-              [class.stat-chip-selected]="statFilter === 'done'"
+
+      <button type="button" class="stat-card stat-done"
+              [class.stat-card-active]="statFilter === 'done'"
               (click)="setStatFilter('done')">
-        <i-tabler name="checks" size="14"></i-tabler>
-        {{ doneCount }} Done
+        <div class="stat-icon-wrap">
+          <i-tabler name="circle-check" size="16"></i-tabler>
+        </div>
+        <div class="stat-body">
+          <div class="stat-count">{{ doneCount }}</div>
+          <div class="stat-label">Done</div>
+        </div>
       </button>
-      <button type="button" class="stat-chip pending"
-              [class.stat-chip-selected]="statFilter === 'pending'"
+
+      <button type="button" class="stat-card stat-pending"
+              [class.stat-card-active]="statFilter === 'pending'"
               (click)="setStatFilter('pending')">
-        <i-tabler name="clock" size="14"></i-tabler>
-        {{ pendingCount }} Pending
+        <div class="stat-icon-wrap">
+          <i-tabler name="clock" size="16"></i-tabler>
+        </div>
+        <div class="stat-body">
+          <div class="stat-count">{{ pendingCount }}</div>
+          <div class="stat-label">Pending</div>
+        </div>
       </button>
+
+      <!-- Progress bar across all stats -->
+      @if (totalCount > 0) {
+        <div class="stat-progress-bar">
+          <div class="stat-progress-fill stat-fill-done"
+               [style.width.%]="(doneCount / totalCount) * 100"></div>
+          <div class="stat-progress-fill stat-fill-active"
+               [style.width.%]="(activeCount / totalCount) * 100"></div>
+          <div class="stat-progress-fill stat-fill-pending"
+               [style.width.%]="(pendingCount / totalCount) * 100"></div>
+        </div>
+      }
     </div>
   }
 
-  <!-- ── Loading state ─────────────────────────────────────────────────── -->
+  <!-- ── Loading skeletons ─────────────────────────────────────────────── -->
   @if (loading || columnsLoading) {
-    <div class="board-loading">
-      <mat-spinner diameter="40"></mat-spinner>
-      <span>Loading schedule…</span>
+    <div class="board-scroll">
+      <div class="board-inner">
+        @for (_ of [1,2,3]; track $index) {
+          <div class="kanban-col skeleton-col">
+            <div class="col-header-sk sk-pulse"></div>
+            <div class="col-body sk-body">
+              @for (__ of [1,2]; track $index) {
+                <div class="sk-card sk-pulse"></div>
+              }
+            </div>
+          </div>
+        }
+      </div>
     </div>
   }
 
@@ -114,13 +167,23 @@
           <div class="kanban-col">
 
             <!-- Column header -->
-            <div class="col-header" [style.background]="col.headerBg">
-              <span class="col-dot" [style.background]="col.dotColor"></span>
-              <i-tabler [name]="col.icon" size="15"></i-tabler>
-              <span class="col-label">{{ col.label }}</span>
-              <span class="col-count">{{ columnCards(col.serviceId).length }}</span>
-              @if (overflowCount(col.serviceId) > 0) {
-                <span class="col-overflow">+{{ overflowCount(col.serviceId) }} more</span>
+            <div class="col-header" [style.--col-dot]="col.dotColor" [style.background]="col.headerBg">
+              <div class="col-header-top">
+                <div class="col-icon-wrap" [style.background]="col.dotColor + '22'">
+                  <i-tabler [name]="col.icon" size="16" [style.color]="col.dotColor"></i-tabler>
+                </div>
+                <span class="col-label" [title]="col.label">{{ col.label }}</span>
+                <span class="col-count" [style.background]="col.dotColor + '22'" [style.color]="col.dotColor">
+                  {{ columnCards(col.serviceId).length }}
+                </span>
+              </div>
+              <!-- Mini progress: done / total for this column -->
+              @if (colTotal(col.serviceId) > 0) {
+                <div class="col-mini-bar">
+                  <div class="col-mini-fill"
+                       [style.width.%]="colDonePct(col.serviceId)"
+                       [style.background]="col.dotColor"></div>
+                </div>
               }
             </div>
 
@@ -129,55 +192,100 @@
 
               @if (columnCards(col.serviceId).length === 0) {
                 <div class="col-empty">
-                  <i-tabler name="inbox" size="28"></i-tabler>
-                  No appointments
+                  <div class="col-empty-icon">
+                    <i-tabler name="calendar-off" size="24"></i-tabler>
+                  </div>
+                  <span>No appointments</span>
                 </div>
               }
 
               @for (appt of columnCards(col.serviceId); track trackById($index, appt)) {
-                <div class="appt-card" (click)="openDetail(appt)">
+                <div class="appt-card appt-s-{{ appt.status }}" (click)="openDetail(appt)">
 
-                  <!-- Time & source row -->
-                  <div class="card-time-row">
-                    <span class="card-time">
-                      <i-tabler name="clock" size="13"></i-tabler>
-                      {{ formatTime(appt.scheduled_at) }}
-                    </span>
-                    <span class="card-source" [matTooltip]="appt.booking_source">
-                      <i-tabler [name]="sourceIcon[appt.booking_source] || 'dots'" size="13"></i-tabler>
-                    </span>
+                  <!-- Left status accent -->
+                  <div class="card-accent"></div>
+
+                  <div class="card-inner">
+                    <!-- Row 1: time + source -->
+                    <div class="card-top-row">
+                      <div class="card-time">
+                        <i-tabler name="clock" size="12"></i-tabler>
+                        {{ formatTime(appt.scheduled_at) }}
+                      </div>
+                      <div class="card-meta-icons">
+                        <span class="card-duration-pill">{{ appt.duration_minutes }}m</span>
+                        <span class="card-source-icon" [matTooltip]="appt.booking_source">
+                          <i-tabler [name]="sourceIcon[appt.booking_source] || 'dots'" size="12"></i-tabler>
+                        </span>
+                      </div>
+                    </div>
+
+                    <!-- Row 2: avatar + patient name + phone -->
+                    <div class="card-patient-row">
+                      <div class="card-avatar" [style.background]="col.dotColor + '22'" [style.color]="col.dotColor">
+                        {{ appt.patient_name.charAt(0).toUpperCase() }}
+                      </div>
+                      <div class="card-patient-info">
+                        <div class="card-patient-name" [title]="appt.patient_name">{{ appt.patient_name }}</div>
+                        <div class="card-phone">
+                          <i-tabler name="phone" size="11"></i-tabler>
+                          {{ appt.patient_phone }}
+                        </div>
+                      </div>
+                    </div>
+
+                    <!-- Row 3: status badge -->
+                    <div class="card-footer">
+                      <span class="status-badge s-{{ appt.status }}">
+                        @if (appt.status === 'in_progress' || appt.status === 'in_treatment') {
+                          <span class="status-dot-pulse"></span>
+                        }
+                        {{ statusLabel[appt.status] || appt.status }}
+                      </span>
+                      @if (appt.chair_id && chairs.length > 1 && selectedChairId === 'all') {
+                        <span class="card-chair" [matTooltip]="getChairName(appt.chair_id)">
+                          <i-tabler name="armchair" size="11"></i-tabler>
+                        </span>
+                      }
+                    </div>
                   </div>
 
-                  <!-- Patient name -->
-                  <div class="card-patient" [title]="appt.patient_name">
-                    {{ appt.patient_name }}
-                  </div>
+                  <!-- In-treatment shimmer bar -->
+                  @if (appt.status === 'in_treatment') {
+                    <div class="card-treatment-bar"></div>
+                  }
 
-                  <!-- Phone -->
-                  <div class="card-phone">
-                    <i-tabler name="phone" size="12"></i-tabler>
-                    {{ appt.patient_phone }}
-                  </div>
+                </div>
+              }
 
-                  <!-- Status badge -->
-                  <div class="card-footer">
-                    <span class="status-badge s-{{ appt.status }}">
-                      {{ statusLabel[appt.status] || appt.status }}
-                    </span>
-                    <span class="card-duration">{{ appt.duration_minutes }}m</span>
-                  </div>
-
+              @if (overflowCount(col.serviceId) > 0) {
+                <div class="col-overflow-note">
+                  <i-tabler name="dots" size="13"></i-tabler>
+                  +{{ overflowCount(col.serviceId) }} more
                 </div>
               }
             </div>
           </div>
         }
 
-        <!-- No services configured -->
+        <!-- No columns / services -->
+        @if (sortedColumns.length === 0 && columns.length > 0) {
+          <div class="board-empty">
+            <div class="board-empty-icon">
+              <i-tabler name="calendar-x" size="36"></i-tabler>
+            </div>
+            <div class="board-empty-title">No appointments today</div>
+            <div class="board-empty-sub">No bookings match the current filter for {{ dateLabel }}.</div>
+          </div>
+        }
+
         @if (columns.length === 0) {
           <div class="board-empty">
-            <i-tabler name="building-hospital" size="40"></i-tabler>
-            <p>No services configured. Add services in Master → Services.</p>
+            <div class="board-empty-icon">
+              <i-tabler name="building-hospital" size="36"></i-tabler>
+            </div>
+            <div class="board-empty-title">No services configured</div>
+            <div class="board-empty-sub">Add services in Master → Services to start scheduling.</div>
           </div>
         }
 

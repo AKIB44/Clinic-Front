@@ -1029,4 +1029,19 @@ export class ScheduleComponent implements OnInit, OnDestroy {
 
   trackByServiceId(_: number, c: ServiceColumn) { return c.serviceId; }
   trackById(_: number, a: Appointment)          { return a.id; }
+
+  getChairName(chairId: string): string {
+    return this.chairs.find(c => c.id === chairId)?.name ?? '';
+  }
+
+  colTotal(serviceId: string): number {
+    return this.filtered.filter(a => a.service_id === serviceId).length;
+  }
+
+  colDonePct(serviceId: string): number {
+    const total = this.colTotal(serviceId);
+    if (!total) return 0;
+    const done = this.filtered.filter(a => a.service_id === serviceId && a.status === 'done').length;
+    return (done / total) * 100;
+  }
 }

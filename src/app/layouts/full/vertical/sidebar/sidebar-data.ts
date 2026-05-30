@@ -139,6 +139,14 @@ export const navItems: NavItem[] = [
     permissions: ['clinic.settings'],
   },
   {
+    displayName: 'Inventory',
+    iconName: 'package',
+    bgcolor: 'warning',
+    route: '/master/inventory',
+    roles: ['admin'],
+    permissions: ['inventory.adjust'],
+  },
+  {
     displayName: 'Activity Log',
     iconName: 'history',
     bgcolor: 'accent',

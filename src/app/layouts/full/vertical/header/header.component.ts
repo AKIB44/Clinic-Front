@@ -1,5 +1,5 @@
 import {
-  Component, Output, EventEmitter, Input, ViewEncapsulation, inject,
+  Component, Output, EventEmitter, Input, ViewEncapsulation, inject, OnInit,
 } from '@angular/core';
 import { MatDialog } from '@angular/material/dialog';
 import { TablerIconsModule } from 'angular-tabler-icons';
@@ -16,6 +16,7 @@ import { BreakGlassService } from 'src/app/core/rbac/break-glass.service';
 import { BreakGlassDialogComponent } from 'src/app/core/rbac/break-glass-dialog/break-glass-dialog.component';
 import { ClinicSwitcherComponent } from 'src/app/core/tenant/clinic-switcher.component';
 import { PermissionService } from 'src/app/core/rbac/permission.service';
+import { InventoryAlertsService } from 'src/app/services/inventory-alerts.service';
 
 interface AppLink   { id: number; img: string; title: string; subtitle: string; link: string; }
 interface QuickLink { id: number; title: string; link: string; }
@@ -31,12 +32,13 @@ interface QuickLink { id: number; title: string; link: string; }
   templateUrl: './header.component.html',
   encapsulation: ViewEncapsulation.None,
 })
-export class HeaderComponent {
-  readonly bgService  = inject(BreakGlassService);
-  private authService = inject(AuthService);
-  private perms       = inject(PermissionService);
-  private router      = inject(Router);
-  private dialog      = inject(MatDialog);
+export class HeaderComponent implements OnInit {
+  readonly bgService     = inject(BreakGlassService);
+  private authService    = inject(AuthService);
+  private perms          = inject(PermissionService);
+  readonly alertsSvc     = inject(InventoryAlertsService);
+  private router         = inject(Router);
+  private dialog         = inject(MatDialog);
 
   @Input() showToggle = true;
   @Input() toggleChecked = false;
@@ -72,6 +74,16 @@ export class HeaderComponent {
 
   get isOrgAdmin(): boolean {
     return this.perms.has('org.manage');
+  }
+
+  get canSeeInventoryAlerts(): boolean {
+    return this.perms.has('inventory.adjust');
+  }
+
+  ngOnInit(): void {
+    if (this.canSeeInventoryAlerts) {
+      this.alertsSvc.refresh();
+    }
   }
 
   openBreakGlass(): void {

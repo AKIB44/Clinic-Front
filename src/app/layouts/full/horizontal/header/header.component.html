@@ -10,10 +10,8 @@
     </button>
     <!-- --------------------------------------------------------------- -->
 
-    <div class="d-none d-lg-flex">
-      <!-- --------------------------------------------------------------- -->
-      <!--  Links -->
-      <!-- --------------------------------------------------------------- -->
+    <!-- Apps / Chat / Calendar / Email hidden — to be enabled later -->
+    <!-- <div class="d-none d-lg-flex">
       <button mat-button [matMenuTriggerFor]="appsmenu" aria-label="Notifications">
         <div class="d-flex align-items-center">
           Apps <i-tabler name="chevron-down" class="icon-16 m-l-4"></i-tabler>
@@ -31,7 +29,7 @@
                       class="text-primary bg-light-primary rounded icon-40 d-flex align-items-center justify-content-center">
                       <img [src]="appdd.img" width="20" />
                     </span>
-  
+
                     <div class="m-l-16">
                       <h5 class="f-s-14 f-w-600 m-0 textprimary mat-subtitle-1 hover-text">
                         {{ appdd.title }}
@@ -67,7 +65,7 @@
       <a mat-button [routerLink]="['/apps/chat']">Chat</a>
       <a mat-button [routerLink]="['/apps/calendar']">Calendar</a>
       <a mat-button [routerLink]="['/apps/email/inbox']">Email</a>
-    </div>
+    </div> -->
 
     <span class="flex-1-auto"></span>
 
@@ -146,8 +144,9 @@
     </mat-menu> -->
 
     <!-- --------------------------------------------------------------- -->
-  <!-- Shortcuts Dropdown -->
+  <!-- Shortcuts Dropdown — hidden, to be enabled later -->
   <!-- --------------------------------------------------------------- -->
+  @if (false) {
   <button mat-icon-button [matMenuTriggerFor]="notificationMenu" aria-label="Notifications">
     <i-tabler class="d-flex" name="layout-grid-add"></i-tabler>
     <div class="pulse">
@@ -216,6 +215,7 @@
       </div>
     </div>
   </mat-menu>
+  }
 
     <!-- --------------------------------------------------------------- -->
     <!-- profile Dropdown -->

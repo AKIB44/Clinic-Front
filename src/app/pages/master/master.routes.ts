@@ -42,4 +42,9 @@ export const MasterRoutes: Routes = [
     loadComponent: () => import('./activity-log/activity-log.component').then(m => m.ActivityLogComponent),
     canActivate: [permissionGuard('audit.view')],
   },
+  {
+    path: 'inventory',
+    loadComponent: () => import('./inventory/inventory.component').then(m => m.InventoryComponent),
+    canActivate: [permissionGuard('inventory.adjust')],
+  },
 ];
