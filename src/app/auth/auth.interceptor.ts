@@ -83,6 +83,13 @@ export const authInterceptor: HttpInterceptorFn = (
       if (err.status !== 401) return throwError(() => err);
       if (isPublicAuthRequest(req)) return throwError(() => err);
 
+      // Session expired (12h hard limit) — skip refresh, force re-login
+      if (err.error?.error === 'session_expired') {
+        storage.clearSession();
+        router.navigate(['/authentication/login'], { queryParams: { reason: 'session_expired' } });
+        return EMPTY;
+      }
+
       // Step-up required for sensitive permission
       if (err.error?.error === 'step_up_required') {
         router.navigate(['/authentication/step-up'], {

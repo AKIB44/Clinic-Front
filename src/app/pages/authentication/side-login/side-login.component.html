@@ -52,6 +52,17 @@
         </div>
       }
 
+      <!-- Session expired banner -->
+      @if (sessionExpired) {
+        <div class="clinic-inactive-banner">
+          <span class="banner-icon">⏱</span>
+          <div>
+            <div class="banner-title">Session expired</div>
+            <div class="banner-body">Your 12-hour session has ended. Please sign in again.</div>
+          </div>
+        </div>
+      }
+
       <!-- ── MFA challenge ─────────────────────────────────────────────── -->
       @if (mfaStep) {
         <div class="mfa-box">

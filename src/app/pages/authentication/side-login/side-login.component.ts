@@ -83,6 +83,7 @@ export class AppSideLoginComponent implements OnInit {
   isSubmitting   = false;
   loginError     = '';
   clinicInactive = false;
+  sessionExpired = false;
   hidePassword   = true;
 
   // MFA step
@@ -97,7 +98,9 @@ export class AppSideLoginComponent implements OnInit {
 
   ngOnInit() {
     this.route.queryParamMap.subscribe(params => {
-      this.clinicInactive = params.get('reason') === 'clinic_inactive';
+      const reason = params.get('reason');
+      this.clinicInactive = reason === 'clinic_inactive';
+      this.sessionExpired = reason === 'session_expired';
     });
   }
 
