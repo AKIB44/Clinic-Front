@@ -12,6 +12,7 @@ import {
 import { AuthStorageService } from './auth-storage.service';
 import { PermissionService } from '../core/rbac/permission.service';
 import { BreakGlassService } from '../core/rbac/break-glass.service';
+import { FeatureFlagsService } from '../services/feature-flags.service';
 
 @Injectable({ providedIn: 'root' })
 export class AuthService {
@@ -19,6 +20,7 @@ export class AuthService {
   private readonly authStorage = inject(AuthStorageService);
   private readonly permissions = inject(PermissionService);
   private readonly breakGlass  = inject(BreakGlassService);
+  private readonly featureFlags = inject(FeatureFlagsService);
   private readonly router      = inject(Router);
 
   private readonly _user = signal<AuthUser | null>(this.authStorage.getUser());
@@ -146,6 +148,9 @@ export class AuthService {
     if (!this.authStorage.isAuthenticated()) return Promise.resolve();
     const clinicId = this.getActiveClinicId();
     // Org admins have no clinic_id — still load org-scoped permissions.
-    return this.permissions.refresh(clinicId ?? undefined);
+    return this.permissions.refresh(clinicId ?? undefined).then(() => {
+      // Fire-and-forget — feature flags shouldn't block app boot if they fail.
+      this.featureFlags.load().subscribe({ error: () => { /* ignored */ } });
+    });
   }
 }

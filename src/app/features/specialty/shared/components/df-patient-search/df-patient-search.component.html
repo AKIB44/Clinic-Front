@@ -1,0 +1,53 @@
+<div class="patient-search">
+  <mat-form-field appearance="outline" class="patient-search__field">
+    <mat-label>Search patient by name or phone</mat-label>
+
+    <input
+      matInput
+      [formControl]="searchCtrl"
+      [matAutocomplete]="auto"
+      placeholder="Type at least 2 characters…"
+      autocomplete="off"
+    />
+
+    @if (loading()) {
+      <mat-spinner matSuffix diameter="18" class="patient-search__spinner"></mat-spinner>
+    } @else if (selectedPatient()) {
+      <button matSuffix mat-icon-button (click)="clearSelection()" type="button"
+              matTooltip="Clear selection" class="patient-search__clear">
+        <mat-icon>close</mat-icon>
+      </button>
+    } @else {
+      <mat-icon matSuffix class="patient-search__icon">search</mat-icon>
+    }
+
+    @if (selectedPatient()) {
+      <mat-hint class="patient-search__hint--selected">
+        ✓ {{ selectedPatient()!.name }} selected
+      </mat-hint>
+    } @else {
+      <mat-hint>Search and select to populate patient details below</mat-hint>
+    }
+  </mat-form-field>
+
+  <mat-autocomplete
+    #auto="matAutocomplete"
+    [displayWith]="displayFn.bind(this)"
+    (optionSelected)="onOptionSelected($event.option.value)"
+  >
+    @for (patient of results(); track patient.id) {
+      <mat-option [value]="patient">
+        <div class="patient-option">
+          <span class="patient-option__name">{{ patient.name }}</span>
+          <span class="patient-option__phone">{{ patient.phone }}</span>
+        </div>
+      </mat-option>
+    }
+
+    @if (!loading() && searchCtrl.value && searchCtrl.value.length >= 2 && results().length === 0) {
+      <mat-option disabled>
+        <span class="patient-option--empty">No patients found for "{{ searchCtrl.value }}"</span>
+      </mat-option>
+    }
+  </mat-autocomplete>
+</div>

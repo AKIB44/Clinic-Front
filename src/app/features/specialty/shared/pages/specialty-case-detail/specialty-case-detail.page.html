@@ -1,0 +1,128 @@
+<div class="spec-detail-page">
+
+  <button type="button" class="back-link" (click)="goBack()">
+    <i-tabler name="arrow-left" size="16"></i-tabler>
+    Back to Patient
+  </button>
+
+  @if (loading()) {
+    <div class="page-loading">
+      <div class="spinner"></div>
+      <span>Loading case…</span>
+    </div>
+  }
+
+  @if (!loading() && errorMsg()) {
+    <div class="page-error">
+      <i-tabler name="alert-circle" size="18"></i-tabler>
+      {{ errorMsg() }}
+    </div>
+  }
+
+  @if (!loading() && specialtyCase(); as sc) {
+
+    <div class="spec-detail-header">
+      <div class="spec-detail-title">
+        <h1>Specialty Case</h1>
+        @if (sc.external_case_no) {
+          <span class="ref-tag">Ref: {{ sc.external_case_no }}</span>
+        }
+      </div>
+    </div>
+
+    <div class="spec-detail-summary">
+      <df-specialty-case-summary [case]="sc"></df-specialty-case-summary>
+    </div>
+
+    <nav class="spec-tabs" aria-label="Case sections">
+      <button type="button" class="spec-tab" [class.on]="activeTab() === 'overview'"
+        (click)="activeTab.set('overview')">Overview</button>
+      <button type="button" class="spec-tab" [class.on]="activeTab() === 'timeline'"
+        (click)="activeTab.set('timeline')">
+        Timeline
+        @if (milestones().length) {
+          <span class="spec-tab-badge">{{ milestones().length }}</span>
+        }
+      </button>
+      <button type="button" class="spec-tab" [class.on]="activeTab() === 'visits'"
+        (click)="activeTab.set('visits')">
+        Visits
+        @if (visits().length) {
+          <span class="spec-tab-badge">{{ visits().length }}</span>
+        }
+      </button>
+    </nav>
+
+    @if (activeTab() === 'overview') {
+      <section class="spec-overview">
+        <div class="info-panel">
+          <h2><i-tabler name="info-circle" size="16"></i-tabler> Case Details</h2>
+          <dl>
+            <div><dt>Case Type</dt><dd>{{ sc.case_type }}</dd></div>
+            <div><dt>Status</dt><dd>{{ sc.status | titlecase }}</dd></div>
+            @if (sc.doctor_name) {
+              <div><dt>Primary Doctor</dt><dd>Dr. {{ sc.doctor_name }}</dd></div>
+            }
+            <div><dt>Started</dt><dd>{{ sc.started_at | date:'d MMM yyyy' }}</dd></div>
+            @if (sc.completed_at) {
+              <div><dt>Completed</dt><dd>{{ sc.completed_at | date:'d MMM yyyy' }}</dd></div>
+            }
+            @if (sc.expected_duration_months) {
+              <div><dt>Expected Duration</dt><dd>{{ sc.expected_duration_months }} months</dd></div>
+            }
+          </dl>
+        </div>
+
+        @if (sc.case_summary) {
+          <div class="info-panel">
+            <h2><i-tabler name="notes" size="16"></i-tabler> Case Summary</h2>
+            <p>{{ sc.case_summary }}</p>
+          </div>
+        }
+      </section>
+    }
+
+    @if (activeTab() === 'timeline') {
+      <section class="spec-timeline-section">
+        <df-specialty-case-timeline [milestones]="milestones()"></df-specialty-case-timeline>
+      </section>
+    }
+
+    @if (activeTab() === 'visits') {
+      <section class="spec-visits-section">
+        @if (visits().length === 0) {
+          <div class="empty-state">
+            <i-tabler name="calendar-off" size="40"></i-tabler>
+            <p>No visits recorded yet.</p>
+          </div>
+        } @else {
+          @for (v of visits(); track v.id) {
+            <div class="visit-card">
+              <div class="visit-number">Visit {{ v.visit_number }}</div>
+              @if (v.visit_type) {
+                <div class="visit-type">{{ v.visit_type }}</div>
+              }
+              @if (v.session_date) {
+                <div class="visit-date">
+                  <i-tabler name="calendar" size="13"></i-tabler>
+                  {{ v.session_date | date:'d MMM yyyy' }}
+                </div>
+              }
+              @if (v.doctor_name) {
+                <div class="visit-doctor">
+                  <i-tabler name="stethoscope" size="13"></i-tabler>
+                  Dr. {{ v.doctor_name }}
+                </div>
+              }
+              @if (v.notes) {
+                <p class="visit-notes">{{ v.notes }}</p>
+              }
+            </div>
+          }
+        }
+      </section>
+    }
+
+  }
+
+</div>

@@ -8,7 +8,8 @@ import { MaterialModule } from '../../material.module';
 import { TablerIconsModule } from 'angular-tabler-icons';
 import { HttpErrorResponse } from '@angular/common/http';
 import { addDays, format } from 'date-fns';
-import { forkJoin } from 'rxjs';
+import { forkJoin, Subject } from 'rxjs';
+import { debounceTime, distinctUntilChanged, switchMap, takeUntil, filter } from 'rxjs/operators';
 import { Router, RouterLink } from '@angular/router';
 import { trigger, transition, style, animate, query, stagger, state } from '@angular/animations';
 import { AppointmentsService, BookingPayload, Slot } from '../../services/appointments.service';
@@ -16,7 +17,7 @@ import { PatientsService } from '../../services/patients.service';
 import { ClinicServicesService } from '../../services/clinic-services.service';
 import { ChairsService } from '../../services/chairs.service';
 import { AuthService } from '../../auth/auth.service';
-import { ClinicService } from '../../models/clinic.model';
+import { ClinicService, Chair } from '../../models/clinic.model';
 
 // ── Types ────────────────────────────────────────────────────────────────────
 
@@ -110,11 +111,29 @@ const stepAnimation = trigger('stepSlide', [
 const cardsAnimation = trigger('cardsList', [
   transition(':enter', [
     query('.svc-card', [
-      style({ opacity: 0, transform: 'translateY(24px) scale(0.95)' }),
-      stagger(60, [
-        animate('380ms cubic-bezier(0.35,0,0.25,1)', style({ opacity: 1, transform: 'translateY(0) scale(1)' })),
+      style({ opacity: 0, transform: 'translateY(20px) scale(0.94)' }),
+      stagger(45, [
+        animate('360ms cubic-bezier(0.22,1,0.36,1)', style({ opacity: 1, transform: 'translateY(0) scale(1)' })),
       ]),
     ], { optional: true }),
+  ]),
+]);
+
+const slotsAnimation = trigger('slotsIn', [
+  transition(':enter', [
+    query('.slot-chip', [
+      style({ opacity: 0, transform: 'translateY(10px)' }),
+      stagger(25, [
+        animate('220ms cubic-bezier(0.22,1,0.36,1)', style({ opacity: 1, transform: 'translateY(0)' })),
+      ]),
+    ], { optional: true }),
+  ]),
+]);
+
+const fadeUp = trigger('fadeUp', [
+  transition(':enter', [
+    style({ opacity: 0, transform: 'translateY(12px)' }),
+    animate('280ms cubic-bezier(0.22,1,0.36,1)', style({ opacity: 1, transform: 'translateY(0)' })),
   ]),
 ]);
 
@@ -134,7 +153,7 @@ const confirmAnim = trigger('confirmIn', [
   templateUrl: './booking.component.html',
   styleUrl: './booking.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  animations: [stepAnimation, cardsAnimation, confirmAnim],
+  animations: [stepAnimation, cardsAnimation, confirmAnim, slotsAnimation, fadeUp],
 })
 export class BookingComponent implements OnInit, OnDestroy {
   private router         = inject(Router);
@@ -153,8 +172,15 @@ export class BookingComponent implements OnInit, OnDestroy {
   readonly services        = signal<ClinicService[]>([]);
   readonly servicesLoading = signal(false);
   readonly metaError       = signal('');
+  readonly serviceSearch   = signal('');
+  readonly filteredServices = computed(() => {
+    const term = this.serviceSearch().trim().toLowerCase();
+    if (!term) return this.services();
+    return this.services().filter(s => s.name.toLowerCase().includes(term));
+  });
 
   // ── Dates ─────────────────────────────────────────────────────────────────
+  readonly todayIso = format(new Date(), 'yyyy-MM-dd');
   readonly dates: DateOption[] = Array.from({ length: 14 }, (_, i) => {
     const d = addDays(new Date(), i);
     return { iso: format(d, 'yyyy-MM-dd'), label: format(d, 'd'), shortDay: format(d, 'EEE'), disabled: false };
@@ -259,7 +285,15 @@ export class BookingComponent implements OnInit, OnDestroy {
   redirectCountdown = 5;
   private redirectTimer: ReturnType<typeof setInterval> | null = null;
 
-  defaultChairId: string | null = null;
+  // ── Chairs ────────────────────────────────────────────────────────────────
+  readonly chairs           = signal<Chair[]>([]);
+  readonly selectedChairId  = signal<string | null>(null);
+  readonly selectedChair    = computed(() =>
+    this.chairs().find(c => c.id === this.selectedChairId()) ?? null
+  );
+
+  readonly lookupBusy = signal(false);
+  private readonly destroy$ = new Subject<void>();
 
   // ── Computed labels ───────────────────────────────────────────────────────
   readonly serviceLabel = computed(() => this.selectedService()?.name ?? '');
@@ -288,10 +322,68 @@ export class BookingComponent implements OnInit, OnDestroy {
     });
 
     this.loadServicesAndChairs();
+
+    // Live lookup as the phone is typed — no need to blur the field.
+    this.patientForm.get('phone')!.valueChanges
+      .pipe(
+        debounceTime(350),
+        distinctUntilChanged(),
+        filter((v: string) => !!v && /^[6-9]\d{9}$/.test(v)),
+        switchMap((phone: string) => {
+          this.lookupBusy.set(true);
+          this.cdr.markForCheck();
+          return this.patientsService.search(phone);
+        }),
+        takeUntil(this.destroy$),
+      )
+      .subscribe({
+        next: r => this.applyLookup(r.patients ?? []),
+        error: () => { this.lookupBusy.set(false); this.cdr.markForCheck(); },
+      });
+
+    // Re-evaluate match when the name is edited (same phone, different person).
+    this.patientForm.get('name')!.valueChanges
+      .pipe(debounceTime(300), distinctUntilChanged(), takeUntil(this.destroy$))
+      .subscribe(() => {
+        const phone = this.patientForm.get('phone')?.value;
+        if (phone && /^[6-9]\d{9}$/.test(phone)) {
+          this.patientsService.search(phone).subscribe({
+            next: r => this.applyLookup(r.patients ?? [], { skipNamePatch: true }),
+          });
+        }
+      });
   }
 
   ngOnDestroy() {
     if (this.redirectTimer) clearInterval(this.redirectTimer);
+    this.destroy$.next();
+    this.destroy$.complete();
+  }
+
+  private applyLookup(matches: { id: string; name: string; email?: string; age?: number; gender?: string; address?: string; clinical_history?: string }[], opts: { skipNamePatch?: boolean } = {}) {
+    this.lookupBusy.set(false);
+    const typedName = (this.patientForm.get('name')?.value ?? '').trim().toLowerCase();
+    const exact = typedName
+      ? matches.find(p => p.name.trim().toLowerCase() === typedName)
+      : (matches.length === 1 ? matches[0] : undefined);
+
+    if (exact) {
+      const patch: Record<string, unknown> = {
+        email:            exact.email ?? '',
+        age:              exact.age ?? null,
+        gender:           exact.gender ?? '',
+        address:          exact.address ?? '',
+        clinical_history: exact.clinical_history ?? '',
+      };
+      if (!opts.skipNamePatch) patch['name'] = exact.name;
+      this.patientForm.patchValue(patch, { emitEvent: false });
+      this.welcomeBack.set(`Welcome back, ${exact.name}!`);
+    } else if (matches.length > 0 && typedName) {
+      this.welcomeBack.set(`New patient — phone shared with ${matches.length} other record${matches.length > 1 ? 's' : ''}`);
+    } else {
+      this.welcomeBack.set('');
+    }
+    this.cdr.markForCheck();
   }
 
   private loadServicesAndChairs() {
@@ -305,10 +397,14 @@ export class BookingComponent implements OnInit, OnDestroy {
     }).subscribe({
       next: ({ services: svcRes, chairs: chairRes }) => {
         this.services.set((svcRes.services ?? []).filter(s => s.is_active !== false));
-        const chairs = chairRes.chairs ?? [];
-        const pick   = chairs.filter(c => c.is_active !== false)[0] ?? chairs[0];
-        this.defaultChairId = pick?.id ?? null;
-        if (!this.defaultChairId) this.metaError.set('No chairs configured for this clinic. Please set up chairs first.');
+        const activeChairs = (chairRes.chairs ?? []).filter(c =>
+          c.is_active !== false && c.operational_status !== 'out_of_order'
+        );
+        this.chairs.set(activeChairs);
+        // Preselect the first active chair so the slot lookup can run without
+        // the user explicitly picking one. They can still change it.
+        this.selectedChairId.set(activeChairs[0]?.id ?? null);
+        if (!this.selectedChairId()) this.metaError.set('No active chairs configured for this clinic. Please set up chairs first.');
         this.servicesLoading.set(false);
         this.cdr.markForCheck();
       },
@@ -336,6 +432,16 @@ export class BookingComponent implements OnInit, OnDestroy {
     this.step.set(2);
   }
 
+  onChairSelect(id: string) {
+    if (this.selectedChairId() === id) return;
+    this.selectedChairId.set(id);
+    // Slots are per-chair — invalidate the picked slot and refetch if a date
+    // is already selected.
+    this.selectedSlot.set(null);
+    this.slotConflict.set('');
+    if (this.selectedDate()) this.loadSlots();
+  }
+
   onDateSelect(iso: string) {
     if (this.dates.find(d => d.iso === iso)?.disabled) return;
     this.selectedDate.set(iso);
@@ -347,10 +453,10 @@ export class BookingComponent implements OnInit, OnDestroy {
   loadSlots() {
     const svc  = this.selectedService();
     const date = this.selectedDate();
-    if (!date || !svc || !this.defaultChairId) return;
+    if (!date || !svc || !this.selectedChairId()) return;
     this.slotsLoading.set(true);
     this.slotsError.set('');
-    this.apptService.getSlots(date, svc.id, this.defaultChairId).subscribe({
+    this.apptService.getSlots(date, svc.id, this.selectedChairId()!).subscribe({
       next:  r => { this.slots.set(r.slots ?? []); this.slotsLoading.set(false); this.cdr.markForCheck(); },
       error: () => { this.slotsError.set('Failed to load slots. Please try again.'); this.slotsLoading.set(false); this.cdr.markForCheck(); },
     });
@@ -367,29 +473,8 @@ export class BookingComponent implements OnInit, OnDestroy {
     this.step.set(3);
   }
 
-  onPhoneBlur() {
-    const phone = this.patientForm.get('phone')?.value;
-    if (!phone || phone.length < 10) return;
-    this.patientsService.lookupByPhone(phone).subscribe({
-      next: r => {
-        if (r.found && r.patient) {
-          this.patientForm.patchValue({
-            name:             r.patient.name,
-            email:            r.patient.email ?? '',
-            age:              r.patient.age ?? null,
-            gender:           r.patient.gender ?? '',
-            address:          r.patient.address ?? '',
-            clinical_history: r.patient.clinical_history ?? '',
-          });
-          this.welcomeBack.set(`Welcome back, ${r.patient.name}!`);
-        } else {
-          this.welcomeBack.set('');
-        }
-        this.cdr.markForCheck();
-      },
-      error: () => {},
-    });
-  }
+  /** Kept for backward template compat — live lookup is debounced via valueChanges. */
+  onPhoneBlur() { /* no-op */ }
 
   proceedToConfirm() {
     this.patientForm.markAllAsTouched();
@@ -460,11 +545,11 @@ export class BookingComponent implements OnInit, OnDestroy {
 
   submitBooking() {
     const svc = this.selectedService();
-    if (!svc || !this.selectedDate() || !this.selectedSlot() || !this.patientData || !this.defaultChairId) return;
+    if (!svc || !this.selectedDate() || !this.selectedSlot() || !this.patientData || !this.selectedChairId()) return;
     this.submitting.set(true);
     this.submitError.set('');
 
-    this.apptService.getSlots(this.selectedDate()!, svc.id, this.defaultChairId).subscribe({
+    this.apptService.getSlots(this.selectedDate()!, svc.id, this.selectedChairId()!).subscribe({
       next: r => {
         this.slots.set(r.slots ?? []);
         const fresh = r.slots?.find(s => s.time === this.selectedSlot());
@@ -484,7 +569,7 @@ export class BookingComponent implements OnInit, OnDestroy {
   private doBook() {
     const payload: BookingPayload = {
       service_id:     this.selectedService()!.id,
-      chair_id:       this.defaultChairId!,
+      chair_id:       this.selectedChairId()!,
       scheduled_at:   `${this.selectedDate()}T${this.selectedSlot()}:00+05:30`,
       booking_source: 'internal',
       patient:        this.patientData!,

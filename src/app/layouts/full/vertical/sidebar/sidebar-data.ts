@@ -2,6 +2,16 @@ import { NavItem } from './nav-item/nav-item';
 
 export const navItems: NavItem[] = [
 
+  // ── Booking ────────────────────────────────────────────────────────────────
+  { navCap: 'Booking' },
+  {
+    displayName: 'New Appointment',
+    iconName: 'calendar-plus',
+    bgcolor: 'success',
+    route: '/booking',
+    permissions: ['appointment.create'],
+  },
+
   // ── Clinic ─────────────────────────────────────────────────────────────────
   { navCap: 'Clinic' },
   {
@@ -52,6 +62,13 @@ export const navItems: NavItem[] = [
     route: '/org-master/release-notes',
     permissions: ['org.manage'],
   },
+  {
+    displayName: 'Feature Flags',
+    iconName: 'toggle-right',
+    bgcolor: 'warning',
+    route: '/org-master/feature-flags',
+    permissions: ['feature_flag.manage'],
+  },
   // {
   //   displayName: 'Security (MFA)',
   //   iconName: 'shield-lock',
@@ -59,6 +76,60 @@ export const navItems: NavItem[] = [
   //   route: '/authentication/mfa-setup',
   //   permissions: ['org.manage'],
   // },
+
+  // ── Specialty Modules ──────────────────────────────────────────────────────
+  { navCap: 'Specialty Modules', permissions: ['specialty.view'] },
+  {
+    displayName: 'Orthodontics',
+    iconName: 'teeth',
+    bgcolor: 'primary',
+    permissions: ['specialty.view'],
+    children: [
+      { displayName: 'All Cases', route: '/specialty/orthodontic/cases',     iconName: 'list',  bgcolor: 'primary' },
+      { displayName: 'New Case',  route: '/specialty/orthodontic/cases/new', iconName: 'plus',  bgcolor: 'primary' },
+    ],
+  },
+  {
+    displayName: 'Implantology',
+    iconName: 'screw',
+    bgcolor: 'accent',
+    permissions: ['specialty.view'],
+    children: [
+      { displayName: 'All Cases',     route: '/specialty/implantology/cases',            iconName: 'list',   bgcolor: 'accent' },
+      { displayName: 'New Case',      route: '/specialty/implantology/cases/new',        iconName: 'plus',   bgcolor: 'accent' },
+      { displayName: 'Recall Search', route: '/specialty/implantology/recall-search',    iconName: 'search', bgcolor: 'accent' },
+    ],
+  },
+  {
+    displayName: 'Paediatric',
+    iconName: 'baby-carriage',
+    bgcolor: 'success',
+    permissions: ['specialty.view'],
+    children: [
+      { displayName: 'All Cases', route: '/specialty/paediatric/cases',     iconName: 'list', bgcolor: 'success' },
+      { displayName: 'New Case',  route: '/specialty/paediatric/cases/new', iconName: 'plus', bgcolor: 'success' },
+    ],
+  },
+  {
+    displayName: 'Endodontics',
+    iconName: 'tooth',
+    bgcolor: 'warning',
+    permissions: ['specialty.view'],
+    children: [
+      { displayName: 'All Cases', route: '/specialty/endodontic/cases',     iconName: 'list', bgcolor: 'warning' },
+      { displayName: 'New Case',  route: '/specialty/endodontic/cases/new', iconName: 'plus', bgcolor: 'warning' },
+    ],
+  },
+  {
+    displayName: 'TMJ & Orofacial',
+    iconName: 'brain',
+    bgcolor: 'error',
+    permissions: ['specialty.view'],
+    children: [
+      { displayName: 'All Cases', route: '/specialty/tmj/cases',     iconName: 'list', bgcolor: 'error' },
+      { displayName: 'New Case',  route: '/specialty/tmj/cases/new', iconName: 'plus', bgcolor: 'error' },
+    ],
+  },
 
   // ── Operations ─────────────────────────────────────────────────────────────
   { navCap: 'Operations' },
@@ -153,16 +224,6 @@ export const navItems: NavItem[] = [
     route: '/master/activity-log',
     roles: ['admin'],
     permissions: ['audit.view'],
-  },
-
-  // ── Booking ────────────────────────────────────────────────────────────────
-  { navCap: 'Booking' },
-  {
-    displayName: 'New Appointment',
-    iconName: 'calendar-plus',
-    bgcolor: 'success',
-    route: '/booking',
-    permissions: ['appointment.create'],
   },
 
 ];

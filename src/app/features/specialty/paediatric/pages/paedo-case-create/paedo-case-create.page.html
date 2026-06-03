@@ -1,0 +1,46 @@
+<div class="case-create-page">
+  <h2>New Paediatric Case</h2>
+
+  <mat-stepper linear>
+
+    <mat-step label="Select Patient" [completed]="step1Valid">
+      <div class="step-content">
+        <p class="step-hint">Search for the patient this case belongs to.</p>
+        <df-patient-search (patientSelected)="onPatientSelected($event)" />
+
+        @if (selectedPatient(); as p) {
+          <mat-card class="patient-confirm-card">
+            <mat-card-content>
+              <div class="patient-confirm-row">
+                <span class="patient-confirm-name">{{ p.name }}</span>
+                <span class="patient-confirm-phone">{{ p.phone }}</span>
+                @if (p.age) { <span class="patient-confirm-age">Age {{ p.age }}</span> }
+              </div>
+            </mat-card-content>
+          </mat-card>
+        }
+
+        <div class="step-actions">
+          <button mat-raised-button color="primary" matStepperNext [disabled]="!step1Valid">Next</button>
+        </div>
+      </div>
+    </mat-step>
+
+    <mat-step label="Case Details">
+      <form [formGroup]="detailsForm" class="step-content">
+        <p class="step-hint">Additional details can be added after the case is created.</p>
+
+        @if (error()) { <p class="create-error">{{ error() }}</p> }
+
+        <div class="step-actions">
+          <button mat-button matStepperPrevious type="button">Back</button>
+          <button mat-raised-button color="primary" type="button"
+                  (click)="submit()" [disabled]="saving() || !step1Valid">
+            {{ saving() ? 'Creating…' : 'Create Paediatric Case' }}
+          </button>
+        </div>
+      </form>
+    </mat-step>
+
+  </mat-stepper>
+</div>

@@ -14,9 +14,12 @@ import {
 import { ClinicServicesService } from '../../../services/clinic-services.service';
 import { ClinicService } from '../../../models/clinic.model';
 import { RxHistoryTabComponent } from '../../rx/rx-history-tab/rx-history-tab.component';
+import { SpecialtyApiService } from '../../../features/specialty/shared/services/specialty-api.service';
+import { DfSpecialtyCaseSummaryComponent } from '../../../features/specialty/shared/components/df-specialty-case-summary/df-specialty-case-summary.component';
+import { SpecialtyCase } from '../../../features/specialty/shared/models/specialty.model';
 import { format, parseISO } from 'date-fns';
 
-type PatientTab = 'overview' | 'appointments' | 'sessions' | 'plans' | 'prescriptions' | 'billing';
+type PatientTab = 'overview' | 'appointments' | 'sessions' | 'plans' | 'prescriptions' | 'billing' | 'specialty';
 
 const STATUS_LABEL: Record<string, string> = {
   booked: 'Booked', confirmed: 'Confirmed', in_progress: 'In Progress',
@@ -43,17 +46,19 @@ const LAB_STATUS_LABEL: Record<string, string> = {
   imports: [
     CommonModule, DatePipe, TitleCasePipe, FormsModule,
     RouterLink, MaterialModule, TablerIconsModule, RxHistoryTabComponent,
+    DfSpecialtyCaseSummaryComponent,
   ],
   templateUrl: './patient-record.component.html',
   styleUrls: ['./patient-record.component.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class PatientRecordComponent implements OnInit {
-  private readonly route  = inject(ActivatedRoute);
-  private readonly router = inject(Router);
-  private readonly patSvc = inject(PatientsService);
-  private readonly svcSvc = inject(ClinicServicesService);
-  private readonly cdr    = inject(ChangeDetectorRef);
+  private readonly route        = inject(ActivatedRoute);
+  private readonly router       = inject(Router);
+  private readonly patSvc       = inject(PatientsService);
+  private readonly svcSvc       = inject(ClinicServicesService);
+  private readonly specialtyApi = inject(SpecialtyApiService);
+  private readonly cdr          = inject(ChangeDetectorRef);
 
   loading  = signal(true);
   errorMsg = signal<string | null>(null);
@@ -61,6 +66,10 @@ export class PatientRecordComponent implements OnInit {
   services = signal<ClinicService[]>([]);
   activeTab    = signal<PatientTab>('overview');
   filterSvcId  = signal('');
+
+  specialtyCases        = signal<SpecialtyCase[]>([]);
+  specialtyLoading      = signal(false);
+  specialtyLoaded       = signal(false);
 
   readonly patient = computed(() => this.record()?.patient ?? null);
 
@@ -114,6 +123,32 @@ export class PatientRecordComponent implements OnInit {
         this.cdr.markForCheck();
       },
     });
+  }
+
+  loadSpecialtyCases(patientId: string): void {
+    if (this.specialtyLoaded() || this.specialtyLoading()) return;
+    this.specialtyLoading.set(true);
+    this.specialtyApi.getCasesForPatient(patientId).subscribe({
+      next: res => {
+        this.specialtyCases.set(res.cases ?? []);
+        this.specialtyLoading.set(false);
+        this.specialtyLoaded.set(true);
+        this.cdr.markForCheck();
+      },
+      error: () => {
+        this.specialtyLoading.set(false);
+        this.specialtyLoaded.set(true);
+        this.cdr.markForCheck();
+      },
+    });
+  }
+
+  onTabChange(tab: PatientTab): void {
+    this.activeTab.set(tab);
+    if (tab === 'specialty') {
+      const id = this.patient()?.id;
+      if (id) this.loadSpecialtyCases(id);
+    }
   }
 
   goBack() {

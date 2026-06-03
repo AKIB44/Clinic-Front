@@ -11,6 +11,8 @@ import { SessionApiService } from '../../services/session-api.service';
 import { ClinicalNote } from '../../models/session.model';
 import { ToastService } from '../../../../services/toast.service';
 
+type SoapField = 's' | 'o' | 'a' | 'p';
+
 @Component({
   selector: 'df-soap-notes',
   standalone: true,
@@ -32,6 +34,13 @@ export class DfSoapNotesComponent implements OnInit, OnDestroy {
   readonly saving = signal(false);
   readonly saved  = signal(false);
 
+  // ── Voice dictation ──────────────────────────────────────────────────────
+  readonly dictating       = signal<SoapField | null>(null);
+  readonly speechSupported = signal(false);
+  readonly interim         = signal('');
+  private recognition: any = null;
+  private baseText         = '';
+
   private change$  = new Subject<void>();
   private destroy$ = new Subject<void>();
 
@@ -46,11 +55,87 @@ export class DfSoapNotesComponent implements OnInit, OnDestroy {
     this.change$
       .pipe(debounceTime(1500), takeUntil(this.destroy$))
       .subscribe(() => this.save());
+
+    // Detect Web Speech API support
+    const SR = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+    this.speechSupported.set(!!SR);
   }
 
   ngOnDestroy(): void {
+    this.stopDictation();
     this.destroy$.next();
     this.destroy$.complete();
+  }
+
+  // ── Voice-to-text ────────────────────────────────────────────────────────
+
+  toggleDictation(field: SoapField): void {
+    if (this.store.isSealed()) return;
+    if (this.dictating() === field) { this.stopDictation(); return; }
+    if (this.dictating()) this.stopDictation();
+    this.startDictation(field);
+  }
+
+  private startDictation(field: SoapField): void {
+    const SR = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+    if (!SR) {
+      this.toast.error('Voice input is not supported in this browser. Try Chrome or Edge.');
+      return;
+    }
+    const rec = new SR();
+    rec.continuous     = true;
+    rec.interimResults = true;
+    rec.lang           = 'en-IN';
+
+    this.baseText = this[field] ? this[field] + ' ' : '';
+    this.interim.set('');
+
+    rec.onresult = (event: any) => {
+      let finalChunk  = '';
+      let interimChunk = '';
+      for (let i = event.resultIndex; i < event.results.length; i++) {
+        const transcript = event.results[i][0].transcript;
+        if (event.results[i].isFinal) finalChunk += transcript;
+        else                          interimChunk += transcript;
+      }
+      if (finalChunk) {
+        this.baseText = (this.baseText + finalChunk).replace(/\s+/g, ' ').trimStart();
+        this[field]   = this.baseText;
+        this.onChange();
+      }
+      const combined = (this.baseText + interimChunk).replace(/\s+/g, ' ');
+      this[field] = combined;
+      this.interim.set(interimChunk);
+    };
+    rec.onerror = (e: any) => {
+      this.dictating.set(null);
+      const msg = e?.error === 'not-allowed'
+        ? 'Microphone permission denied.'
+        : 'Voice input error. Please try again.';
+      this.toast.error(msg);
+    };
+    rec.onend = () => {
+      this.interim.set('');
+      this.dictating.set(null);
+      // Persist clean final text once stopped
+      this[field] = this.baseText.trim();
+      this.onChange();
+    };
+
+    try {
+      rec.start();
+      this.recognition = rec;
+      this.dictating.set(field);
+    } catch {
+      this.toast.error('Could not start voice input.');
+    }
+  }
+
+  stopDictation(): void {
+    if (this.recognition) {
+      try { this.recognition.stop(); } catch { /* ignore */ }
+      this.recognition = null;
+    }
   }
 
   onChange(): void {

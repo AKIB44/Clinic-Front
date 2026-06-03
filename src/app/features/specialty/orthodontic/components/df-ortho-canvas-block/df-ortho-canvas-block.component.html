@@ -1,0 +1,55 @@
+<mat-card class="ortho-block">
+  <mat-card-header>
+    <mat-card-title class="ortho-block__title">
+      Orthodontic Case
+      @if (store.caseDetail(); as detail) {
+        <mat-chip class="phase-chip">{{ detail.currentPhase | titlecase }}</mat-chip>
+      }
+    </mat-card-title>
+  </mat-card-header>
+
+  <mat-card-content>
+    @if (store.loading()) {
+      <p class="ortho-block__loading">Loading case data…</p>
+    }
+
+    @if (store.error()) {
+      <p class="ortho-block__error">{{ store.error() }}</p>
+    }
+
+    @if (store.caseDetail(); as detail) {
+      <div class="ortho-block__info-row">
+        <span class="label">Appliance:</span>
+        <span>{{ detail.applianceType | titlecase }}</span>
+      </div>
+
+      <div class="ortho-block__wires">
+        <div class="wire-row">
+          <span class="label">Upper wire:</span>
+          <span>{{ store.currentUpperWire()?.wireDescription ?? '—' }}</span>
+        </div>
+        <div class="wire-row">
+          <span class="label">Lower wire:</span>
+          <span>{{ store.currentLowerWire()?.wireDescription ?? '—' }}</span>
+        </div>
+      </div>
+
+      @if (store.isAlignerCase()) {
+        <div class="ortho-block__aligner-note">
+          Clear aligner case — track tray progression in case detail.
+        </div>
+      }
+
+      <div class="ortho-block__phase-transition">
+        <mat-form-field appearance="outline" class="phase-select">
+          <mat-label>Transition to phase</mat-label>
+          <mat-select (valueChange)="transitionPhase($event)">
+            @for (phase of phases; track phase) {
+              <mat-option [value]="phase">{{ phase | titlecase }}</mat-option>
+            }
+          </mat-select>
+        </mat-form-field>
+      </div>
+    }
+  </mat-card-content>
+</mat-card>

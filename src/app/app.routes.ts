@@ -90,6 +90,40 @@ export const routes: Routes = [
           ),
       },
       {
+        path: 'specialty',
+        canActivate: [permissionGuard('specialty.view')],
+        children: [
+          {
+            path: 'cases/:id',
+            loadComponent: () =>
+              import('./features/specialty/shared/pages/specialty-case-detail/specialty-case-detail.page').then(
+                (m) => m.SpecialtyCaseDetailPage
+              ),
+          },
+          // Orthodontics
+          { path: 'orthodontic/cases', loadComponent: () => import('./features/specialty/orthodontic/pages/ortho-case-list/ortho-case-list.page').then(m => m.OrthoCaseListPage) },
+          { path: 'orthodontic/cases/new', loadComponent: () => import('./features/specialty/orthodontic/pages/ortho-case-create/ortho-case-create.page').then(m => m.OrthoCaseCreatePage) },
+          { path: 'orthodontic/cases/:caseId', loadComponent: () => import('./features/specialty/orthodontic/pages/ortho-case-detail/ortho-case-detail.page').then(m => m.OrthoCaseDetailPage) },
+          // Implantology
+          { path: 'implantology/cases', loadComponent: () => import('./features/specialty/implantology/pages/implant-case-list/implant-case-list.page').then(m => m.ImplantCaseListPage) },
+          { path: 'implantology/cases/new', loadComponent: () => import('./features/specialty/implantology/pages/implant-case-create/implant-case-create.page').then(m => m.ImplantCaseCreatePage) },
+          { path: 'implantology/cases/:caseId', loadComponent: () => import('./features/specialty/implantology/pages/implant-case-detail/implant-case-detail.page').then(m => m.ImplantCaseDetailPage) },
+          { path: 'implantology/recall-search', loadComponent: () => import('./features/specialty/implantology/pages/implant-recall-search/implant-recall-search.page').then(m => m.ImplantRecallSearchPage) },
+          // Paediatric
+          { path: 'paediatric/cases', loadComponent: () => import('./features/specialty/paediatric/pages/paedo-case-list/paedo-case-list.page').then(m => m.PaedoCaseListPage) },
+          { path: 'paediatric/cases/new', loadComponent: () => import('./features/specialty/paediatric/pages/paedo-case-create/paedo-case-create.page').then(m => m.PaedoCaseCreatePage) },
+          { path: 'paediatric/cases/:caseId', loadComponent: () => import('./features/specialty/paediatric/pages/paedo-case-detail/paedo-case-detail.page').then(m => m.PaedoCaseDetailPage) },
+          // Endodontic
+          { path: 'endodontic/cases', loadComponent: () => import('./features/specialty/endodontic/pages/endo-case-list/endo-case-list.page').then(m => m.EndoCaseListPage) },
+          { path: 'endodontic/cases/new', loadComponent: () => import('./features/specialty/endodontic/pages/endo-case-create/endo-case-create.page').then(m => m.EndoCaseCreatePage) },
+          { path: 'endodontic/cases/:caseId', loadComponent: () => import('./features/specialty/endodontic/pages/endo-case-detail/endo-case-detail.page').then(m => m.EndoCaseDetailPage) },
+          // TMJ
+          { path: 'tmj/cases', loadComponent: () => import('./features/specialty/tmj/pages/tmj-case-list/tmj-case-list.page').then(m => m.TmjCaseListPage) },
+          { path: 'tmj/cases/new', loadComponent: () => import('./features/specialty/tmj/pages/tmj-case-create/tmj-case-create.page').then(m => m.TmjCaseCreatePage) },
+          { path: 'tmj/cases/:caseId', loadComponent: () => import('./features/specialty/tmj/pages/tmj-case-detail/tmj-case-detail.page').then(m => m.TmjCaseDetailPage) },
+        ],
+      },
+      {
         path: 'dashboards',
         loadChildren: () =>
           import('./pages/dashboards/dashboards.routes').then((m) => m.DashboardsRoutes),

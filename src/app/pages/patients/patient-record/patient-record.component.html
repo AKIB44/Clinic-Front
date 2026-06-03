@@ -70,10 +70,10 @@
     <!-- ── Tabs ────────────────────────────────────────────────────────────── -->
     <nav class="pt-tabs" aria-label="Patient record sections">
       <button type="button" class="pt-tab" [class.on]="activeTab() === 'overview'"
-        (click)="activeTab.set('overview')">Overview</button>
+        (click)="onTabChange('overview')">Overview</button>
 
       <button type="button" class="pt-tab" [class.on]="activeTab() === 'appointments'"
-        (click)="activeTab.set('appointments')">
+        (click)="onTabChange('appointments')">
         Appointments
         @if (allAppts().length) {
           <span class="pt-badge">{{ allAppts().length }}</span>
@@ -81,7 +81,7 @@
       </button>
 
       <button type="button" class="pt-tab" [class.on]="activeTab() === 'sessions'"
-        (click)="activeTab.set('sessions')">
+        (click)="onTabChange('sessions')">
         Clinical Sessions
         @if ((record()?.sessions?.length ?? 0) > 0) {
           <span class="pt-badge">{{ record()?.sessions?.length }}</span>
@@ -89,7 +89,7 @@
       </button>
 
       <button type="button" class="pt-tab" [class.on]="activeTab() === 'plans'"
-        (click)="activeTab.set('plans')">
+        (click)="onTabChange('plans')">
         Treatment Plans
         @if (activePlansCount() > 0) {
           <span class="pt-badge pt-badge--warn">{{ activePlansCount() }}</span>
@@ -97,10 +97,18 @@
       </button>
 
       <button type="button" class="pt-tab" [class.on]="activeTab() === 'prescriptions'"
-        (click)="activeTab.set('prescriptions')">Prescriptions</button>
+        (click)="onTabChange('prescriptions')">Prescriptions</button>
 
       <button type="button" class="pt-tab" [class.on]="activeTab() === 'billing'"
-        (click)="activeTab.set('billing')">Billing</button>
+        (click)="onTabChange('billing')">Billing</button>
+
+      <button type="button" class="pt-tab" [class.on]="activeTab() === 'specialty'"
+        (click)="onTabChange('specialty')">
+        Specialty Cases
+        @if (specialtyCases().length > 0) {
+          <span class="pt-badge">{{ specialtyCases().length }}</span>
+        }
+      </button>
     </nav>
 
     <!-- ══════════════════════════════════════════════════════════════════════ -->
@@ -150,7 +158,7 @@
               </div>
             }
             @if ((record()?.sessions?.length ?? 0) > 3) {
-              <button class="link-btn" type="button" (click)="activeTab.set('sessions')">
+              <button class="link-btn" type="button" (click)="onTabChange('sessions')">
                 View all {{ record()?.sessions?.length }} sessions →
               </button>
             }
@@ -532,6 +540,40 @@
                 }
               </tbody>
             </table>
+          </div>
+        }
+
+      </section>
+    }
+
+    <!-- ══════════════════════════════════════════════════════════════════════ -->
+    <!-- Specialty Cases                                                         -->
+    <!-- ══════════════════════════════════════════════════════════════════════ -->
+    @if (activeTab() === 'specialty') {
+      <section class="specialty-section">
+
+        @if (specialtyLoading()) {
+          <div class="specialty-loading">
+            <mat-spinner diameter="28"></mat-spinner>
+            <span>Loading specialty cases…</span>
+          </div>
+        }
+
+        @if (!specialtyLoading() && specialtyCases().length === 0) {
+          <div class="empty-state">
+            <i-tabler name="stethoscope" size="40"></i-tabler>
+            <p>No specialty cases on record.</p>
+          </div>
+        }
+
+        @if (!specialtyLoading() && specialtyCases().length > 0) {
+          <div class="section-count">
+            {{ specialtyCases().length }} specialty case{{ specialtyCases().length !== 1 ? 's' : '' }}
+          </div>
+          <div class="specialty-cases-grid">
+            @for (sc of specialtyCases(); track sc.id) {
+              <df-specialty-case-summary [case]="sc"></df-specialty-case-summary>
+            }
           </div>
         }
 

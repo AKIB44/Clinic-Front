@@ -7,10 +7,12 @@ import { MaterialModule } from '../../material.module';
 import { TablerIconsModule } from 'angular-tabler-icons';
 import { MatDialog, MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
 import { Router, NavigationEnd } from '@angular/router';
-import { interval, Subject, forkJoin, merge, of } from 'rxjs';
-import { map, switchMap, takeUntil, filter } from 'rxjs/operators';
+import { interval, Subject, fromEvent, forkJoin, merge, of } from 'rxjs';
+import { map, switchMap, takeUntil, filter, debounceTime } from 'rxjs/operators';
+import { ScheduleEventsService } from '../../services/schedule-events.service';
 import { format, addDays, subDays, isToday, parseISO } from 'date-fns';
 import { AppointmentsService, Appointment, AppointmentStatus, Slot } from '../../services/appointments.service';
+import { PatientsService, Patient } from '../../services/patients.service';
 import { ClinicServicesService } from '../../services/clinic-services.service';
 import { ChairsService } from '../../services/chairs.service';
 import { AuthService } from '../../auth/auth.service';
@@ -370,6 +372,16 @@ export class RescheduleDialog {
         </mat-dialog-content>
 
         <mat-dialog-actions align="end">
+          <ng-container *hasPermission="'patient.update'">
+            <button mat-stroked-button (click)="openEditPatient()" [disabled]="pendingKey === 'load_patient'">
+              @if (pendingKey === 'load_patient') {
+                <mat-spinner diameter="16" class="btn-inline-spinner"></mat-spinner>
+              } @else {
+                <i-tabler name="edit" size="16"></i-tabler>
+              }
+              Edit Patient
+            </button>
+          </ng-container>
           <ng-container *hasPermission="'patient.view'">
             <button mat-stroked-button (click)="openPatientRecord()">
               <i-tabler name="user-circle" size="16"></i-tabler>
@@ -432,6 +444,68 @@ export class RescheduleDialog {
         </mat-dialog-actions>
       }
 
+      <!-- ── Edit Patient view ── -->
+      @if (view === 'edit-patient') {
+        <mat-dialog-content class="dialog-body">
+          <div class="edit-form">
+            <mat-form-field appearance="outline" class="w-100">
+              <mat-label>Full Name</mat-label>
+              <input matInput type="text" [(ngModel)]="editPatient.name" required>
+            </mat-form-field>
+            <mat-form-field appearance="outline" class="w-100">
+              <mat-label>Mobile Number</mat-label>
+              <input matInput type="tel" inputmode="numeric" maxlength="10"
+                     [(ngModel)]="editPatient.phone" required>
+            </mat-form-field>
+            <div class="edit-row">
+              <mat-form-field appearance="outline" class="edit-half">
+                <mat-label>Age</mat-label>
+                <input matInput type="number" min="0" max="150"
+                       [(ngModel)]="editPatient.age">
+              </mat-form-field>
+              <mat-form-field appearance="outline" class="edit-half">
+                <mat-label>Gender</mat-label>
+                <mat-select [(ngModel)]="editPatient.gender">
+                  <mat-option value="male">Male</mat-option>
+                  <mat-option value="female">Female</mat-option>
+                  <mat-option value="other">Other</mat-option>
+                </mat-select>
+              </mat-form-field>
+            </div>
+            <mat-form-field appearance="outline" class="w-100">
+              <mat-label>Email</mat-label>
+              <input matInput type="email" [(ngModel)]="editPatient.email">
+            </mat-form-field>
+            <mat-form-field appearance="outline" class="w-100">
+              <mat-label>Address</mat-label>
+              <input matInput type="text" [(ngModel)]="editPatient.address">
+            </mat-form-field>
+            <mat-form-field appearance="outline" class="w-100">
+              <mat-label>Clinical History</mat-label>
+              <textarea matInput rows="3" [(ngModel)]="editPatient.clinical_history"></textarea>
+            </mat-form-field>
+          </div>
+
+          @if (actionError) {
+            <div class="dialog-error">{{ actionError }}</div>
+          }
+        </mat-dialog-content>
+
+        <mat-dialog-actions align="end">
+          <button mat-stroked-button [disabled]="pendingKey === 'save_patient'" (click)="view = 'detail'">
+            Back
+          </button>
+          <button mat-flat-button color="primary"
+                  [disabled]="pendingKey === 'save_patient' || !editPatient.name || !editPatient.phone"
+                  (click)="savePatient()">
+            @if (pendingKey === 'save_patient') {
+              <mat-spinner diameter="18" class="btn-inline-spinner"></mat-spinner>
+            }
+            Save Changes
+          </button>
+        </mat-dialog-actions>
+      }
+
     </div>
   `,
   styles: [`
@@ -469,23 +543,33 @@ export class RescheduleDialog {
     .cancel-sub         { font-size: 13px; color: #64748b; margin: 0; }
     .cancel-reason-field { width: 100%; margin-top: 8px; }
     .btn-inline-spinner { display: inline-block; vertical-align: middle; margin-right: 8px; }
+    .edit-form          { display: flex; flex-direction: column; gap: 4px; }
+    .edit-row           { display: flex; gap: 12px; }
+    .edit-half          { flex: 1; }
+    .w-100              { width: 100%; }
   `]
 })
 export class AppointmentDetailDialog {
-  dialogRef          = inject(MatDialogRef<AppointmentDetailDialog>);
-  data               = inject<Appointment>(MAT_DIALOG_DATA);
-  private apptSvc    = inject(AppointmentsService);
-  private router     = inject(Router);
-  private dialog     = inject(MatDialog);
-  private sessionApi = inject(SessionApiService);
+  dialogRef           = inject(MatDialogRef<AppointmentDetailDialog>);
+  data                = inject<Appointment>(MAT_DIALOG_DATA);
+  private apptSvc     = inject(AppointmentsService);
+  private patientsSvc = inject(PatientsService);
+  private router      = inject(Router);
+  private dialog      = inject(MatDialog);
+  private sessionApi  = inject(SessionApiService);
 
   statusLabel = STATUS_LABEL;
   sourceIcon  = BOOKING_SOURCE_ICON;
   /** Which control is waiting on the server — only that row shows a spinner; others stay idle (still disabled while any request runs). */
   pendingKey: string | null = null;
   actionError = '';
-  view: 'detail' | 'cancel' = 'detail';
+  view: 'detail' | 'cancel' | 'edit-patient' = 'detail';
   cancelReason = '';
+
+  editPatient: Partial<Patient> = {
+    name: '', phone: '', email: '', age: undefined,
+    gender: undefined, address: '', clinical_history: '',
+  };
 
   statusActionKey(next: AppointmentStatus): string {
     return `status:${next}`;
@@ -566,6 +650,56 @@ export class AppointmentDetailDialog {
   openPatientRecord() {
     this.dialogRef.close();
     this.router.navigate(['/patients', this.data.patient_id]);
+  }
+
+  openEditPatient() {
+    this.pendingKey  = 'load_patient';
+    this.actionError = '';
+    this.patientsSvc.getById(this.data.patient_id).subscribe({
+      next: ({ patient }) => {
+        this.editPatient = {
+          name:             patient.name,
+          phone:            patient.phone,
+          email:            patient.email ?? '',
+          age:              patient.age ?? undefined,
+          gender:           patient.gender ?? undefined,
+          address:          patient.address ?? '',
+          clinical_history: patient.clinical_history ?? '',
+        };
+        this.pendingKey = null;
+        this.view = 'edit-patient';
+      },
+      error: () => {
+        this.pendingKey = null;
+        this.actionError = 'Could not load patient. Please try again.';
+      },
+    });
+  }
+
+  savePatient() {
+    const p = this.editPatient;
+    if (!p.name || !p.phone) return;
+    this.pendingKey  = 'save_patient';
+    this.actionError = '';
+    const payload: Partial<Patient> = {
+      name:             p.name,
+      phone:            p.phone,
+      email:            p.email || undefined,
+      age:              p.age != null ? Number(p.age) : undefined,
+      gender:           p.gender || undefined,
+      address:          p.address || undefined,
+      clinical_history: p.clinical_history || undefined,
+    };
+    this.patientsSvc.update(this.data.patient_id, payload).subscribe({
+      next: () => {
+        this.pendingKey = null;
+        this.dialogRef.close('reload');
+      },
+      error: (e) => {
+        this.pendingKey = null;
+        this.actionError = e?.error?.error ?? 'Failed to save patient. Please try again.';
+      },
+    });
   }
 
   startTreatment() {
@@ -668,6 +802,7 @@ export class ScheduleComponent implements OnInit, OnDestroy {
   private dialog         = inject(MatDialog);
   private cdr            = inject(ChangeDetectorRef);
   private releaseNotesSvc = inject(ReleaseNotesService);
+  private scheduleEvents = inject(ScheduleEventsService);
 
   statusLabel = STATUS_LABEL;
   sourceIcon  = BOOKING_SOURCE_ICON;
@@ -832,10 +967,26 @@ export class ScheduleComponent implements OnInit, OnDestroy {
   // ── Polling ───────────────────────────────────────────────────────────────
 
   private startPolling() {
-    // First load shows spinner; later polls refresh silently so cards/CSS are not replaced by a loading shell every minute.
+    // Event-driven refresh — no more 60s blind poll. We refetch when:
+    //   1. The page mounts (initial spinner).
+    //   2. Any mutation broadcasts a "schedule changed" pulse via
+    //      ScheduleEventsService (booking, reschedule, status update, voice
+    //      booking through Friday, patient edit, …).
+    //   3. The browser tab becomes visible again after being hidden — covers
+    //      the "I left this open for an hour" case without continuous polling.
+    //   4. A long-interval safety net (5 minutes) catches anything an
+    //      out-of-band mutation forgot to broadcast.
     merge(
-      of<'initial' | 'poll'>('initial'),
-      interval(60_000).pipe(map(() => 'poll' as const)),
+      of<'initial' | 'event' | 'visibility' | 'safety'>('initial'),
+      this.scheduleEvents.changes$.pipe(
+        debounceTime(150),                         // coalesce bursts (book + redirect)
+        map(() => 'event' as const),
+      ),
+      fromEvent(document, 'visibilitychange').pipe(
+        filter(() => document.visibilityState === 'visible'),
+        map(() => 'visibility' as const),
+      ),
+      interval(300_000).pipe(map(() => 'safety' as const)),
     ).pipe(
       switchMap((kind) => {
         if (kind === 'initial') {
@@ -853,7 +1004,7 @@ export class ScheduleComponent implements OnInit, OnDestroy {
         this.cdr.markForCheck();
       },
       error: () => {
-        this.error   = 'Could not load appointments. Retrying in 60s.';
+        this.error   = 'Could not load appointments.';
         this.loading = false;
         this.cdr.markForCheck();
       },

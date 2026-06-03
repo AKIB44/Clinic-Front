@@ -1,0 +1,86 @@
+<div class="recall-search-page">
+  <header class="recall-search-page__header">
+    <h2>Implant Recall Search</h2>
+    <p class="subtitle">Search by lot number or brand to identify affected patients in a manufacturer recall.</p>
+  </header>
+
+  <mat-card class="recall-search-page__form-card">
+    <mat-card-content>
+      <form [formGroup]="form" (ngSubmit)="search()" class="search-form">
+        <mat-form-field appearance="outline">
+          <mat-label>Lot Number</mat-label>
+          <input matInput formControlName="lot" placeholder="e.g. ABC123" />
+        </mat-form-field>
+
+        <mat-form-field appearance="outline">
+          <mat-label>Brand</mat-label>
+          <input matInput formControlName="brand" placeholder="e.g. Nobel" />
+        </mat-form-field>
+
+        <mat-form-field appearance="outline">
+          <mat-label>Placed From</mat-label>
+          <input matInput type="date" formControlName="from" />
+        </mat-form-field>
+
+        <mat-form-field appearance="outline">
+          <mat-label>Placed To</mat-label>
+          <input matInput type="date" formControlName="to" />
+        </mat-form-field>
+
+        <button mat-raised-button color="warn" type="submit" [disabled]="searching()">
+          {{ searching() ? 'Searching…' : 'Search' }}
+        </button>
+      </form>
+    </mat-card-content>
+  </mat-card>
+
+  @if (searched()) {
+    <mat-card class="recall-search-page__results">
+      <mat-card-header>
+        <mat-card-title>{{ results().length }} fixture{{ results().length !== 1 ? 's' : '' }} found</mat-card-title>
+      </mat-card-header>
+      <mat-card-content>
+        @if (results().length === 0) {
+          <p class="empty">No matching fixtures found.</p>
+        } @else {
+          <table mat-table [dataSource]="results()" class="recall-table">
+            <ng-container matColumnDef="patient_name">
+              <th mat-header-cell *matHeaderCellDef>Patient</th>
+              <td mat-cell *matCellDef="let f">{{ $any(f).patient_name }}</td>
+            </ng-container>
+            <ng-container matColumnDef="brand">
+              <th mat-header-cell *matHeaderCellDef>Brand</th>
+              <td mat-cell *matCellDef="let f">{{ $any(f).brand }} {{ $any(f).system }}</td>
+            </ng-container>
+            <ng-container matColumnDef="system">
+              <th mat-header-cell *matHeaderCellDef>System</th>
+              <td mat-cell *matCellDef="let f">{{ $any(f).diameter_mm }}×{{ $any(f).length_mm }}mm</td>
+            </ng-container>
+            <ng-container matColumnDef="lot_number">
+              <th mat-header-cell *matHeaderCellDef>Lot</th>
+              <td mat-cell *matCellDef="let f">{{ $any(f).lot_number }}</td>
+            </ng-container>
+            <ng-container matColumnDef="expiry_date">
+              <th mat-header-cell *matHeaderCellDef>Expiry</th>
+              <td mat-cell *matCellDef="let f">{{ $any(f).expiry_date | date:'mediumDate' }}</td>
+            </ng-container>
+            <ng-container matColumnDef="fdi_position">
+              <th mat-header-cell *matHeaderCellDef>Position</th>
+              <td mat-cell *matCellDef="let f">{{ $any(f).fdi_position }}</td>
+            </ng-container>
+            <ng-container matColumnDef="placed_at">
+              <th mat-header-cell *matHeaderCellDef>Placed</th>
+              <td mat-cell *matCellDef="let f">{{ $any(f).placed_at | date:'mediumDate' }}</td>
+            </ng-container>
+            <ng-container matColumnDef="phone">
+              <th mat-header-cell *matHeaderCellDef>Contact</th>
+              <td mat-cell *matCellDef="let f">{{ $any(f).phone ?? '—' }}</td>
+            </ng-container>
+            <tr mat-header-row *matHeaderRowDef="columns"></tr>
+            <tr mat-row *matRowDef="let row; columns: columns;"></tr>
+          </table>
+        }
+      </mat-card-content>
+    </mat-card>
+  }
+</div>

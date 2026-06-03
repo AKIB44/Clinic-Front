@@ -1,0 +1,5 @@
+.case-list-page {
+  padding: 24px; max-width: 1100px; margin: 0 auto;
+  &__header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; h2 { margin: 0; } }
+  .empty { color: #999; }
+}

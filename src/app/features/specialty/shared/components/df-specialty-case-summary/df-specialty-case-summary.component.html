@@ -1,0 +1,67 @@
+<div class="spec-case-card" [class]="statusClass">
+
+  <div class="spec-case-card__header">
+    <div class="type-badge" [class]="typeClass">
+      <i-tabler [name]="typeIcon" size="14"></i-tabler>
+      {{ caseTypeLabel }}
+    </div>
+
+    <span class="status-chip" [class]="statusClass">{{ statusLabel }}</span>
+  </div>
+
+  <div class="spec-case-card__body">
+    @if (case.doctor_name) {
+      <div class="spec-info-row">
+        <i-tabler name="stethoscope" size="14"></i-tabler>
+        <span>Dr. {{ case.doctor_name }}</span>
+      </div>
+    }
+
+    <div class="spec-info-row">
+      <i-tabler name="calendar-event" size="14"></i-tabler>
+      <span>Started {{ case.started_at | date:'d MMM yyyy' }}</span>
+    </div>
+
+    @if (case.expected_duration_months) {
+      <div class="spec-info-row">
+        <i-tabler name="clock" size="14"></i-tabler>
+        <span>Est. {{ case.expected_duration_months }} month{{ case.expected_duration_months !== 1 ? 's' : '' }}</span>
+      </div>
+    }
+
+    @if (case.external_case_no) {
+      <div class="spec-info-row">
+        <i-tabler name="hash" size="14"></i-tabler>
+        <span class="muted">Ref: {{ case.external_case_no }}</span>
+      </div>
+    }
+
+    @if (case.case_summary) {
+      <p class="spec-case-summary">{{ case.case_summary }}</p>
+    }
+  </div>
+
+  @if (case.status === 'ACTIVE' || case.status === 'PAUSED') {
+    <div class="spec-case-card__progress">
+      <div class="progress-label">
+        <span>Progress</span>
+        <span>{{ progressPercent }}%</span>
+      </div>
+      <div class="progress-bar">
+        <div class="progress-bar__fill" [style.width.%]="progressPercent"></div>
+      </div>
+    </div>
+  }
+
+  <div class="spec-case-card__footer">
+    <div class="spec-visit-count">
+      <i-tabler name="calendar-check" size="13"></i-tabler>
+      {{ case.visit_count ?? 0 }} visit{{ (case.visit_count ?? 0) !== 1 ? 's' : '' }}
+    </div>
+
+    <a class="spec-view-btn" [routerLink]="caseRoute">
+      View Case <i-tabler name="arrow-right" size="13"></i-tabler>
+    </a>
+  </div>
+
+</div>

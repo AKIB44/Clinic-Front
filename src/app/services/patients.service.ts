@@ -141,4 +141,8 @@ export class PatientsService {
   getFullRecord(id: string): Observable<PatientFullRecord> {
     return this.http.get<PatientFullRecord>(`${this.base}/${id}/record`);
   }
+
+  update(id: string, payload: Partial<Patient>): Observable<{ patient: Patient }> {
+    return this.http.put<{ patient: Patient }>(`${this.base}/${id}`, payload);
+  }
 }

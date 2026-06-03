@@ -1,0 +1,53 @@
+:host {
+  display: block;
+}
+
+.ortho-block {
+  border-left: 4px solid #7c4dff;
+  margin-bottom: 16px;
+
+  &__title {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 16px;
+    font-weight: 600;
+  }
+
+  &__loading,
+  &__error {
+    color: #999;
+    font-size: 13px;
+  }
+
+  &__error { color: #d32f2f; }
+
+  &__info-row,
+  .wire-row {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 6px;
+    font-size: 14px;
+  }
+
+  &__wires {
+    background: #f5f5f5;
+    border-radius: 8px;
+    padding: 10px 12px;
+    margin: 10px 0;
+  }
+
+  &__aligner-note {
+    font-size: 13px;
+    color: #0288d1;
+    margin-bottom: 10px;
+  }
+
+  &__phase-transition {
+    margin-top: 12px;
+  }
+
+  .phase-select { width: 100%; }
+  .phase-chip { margin-left: 4px; font-size: 11px; }
+  .label { font-weight: 500; color: #555; min-width: 80px; }
+}

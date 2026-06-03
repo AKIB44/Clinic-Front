@@ -51,30 +51,68 @@
                 </div>
               }
 
+              <!-- Service search -->
+              @if (!servicesLoading() && services().length > 0) {
+                <div class="svc-search-wrap">
+                  <i-tabler name="search" class="svc-search-icon icon-16"></i-tabler>
+                  <input
+                    class="svc-search-input"
+                    type="text"
+                    placeholder="Search treatments…"
+                    [value]="serviceSearch()"
+                    (input)="serviceSearch.set($any($event.target).value)"
+                    autocomplete="off"
+                  />
+                  @if (serviceSearch()) {
+                    <button class="svc-search-clear" type="button"
+                            (click)="serviceSearch.set('')">
+                      <i-tabler name="x" class="icon-14"></i-tabler>
+                    </button>
+                  }
+                </div>
+              }
+
               @if (servicesLoading()) {
                 <div class="svc-grid">
-                  @for (i of [1,2,3,4,5,6]; track i) { <div class="svc-skeleton"></div> }
+                  @for (i of [1,2,3,4,5,6]; track i) {
+                    <div class="svc-skeleton">
+                      <div class="svc-skeleton__icon"></div>
+                      <div class="svc-skeleton__line svc-skeleton__line--lg"></div>
+                      <div class="svc-skeleton__line svc-skeleton__line--sm"></div>
+                    </div>
+                  }
                 </div>
               } @else if (services().length === 0 && !metaError()) {
                 <div class="empty-hint">
                   <i-tabler name="mood-empty" class="icon-36"></i-tabler>
                   No active services found. Add services from the Master menu first.
                 </div>
+              } @else if (filteredServices().length === 0) {
+                <div class="empty-hint">
+                  <i-tabler name="search-off" class="icon-36"></i-tabler>
+                  No treatments match "{{ serviceSearch() }}"
+                </div>
               } @else {
                 <div class="svc-grid" @cardsList>
-                  @for (svc of services(); track svc.id) {
+                  @for (svc of filteredServices(); track svc.id) {
                     <button class="svc-card" [class.selected]="selectedService()?.id === svc.id"
                             (click)="selectService(svc)" type="button">
+                      <!-- selected checkmark -->
+                      @if (selectedService()?.id === svc.id) {
+                        <span class="svc-check" @fadeUp>
+                          <i-tabler name="check" class="icon-12"></i-tabler>
+                        </span>
+                      }
                       <div class="svc-icon-ring" [style.background]="getVisual(svc).gradient">
                         <span>{{ getVisual(svc).emoji }}</span>
                       </div>
                       <div class="svc-name">{{ svc.name }}</div>
                       <div class="svc-tags">
                         @if (svc.duration_minutes) {
-                          <span class="svc-tag">{{ svc.duration_minutes }} min</span>
-                        }
-                        @if (svc.price) {
-                          <span class="svc-tag">₹{{ svc.price }}</span>
+                          <span class="svc-tag">
+                            <i-tabler name="clock" class="icon-10"></i-tabler>
+                            {{ svc.duration_minutes }} min
+                          </span>
                         }
                       </div>
                     </button>
@@ -94,6 +132,26 @@
             </div>
 
             <div class="step-body">
+              @if (chairs().length > 1) {
+                <div class="section-label">
+                  <i-tabler name="armchair" class="icon-14"></i-tabler>
+                  Select Chair
+                </div>
+                <div class="chair-strip">
+                  @for (c of chairs(); track c.id) {
+                    <button class="chair-pill"
+                            [class.selected]="selectedChairId() === c.id"
+                            (click)="onChairSelect(c.id)" type="button">
+                      <i-tabler name="armchair" class="icon-14"></i-tabler>
+                      {{ c.name }}
+                      @if (c.operational_status === 'under_service') {
+                        <span class="chair-tag">service</span>
+                      }
+                    </button>
+                  }
+                </div>
+              }
+
               <div class="section-label">
                 <i-tabler name="calendar" class="icon-14"></i-tabler>
                 Select Date
@@ -574,9 +632,6 @@
                       @if (selectedService()?.duration_minutes) {
                         <span class="review-tag">{{ selectedService()!.duration_minutes }} min</span>
                       }
-                      @if (selectedService()?.price) {
-                        <span class="review-tag">₹{{ selectedService()!.price }}</span>
-                      }
                     </div>
                   </div>
                 </div>
@@ -596,6 +651,15 @@
                       <div class="review-cell-val">{{ selectedSlot() }}</div>
                     </div>
                   </div>
+                  @if (selectedChair()) {
+                    <div class="review-cell">
+                      <i-tabler name="armchair" class="review-cell-icon"></i-tabler>
+                      <div>
+                        <div class="review-cell-lbl">Chair</div>
+                        <div class="review-cell-val">{{ selectedChair()!.name }}</div>
+                      </div>
+                    </div>
+                  }
                   <div class="review-cell">
                     <i-tabler name="user" class="review-cell-icon"></i-tabler>
                     <div>

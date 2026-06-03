@@ -1,0 +1,50 @@
+:host {
+  display: block;
+}
+
+.patient-search {
+  &__field {
+    width: 100%;
+  }
+
+  &__spinner {
+    margin-right: 4px;
+  }
+
+  &__icon {
+    color: #999;
+  }
+
+  &__clear {
+    color: #666;
+  }
+
+  &__hint--selected {
+    color: #2e7d32;
+    font-weight: 500;
+  }
+}
+
+.patient-option {
+  display: flex;
+  flex-direction: column;
+  padding: 2px 0;
+  line-height: 1.4;
+
+  &__name {
+    font-size: 14px;
+    font-weight: 500;
+    color: #111;
+  }
+
+  &__phone {
+    font-size: 12px;
+    color: #888;
+  }
+
+  &--empty {
+    font-size: 13px;
+    color: #aaa;
+    font-style: italic;
+  }
+}

@@ -1,0 +1,71 @@
+.ortho-create-page {
+  padding: 24px;
+  max-width: 680px;
+  margin: 0 auto;
+
+  h2 {
+    margin: 0 0 24px;
+    font-size: 22px;
+    font-weight: 600;
+  }
+}
+
+.step-content {
+  padding: 20px 0 8px;
+}
+
+.step-hint {
+  font-size: 13px;
+  color: #666;
+  margin: 0 0 16px;
+}
+
+.full-width {
+  width: 100%;
+  margin-bottom: 14px;
+}
+
+.half-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+  margin-bottom: 14px;
+
+  mat-form-field { width: 100%; }
+}
+
+.step-actions {
+  display: flex;
+  gap: 12px;
+  margin-top: 20px;
+}
+
+.patient-confirm-card {
+  margin: 12px 0;
+  border-left: 4px solid #1976d2;
+  background: #e3f2fd;
+}
+
+.patient-confirm-row {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.patient-confirm-name {
+  font-weight: 600;
+  font-size: 15px;
+}
+
+.patient-confirm-phone,
+.patient-confirm-age {
+  font-size: 13px;
+  color: #555;
+}
+
+.create-error {
+  color: #c62828;
+  font-size: 13px;
+  margin: 8px 0;
+}

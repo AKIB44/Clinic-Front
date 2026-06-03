@@ -1,0 +1,27 @@
+.recall-search-page {
+  padding: 24px;
+  max-width: 1200px;
+  margin: 0 auto;
+
+  &__header {
+    margin-bottom: 20px;
+    h2 { margin: 0 0 4px; font-size: 22px; font-weight: 600; }
+    .subtitle { color: #666; font-size: 13px; margin: 0; }
+  }
+
+  &__form-card { margin-bottom: 20px; }
+  &__results { }
+
+  .search-form {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    align-items: flex-start;
+
+    mat-form-field { flex: 1 1 180px; }
+    button { height: 56px; align-self: flex-start; }
+  }
+
+  .recall-table { width: 100%; }
+  .empty { color: #999; padding: 20px 0; }
+}

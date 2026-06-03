@@ -1,0 +1,33 @@
+<div class="case-detail-page">
+  @if (store.loading()) { <p>Loading…</p> }
+  @if (store.error()) { <p class="error">{{ store.error() }}</p> }
+  @if (store.caseData(); as data) {
+    <header class="case-detail-page__header">
+      <h2>Implant Case</h2>
+      <span class="status">{{ data['status'] }}</span>
+    </header>
+    <mat-tab-group>
+      <mat-tab label="Overview">
+        <mat-card class="detail-card">
+          <mat-card-content>
+            <div class="info-row"><span class="label">Patient:</span><span>{{ data['patient_name'] }}</span></div>
+            <div class="info-row"><span class="label">Status:</span><span>{{ data['status'] }}</span></div>
+            <div class="info-row"><span class="label">Started:</span><span>{{ $any(data)['started_at'] | date:'mediumDate' }}</span></div>
+          </mat-card-content>
+        </mat-card>
+      </mat-tab>
+      <mat-tab label="Milestones">
+        <mat-card class="detail-card">
+          <mat-card-content>
+            @for (m of $any(data['milestones'] ?? []); track $any(m).id) {
+              <div class="milestone-row">
+                <span class="milestone-title">{{ $any(m).title }}</span>
+                <span class="milestone-date">{{ $any(m).occurred_at | date:'mediumDate' }}</span>
+              </div>
+            }
+          </mat-card-content>
+        </mat-card>
+      </mat-tab>
+    </mat-tab-group>
+  }
+</div>

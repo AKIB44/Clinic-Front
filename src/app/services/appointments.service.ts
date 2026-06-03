@@ -1,7 +1,8 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { Observable } from 'rxjs';
+import { Observable, tap } from 'rxjs';
 import { authApiConfig } from '../auth/auth.config';
+import { ScheduleEventsService } from './schedule-events.service';
 
 export interface Slot {
   time: string;
@@ -40,8 +41,9 @@ export type AppointmentStatus = Appointment['status'];
 
 @Injectable({ providedIn: 'root' })
 export class AppointmentsService {
-  private readonly http = inject(HttpClient);
-  private readonly base = `${authApiConfig.baseUrl}/appointments`;
+  private readonly http   = inject(HttpClient);
+  private readonly events = inject(ScheduleEventsService);
+  private readonly base   = `${authApiConfig.baseUrl}/appointments`;
 
   // Slot availability — public, no auth needed
   getSlots(date: string, serviceId: string, chairId: string): Observable<{ slots: Slot[] }> {
@@ -64,18 +66,24 @@ export class AppointmentsService {
 
   // Public booking — no auth required on backend
   book(payload: BookingPayload): Observable<{ appointment: Appointment }> {
-    return this.http.post<{ appointment: Appointment }>(this.base, payload);
+    return this.http.post<{ appointment: Appointment }>(this.base, payload).pipe(
+      tap(() => this.events.emit('booked')),
+    );
   }
 
   // Single unified status transition endpoint
   updateStatus(id: string, status: AppointmentStatus, cancelReason?: string): Observable<{ appointment: Appointment }> {
     const body: Record<string, string> = { status };
     if (cancelReason) body['cancel_reason'] = cancelReason;
-    return this.http.patch<{ appointment: Appointment }>(`${this.base}/${id}/status`, body);
+    return this.http.patch<{ appointment: Appointment }>(`${this.base}/${id}/status`, body).pipe(
+      tap(() => this.events.emit(`status:${status}`)),
+    );
   }
 
   // Reschedule — change time or chair
   reschedule(id: string, payload: { scheduled_at?: string; chair_id?: string; notes?: string }): Observable<{ appointment: Appointment }> {
-    return this.http.patch<{ appointment: Appointment }>(`${this.base}/${id}`, payload);
+    return this.http.patch<{ appointment: Appointment }>(`${this.base}/${id}`, payload).pipe(
+      tap(() => this.events.emit('rescheduled')),
+    );
   }
 }

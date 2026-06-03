@@ -15,3 +15,159 @@
 .soap-addendum     { background: #f8fafd; border-radius: 8px; padding: 10px 12px; margin-bottom: 8px; }
 .addendum-meta     { font-size: 11px; color: #94a3b8; margin-bottom: 4px; }
 .addendum-text     { font-size: 13px; color: #334155; }
+
+/* ── Field wrap holds textarea + floating mic + live listening pill ─────── */
+.soap-field-wrap {
+  position: relative;
+  transition: filter .25s ease;
+}
+.soap-field-wrap.is-dictating .soap-field .mat-mdc-form-field-flex {
+  /* Subtle outline glow when dictating — uses :host fallback for safety */
+}
+.soap-field-wrap.is-dictating::after {
+  content: '';
+  position: absolute;
+  inset: 4px 4px 28px 4px;
+  border-radius: 10px;
+  pointer-events: none;
+  box-shadow: 0 0 0 2px rgba(239,68,68,.22), 0 0 18px rgba(239,68,68,.16);
+  animation: soap-glow 1.6s ease-in-out infinite;
+  z-index: 1;
+}
+@keyframes soap-glow {
+  0%,100% { box-shadow: 0 0 0 2px rgba(239,68,68,.18), 0 0 14px rgba(239,68,68,.12); }
+  50%     { box-shadow: 0 0 0 3px rgba(239,68,68,.32), 0 0 22px rgba(239,68,68,.22); }
+}
+
+/* ── Mic button: tucked into bottom-right of the field ─────────────────── */
+.soap-mic {
+  position: absolute;
+  bottom: 30px;
+  right: 14px;
+  width: 36px; height: 36px;
+  border-radius: 50%;
+  border: 1px solid #e2e8f0;
+  background: #fff;
+  color: #64748b;
+  cursor: pointer;
+  display: inline-flex; align-items: center; justify-content: center;
+  transition: background .18s, color .18s, border-color .18s, box-shadow .18s, transform .18s;
+  z-index: 3;
+}
+.soap-mic:hover {
+  color: #0074ba;
+  border-color: #0074ba;
+  box-shadow: 0 4px 12px rgba(0,116,186,.18);
+  transform: translateY(-1px);
+}
+.soap-mic-active {
+  background: linear-gradient(135deg,#ef4444,#dc2626);
+  border-color: transparent;
+  color: #fff;
+  box-shadow: 0 6px 18px rgba(239,68,68,.45);
+  transform: scale(1.05);
+}
+.soap-mic-active::before,
+.soap-mic-active::after {
+  content: '';
+  position: absolute;
+  inset: -4px;
+  border-radius: 50%;
+  border: 2px solid rgba(239,68,68,.55);
+  animation: soap-mic-ring 1.6s ease-out infinite;
+}
+.soap-mic-active::after { animation-delay: .8s; }
+@keyframes soap-mic-ring {
+  0%   { transform: scale(0.9); opacity: .75; }
+  100% { transform: scale(1.9); opacity: 0; }
+}
+
+/* ── Listening pill: live waveform + interim transcript ───────────────── */
+.soap-listen-pill {
+  margin: -8px 4px 12px;
+  padding: 8px 12px;
+  border-radius: 10px;
+  background: linear-gradient(135deg,#fef2f2,#fff5f5);
+  border: 1px solid rgba(239,68,68,.18);
+  display: flex; align-items: center; gap: 10px;
+  font-size: 12.5px;
+  color: #7f1d1d;
+  position: relative;
+  z-index: 2;
+  animation: soap-pill-in .25s cubic-bezier(0.22,1,0.36,1);
+}
+@keyframes soap-pill-in {
+  from { opacity: 0; transform: translateY(-4px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.soap-waves {
+  display: inline-flex; align-items: center; gap: 3px;
+  height: 18px;
+}
+.soap-waves i {
+  display: inline-block;
+  width: 3px;
+  border-radius: 2px;
+  background: linear-gradient(180deg,#ef4444,#dc2626);
+  animation: soap-wave 1.05s ease-in-out infinite;
+}
+.soap-waves i:nth-child(1) { height: 8px;  animation-delay: 0s;    }
+.soap-waves i:nth-child(2) { height: 14px; animation-delay: .12s;  }
+.soap-waves i:nth-child(3) { height: 18px; animation-delay: .24s;  }
+.soap-waves i:nth-child(4) { height: 12px; animation-delay: .36s;  }
+.soap-waves i:nth-child(5) { height: 8px;  animation-delay: .48s;  }
+@keyframes soap-wave {
+  0%,100% { transform: scaleY(.45); opacity: .65; }
+  50%     { transform: scaleY(1.15); opacity: 1;  }
+}
+
+.soap-listen-label {
+  font-weight: 600;
+  letter-spacing: .02em;
+  color: #b91c1c;
+  display: inline-flex; align-items: center; gap: 4px;
+  white-space: nowrap;
+}
+.soap-listen-label::after {
+  content: '';
+  display: inline-block;
+  width: 4px; height: 4px;
+  border-radius: 50%;
+  background: currentColor;
+  margin-left: 2px;
+  animation: soap-dot 1s ease-in-out infinite;
+  box-shadow: 8px 0 0 currentColor, 16px 0 0 currentColor;
+}
+@keyframes soap-dot {
+  0%,80%,100% { opacity: .25; }
+  40%         { opacity: 1;   }
+}
+
+.soap-listen-text {
+  color: #475569;
+  font-style: italic;
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  border-left: 1px solid rgba(239,68,68,.2);
+  padding-left: 10px;
+  margin-left: 4px;
+  animation: soap-caret .9s steps(1) infinite;
+}
+@keyframes soap-caret {
+  0%,100% { border-right: 2px solid transparent; }
+  50%     { border-right: 2px solid #dc2626; }
+}
+.soap-listen-text::after {
+  content: '▍';
+  margin-left: 2px;
+  color: #dc2626;
+  animation: soap-blink 1s steps(1) infinite;
+}
+@keyframes soap-blink { 50% { opacity: 0; } }
+
+/* When idle but supported, the listen-text is hidden */
+.soap-listen-pill.is-warming .soap-listen-text { display: none; }

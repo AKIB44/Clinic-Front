@@ -22,5 +22,10 @@ export const OrgMasterRoutes: Routes = [
     loadComponent: () => import('./release-notes/release-notes.component').then(m => m.ReleaseNotesComponent),
     canActivate: [permissionGuard('org.manage')],
   },
+  {
+    path: 'feature-flags',
+    loadComponent: () => import('./feature-flags/feature-flags.component').then(m => m.FeatureFlagsAdminComponent),
+    canActivate: [permissionGuard('feature_flag.manage')],
+  },
   { path: '', redirectTo: 'hr', pathMatch: 'full' },
 ];

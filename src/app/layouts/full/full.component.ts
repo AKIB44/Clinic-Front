@@ -24,6 +24,7 @@ import { AppHorizontalSidebarComponent } from './horizontal/sidebar/sidebar.comp
 import { AppBreadcrumbComponent } from './shared/breadcrumb/breadcrumb.component';
 import { CustomizerComponent } from './shared/customizer/customizer.component';
 import { BreakGlassBannerComponent } from './shared/break-glass-banner/break-glass-banner.component';
+import { VoiceAssistantComponent } from '../../components/voice-assistant/voice-assistant.component';
 
 const MOBILE_VIEW = 'screen and (max-width: 768px)';
 const TABLET_VIEW = 'screen and (min-width: 769px) and (max-width: 1024px)';
@@ -62,6 +63,7 @@ interface quicklinks {
     AppBreadcrumbComponent,
     CustomizerComponent,
     BreakGlassBannerComponent,
+    VoiceAssistantComponent,
   ],
   templateUrl: './full.component.html',
   styleUrls: [],
@@ -87,18 +89,59 @@ export class FullComponent implements OnInit {
   }
 
   get navItems() {
-    const role = this.rbac.role;
-    const loaded = this.permissions.loaded();
-    const perms  = this.permissions.perms();
-    // Use permissions only when the backend has returned a non-empty set.
-    // An empty set means migrations haven't run — fall back to role check.
-    const permsReady = loaded && Object.keys(perms).length > 0;
+    return this.filterNav(allNavItems);
+  }
 
-    return allNavItems.filter(item => {
-      const roleOk = !item.roles || !role || item.roles.includes(role);
-      if (!item.permissions || !permsReady) return roleOk;
-      // Role is always a valid fallback even when permissions are partially seeded.
-      return item.permissions.some(c => c in perms) || roleOk;
+  /**
+   * Recursively filter the nav tree by permissions / roles.
+   *
+   * Rules:
+   *  - When permissions are loaded AND the item declares `permissions: [...]`,
+   *    permissions are authoritative — a matching role is NOT a fallback. This
+   *    is the bug the previous OR-clause introduced: it left items visible to
+   *    any logged-in user just because their role wasn't explicitly excluded.
+   *  - When permissions aren't loaded yet (e.g. perms endpoint not seeded or
+   *    network failed), fall back to `roles: [...]` if present; otherwise show.
+   *  - Children are filtered with the same rules; a parent with children that
+   *    all got filtered out is itself hidden (unless it has its own route).
+   *  - navCap dividers respect their declared permissions too.
+   */
+  private filterNav(items: any[]): any[] {
+    const role       = this.rbac.role;
+    const perms      = this.permissions.perms();
+    const permsReady = this.permissions.loaded() && Object.keys(perms).length > 0;
+
+    const allowed = (item: any): boolean => {
+      if (permsReady && item.permissions?.length) {
+        return item.permissions.some((c: string) => c in perms);
+      }
+      if (item.roles?.length) {
+        return !!role && item.roles.includes(role);
+      }
+      return true;
+    };
+
+    const out: any[] = [];
+    for (const item of items) {
+      if (!allowed(item)) continue;
+      if (item.children?.length) {
+        const filteredChildren = this.filterNav(item.children);
+        if (!filteredChildren.length && !item.route) continue;
+        out.push({ ...item, children: filteredChildren });
+      } else {
+        out.push(item);
+      }
+    }
+    // Drop section headers (navCap) that have no real items beneath them. A
+    // navCap is followed by zero-or-more menu items until the next navCap (or
+    // end of list). If that run is empty, the header is just visual clutter.
+    return out.filter((item, idx, arr) => {
+      if (!item.navCap) return true;
+      for (let j = idx + 1; j < arr.length; j++) {
+        if (arr[j].navCap) return false; // hit next section → empty
+        return true;                     // found at least one item
+      }
+      return false;                      // trailing navCap with nothing after it
     });
   }
 
@@ -257,10 +300,28 @@ export class FullComponent implements OnInit {
       });
   }
 
-  ngOnInit(): void {}
+  ngOnInit(): void {
+    // RBAC freshness — refetch permissions whenever the tab regains focus, so
+    // role / permission changes pushed by an admin appear without needing the
+    // user to manually refresh. Debounced via the browser's own event cadence.
+    this.visibilityHandler = () => {
+      if (document.visibilityState === 'visible' && this.authService.getUser()) {
+        const clinicId = this.authService.getActiveClinicId();
+        this.permissions.refresh(clinicId ?? undefined).catch(() => { /* ignore */ });
+      }
+    };
+    document.addEventListener('visibilitychange', this.visibilityHandler);
+    window.addEventListener('focus', this.visibilityHandler);
+  }
+
+  private visibilityHandler: (() => void) | null = null;
 
   ngOnDestroy() {
     this.layoutChangesSubscription.unsubscribe();
+    if (this.visibilityHandler) {
+      document.removeEventListener('visibilitychange', this.visibilityHandler);
+      window.removeEventListener('focus', this.visibilityHandler);
+    }
   }
 
   toggleCollapsed() {

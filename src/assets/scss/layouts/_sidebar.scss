@@ -241,6 +241,9 @@ body {
           z-index: -1;
           border-radius: 0 24px 24px 0;
           transition: all 0.4s ease-in-out;
+          // Default neutral background for items that have no explicit bgcolor class.
+          // Prevents the raw MDC dark ripple from showing through on hover.
+          background-color: $light-accent;
         }
         &:hover {
           &:before {

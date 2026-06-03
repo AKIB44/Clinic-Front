@@ -18,33 +18,106 @@
   }
 
   <div class="soap-body">
-    <mat-form-field appearance="outline" class="soap-field">
-      <mat-label>S — Subjective (Chief Complaint)</mat-label>
-      <textarea matInput rows="3" [(ngModel)]="s"
-                [disabled]="store.isSealed()"
-                (ngModelChange)="onChange()" placeholder="Patient's description of symptoms, pain, concerns…"></textarea>
-    </mat-form-field>
 
-    <mat-form-field appearance="outline" class="soap-field">
-      <mat-label>O — Objective (Clinical Findings)</mat-label>
-      <textarea matInput rows="3" [(ngModel)]="o"
-                [disabled]="store.isSealed()"
-                (ngModelChange)="onChange()" placeholder="Examination findings, vitals, investigations…"></textarea>
-    </mat-form-field>
+    <!-- ── S ── -->
+    <div class="soap-field-wrap" [class.is-dictating]="dictating() === 's'">
+      <mat-form-field appearance="outline" class="soap-field">
+        <mat-label>S — Subjective (Chief Complaint)</mat-label>
+        <textarea matInput rows="3" [(ngModel)]="s"
+                  [disabled]="store.isSealed()"
+                  (ngModelChange)="onChange()" placeholder="Patient's description of symptoms, pain, concerns…"></textarea>
+      </mat-form-field>
+      @if (speechSupported() && !store.isSealed()) {
+        <button type="button" class="soap-mic"
+                [class.soap-mic-active]="dictating() === 's'"
+                (click)="toggleDictation('s')"
+                [attr.aria-label]="dictating() === 's' ? 'Stop dictation' : 'Dictate subjective'">
+          <i-tabler [name]="dictating() === 's' ? 'player-stop-filled' : 'microphone'" size="16"></i-tabler>
+        </button>
+      }
+    </div>
+    @if (dictating() === 's') {
+      <div class="soap-listen-pill" [class.is-warming]="!interim()">
+        <span class="soap-waves"><i></i><i></i><i></i><i></i><i></i></span>
+        <span class="soap-listen-label">Listening</span>
+        @if (interim()) { <span class="soap-listen-text">{{ interim() }}</span> }
+      </div>
+    }
 
-    <mat-form-field appearance="outline" class="soap-field">
-      <mat-label>A — Assessment (Diagnosis)</mat-label>
-      <textarea matInput rows="2" [(ngModel)]="a"
-                [disabled]="store.isSealed()"
-                (ngModelChange)="onChange()" placeholder="Working diagnosis and clinical impression…"></textarea>
-    </mat-form-field>
+    <!-- ── O ── -->
+    <div class="soap-field-wrap" [class.is-dictating]="dictating() === 'o'">
+      <mat-form-field appearance="outline" class="soap-field">
+        <mat-label>O — Objective (Clinical Findings)</mat-label>
+        <textarea matInput rows="3" [(ngModel)]="o"
+                  [disabled]="store.isSealed()"
+                  (ngModelChange)="onChange()" placeholder="Examination findings, vitals, investigations…"></textarea>
+      </mat-form-field>
+      @if (speechSupported() && !store.isSealed()) {
+        <button type="button" class="soap-mic"
+                [class.soap-mic-active]="dictating() === 'o'"
+                (click)="toggleDictation('o')"
+                [attr.aria-label]="dictating() === 'o' ? 'Stop dictation' : 'Dictate objective'">
+          <i-tabler [name]="dictating() === 'o' ? 'player-stop-filled' : 'microphone'" size="16"></i-tabler>
+        </button>
+      }
+    </div>
+    @if (dictating() === 'o') {
+      <div class="soap-listen-pill" [class.is-warming]="!interim()">
+        <span class="soap-waves"><i></i><i></i><i></i><i></i><i></i></span>
+        <span class="soap-listen-label">Listening</span>
+        @if (interim()) { <span class="soap-listen-text">{{ interim() }}</span> }
+      </div>
+    }
 
-    <mat-form-field appearance="outline" class="soap-field">
-      <mat-label>P — Plan (Treatment)</mat-label>
-      <textarea matInput rows="3" [(ngModel)]="p"
-                [disabled]="store.isSealed()"
-                (ngModelChange)="onChange()" placeholder="Procedures done, medications prescribed, follow-up…"></textarea>
-    </mat-form-field>
+    <!-- ── A ── -->
+    <div class="soap-field-wrap" [class.is-dictating]="dictating() === 'a'">
+      <mat-form-field appearance="outline" class="soap-field">
+        <mat-label>A — Assessment (Diagnosis)</mat-label>
+        <textarea matInput rows="2" [(ngModel)]="a"
+                  [disabled]="store.isSealed()"
+                  (ngModelChange)="onChange()" placeholder="Working diagnosis and clinical impression…"></textarea>
+      </mat-form-field>
+      @if (speechSupported() && !store.isSealed()) {
+        <button type="button" class="soap-mic"
+                [class.soap-mic-active]="dictating() === 'a'"
+                (click)="toggleDictation('a')"
+                [attr.aria-label]="dictating() === 'a' ? 'Stop dictation' : 'Dictate assessment'">
+          <i-tabler [name]="dictating() === 'a' ? 'player-stop-filled' : 'microphone'" size="16"></i-tabler>
+        </button>
+      }
+    </div>
+    @if (dictating() === 'a') {
+      <div class="soap-listen-pill" [class.is-warming]="!interim()">
+        <span class="soap-waves"><i></i><i></i><i></i><i></i><i></i></span>
+        <span class="soap-listen-label">Listening</span>
+        @if (interim()) { <span class="soap-listen-text">{{ interim() }}</span> }
+      </div>
+    }
+
+    <!-- ── P ── -->
+    <div class="soap-field-wrap" [class.is-dictating]="dictating() === 'p'">
+      <mat-form-field appearance="outline" class="soap-field">
+        <mat-label>P — Plan (Treatment)</mat-label>
+        <textarea matInput rows="3" [(ngModel)]="p"
+                  [disabled]="store.isSealed()"
+                  (ngModelChange)="onChange()" placeholder="Procedures done, medications prescribed, follow-up…"></textarea>
+      </mat-form-field>
+      @if (speechSupported() && !store.isSealed()) {
+        <button type="button" class="soap-mic"
+                [class.soap-mic-active]="dictating() === 'p'"
+                (click)="toggleDictation('p')"
+                [attr.aria-label]="dictating() === 'p' ? 'Stop dictation' : 'Dictate plan'">
+          <i-tabler [name]="dictating() === 'p' ? 'player-stop-filled' : 'microphone'" size="16"></i-tabler>
+        </button>
+      }
+    </div>
+    @if (dictating() === 'p') {
+      <div class="soap-listen-pill" [class.is-warming]="!interim()">
+        <span class="soap-waves"><i></i><i></i><i></i><i></i><i></i></span>
+        <span class="soap-listen-label">Listening</span>
+        @if (interim()) { <span class="soap-listen-text">{{ interim() }}</span> }
+      </div>
+    }
   </div>
 
   <!-- Post-seal addenda -->

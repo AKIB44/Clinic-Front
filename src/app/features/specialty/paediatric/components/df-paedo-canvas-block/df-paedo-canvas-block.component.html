@@ -1,0 +1,19 @@
+<mat-card class="paedo-block">
+  <mat-card-header>
+    <mat-card-title>Paedo Case</mat-card-title>
+  </mat-card-header>
+  <mat-card-content>
+    @if (store.loading()) {
+      <p>Loading…</p>
+    }
+    @if (store.error()) {
+      <p class="error">{{ store.error() }}</p>
+    }
+    @if (store.caseData(); as data) {
+      <div class="info-row">
+        <span class="label">Status:</span>
+        <span>{{ data['status'] }}</span>
+      </div>
+    }
+  </mat-card-content>
+</mat-card>

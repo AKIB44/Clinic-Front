@@ -1,0 +1,71 @@
+<div class="ortho-detail-page">
+  @if (store.loading()) {
+    <p>Loading…</p>
+  }
+
+  @if (store.error()) {
+    <p class="ortho-detail-page__error">{{ store.error() }}</p>
+  }
+
+  @if (store.caseDetail(); as detail) {
+    <header class="ortho-detail-page__header">
+      <h2>Orthodontic Case</h2>
+      <mat-chip class="phase-chip">{{ detail.currentPhase }}</mat-chip>
+    </header>
+
+    <mat-tab-group>
+      <mat-tab label="Overview">
+        <mat-card class="detail-card">
+          <mat-card-content>
+            <div class="info-row"><span class="label">Appliance:</span><span>{{ detail.applianceType }}</span></div>
+            <div class="info-row"><span class="label">Duration:</span><span>{{ detail.expectedDurationMonths ?? '—' }} months</span></div>
+            <div class="info-row"><span class="label">Phase:</span><span>{{ detail.currentPhase }}</span></div>
+            @if (detail.treatmentObjectives) {
+              <p class="objectives">{{ detail.treatmentObjectives }}</p>
+            }
+          </mat-card-content>
+        </mat-card>
+      </mat-tab>
+
+      <mat-tab label="Archwires">
+        <mat-card class="detail-card">
+          <mat-card-content>
+            <div class="wire-summary">
+              <div><strong>Current Upper:</strong> {{ store.currentUpperWire()?.wireDescription ?? 'None' }}</div>
+              <div><strong>Current Lower:</strong> {{ store.currentLowerWire()?.wireDescription ?? 'None' }}</div>
+            </div>
+            @if (store.archwires().length > 0) {
+              @for (w of store.archwires(); track w.id) {
+                <div class="wire-row">
+                  <span class="arch-badge">{{ w.arch }}</span>
+                  <span>{{ w.wireDescription }}</span>
+                  <span class="date">{{ w.placedAt | date:'mediumDate' }}</span>
+                  @if (w.removedAt) {
+                    <span class="removed"> → {{ w.removedAt | date:'mediumDate' }}</span>
+                  }
+                </div>
+              }
+            } @else {
+              <p class="empty">No archwire records yet.</p>
+            }
+          </mat-card-content>
+        </mat-card>
+      </mat-tab>
+
+      <mat-tab label="Retention">
+        <mat-card class="detail-card">
+          <mat-card-content>
+            @if (store.retentionPlan(); as plan) {
+              <div class="info-row"><span class="label">Fixed Upper:</span><span>{{ plan.fixedUpper ? 'Yes' : 'No' }}</span></div>
+              <div class="info-row"><span class="label">Fixed Lower:</span><span>{{ plan.fixedLower ? 'Yes' : 'No' }}</span></div>
+              <div class="info-row"><span class="label">Removable:</span><span>{{ plan.removableType ?? '—' }}</span></div>
+              <div class="info-row"><span class="label">Recall:</span><span>Every {{ plan.recallCadenceMonths }} months</span></div>
+            } @else {
+              <p class="empty">No retention plan defined yet.</p>
+            }
+          </mat-card-content>
+        </mat-card>
+      </mat-tab>
+    </mat-tab-group>
+  }
+</div>

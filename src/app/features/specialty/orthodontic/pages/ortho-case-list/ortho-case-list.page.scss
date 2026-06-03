@@ -1,0 +1,18 @@
+.ortho-list-page {
+  padding: 24px;
+  max-width: 1100px;
+  margin: 0 auto;
+
+  &__header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+
+    h2 { margin: 0; font-size: 22px; font-weight: 600; }
+  }
+
+  &__loading,
+  &__empty { color: #999; padding: 20px 0; }
+  .ortho-table { width: 100%; }
+}

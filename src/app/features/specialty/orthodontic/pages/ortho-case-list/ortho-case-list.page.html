@@ -1,0 +1,43 @@
+<div class="ortho-list-page">
+  <header class="ortho-list-page__header">
+    <h2>Orthodontic Cases</h2>
+    <a mat-raised-button color="primary" [routerLink]="['/specialty/orthodontic/cases/new']">
+      + New Case
+    </a>
+  </header>
+
+  @if (loading()) {
+    <p class="ortho-list-page__loading">Loading cases…</p>
+  } @else if (cases().length === 0) {
+    <p class="ortho-list-page__empty">No active orthodontic cases.</p>
+  } @else {
+    <mat-card>
+      <table mat-table [dataSource]="cases()" class="ortho-table">
+        <ng-container matColumnDef="patient_name">
+          <th mat-header-cell *matHeaderCellDef>Patient</th>
+          <td mat-cell *matCellDef="let c">{{ $any(c).patient_name }}</td>
+        </ng-container>
+        <ng-container matColumnDef="external_case_no">
+          <th mat-header-cell *matHeaderCellDef>Case No.</th>
+          <td mat-cell *matCellDef="let c">{{ $any(c).external_case_no ?? '—' }}</td>
+        </ng-container>
+        <ng-container matColumnDef="current_phase">
+          <th mat-header-cell *matHeaderCellDef>Phase</th>
+          <td mat-cell *matCellDef="let c">{{ $any(c).current_phase }}</td>
+        </ng-container>
+        <ng-container matColumnDef="started_at">
+          <th mat-header-cell *matHeaderCellDef>Started</th>
+          <td mat-cell *matCellDef="let c">{{ $any(c).started_at | date:'mediumDate' }}</td>
+        </ng-container>
+        <ng-container matColumnDef="actions">
+          <th mat-header-cell *matHeaderCellDef></th>
+          <td mat-cell *matCellDef="let c">
+            <a mat-button [routerLink]="['/specialty/orthodontic/cases', $any(c).id]">View</a>
+          </td>
+        </ng-container>
+        <tr mat-header-row *matHeaderRowDef="columns"></tr>
+        <tr mat-row *matRowDef="let row; columns: columns;"></tr>
+      </table>
+    </mat-card>
+  }
+</div>
