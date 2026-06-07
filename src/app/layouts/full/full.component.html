@@ -16,6 +16,29 @@
   </div>
 }
 
+<!-- ============================================================== -->
+<!-- Animated connectivity greeting (online / offline) -->
+<!-- ============================================================== -->
+@if (offline.greeting(); as g) {
+  <div class="df-reconnect-overlay" (click)="offline.dismissGreeting()">
+    <div class="df-reconnect-card df-reconnect-card--{{ g.kind }}">
+      <span class="df-reconnect-ring"></span>
+      <div class="df-reconnect-icon">
+        <i-tabler [name]="g.kind === 'online' ? 'wifi' : 'wifi-off'"></i-tabler>
+      </div>
+      <div class="df-reconnect-title">{{ g.title }}</div>
+      <div class="df-reconnect-sub">
+        @if (g.kind === 'online') {
+          @if (offline.queueDepth() > 0) { Syncing your offline changes… }
+          @else { Everything’s up to date. }
+        } @else {
+          Keep working — your edits will sync automatically when you’re back.
+        }
+      </div>
+    </div>
+  </div>
+}
+
 <mat-sidenav-container class="mainWrapper" autosize autoFocus [ngClass]="{
   'sidebarNav-mini':
     options.sidenavCollapsed &&

@@ -36,16 +36,82 @@ export class OfflineQueueService {
   readonly queueDepth   = signal<number>(0);
   readonly lastSyncedAt = signal<number | null>(null);
 
+  /** Animated full-screen greeting shown on connectivity transitions. */
+  readonly greeting = signal<{ kind: 'online' | 'offline'; title: string } | null>(null);
+  private greetingTimer?: ReturnType<typeof setTimeout>;
+
+  // Light-hearted lines shown when the connection drops.
+  private readonly OFFLINE_QUIPS = [
+    'Internet took a coffee break ☕ — we’ve got your back.',
+    'Wi-Fi ghosted you 👻 — keep working, we’ll sync later.',
+    'Offline mode engaged — your edits are safe with us.',
+    'No signal? No drama. We’ll sync it all when you’re back.',
+  ];
+
   constructor() {
     this.openDb();
     window.addEventListener('online',  () => {
       this.online.set(true);
+      this.playTone('connect');
+      this.showGreeting('online');
       this.flush();
     });
     window.addEventListener('offline', () => {
       this.online.set(false);
-      this.toast.info('You’re offline — changes will be saved and synced when you reconnect.');
+      this.playTone('disconnect');
+      this.showGreeting('offline');
     });
+  }
+
+  // ── Connectivity greeting ───────────────────────────────────────────────────
+
+  private showGreeting(kind: 'online' | 'offline'): void {
+    let title: string;
+    if (kind === 'online') {
+      const h    = new Date().getHours();
+      const part = h < 12 ? 'Good morning' : h < 17 ? 'Good afternoon' : 'Good evening';
+      title = `${part}! You’re back online`;
+    } else {
+      title = this.OFFLINE_QUIPS[Math.floor(Math.random() * this.OFFLINE_QUIPS.length)];
+    }
+    this.greeting.set({ kind, title });
+    clearTimeout(this.greetingTimer);
+    this.greetingTimer = setTimeout(() => this.greeting.set(null), 4500);
+  }
+
+  dismissGreeting(): void {
+    clearTimeout(this.greetingTimer);
+    this.greeting.set(null);
+  }
+
+  // ── Connectivity alert tones (Web Audio — no asset files, works offline) ────
+
+  private playTone(kind: 'connect' | 'disconnect'): void {
+    try {
+      const Ctx = window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
+      if (!Ctx) return;
+      const ctx = new Ctx();
+      const now = ctx.currentTime;
+      // Rising major triad for "connected", falling two-tone for "disconnected".
+      const seq = kind === 'connect' ? [523.25, 659.25, 783.99] : [493.88, 369.99];
+      seq.forEach((freq, i) => {
+        const osc  = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.type = 'sine';
+        osc.frequency.value = freq;
+        const t = now + i * 0.13;
+        gain.gain.setValueAtTime(0.0001, t);
+        gain.gain.exponentialRampToValueAtTime(0.22, t + 0.02);
+        gain.gain.exponentialRampToValueAtTime(0.0001, t + 0.2);
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.start(t);
+        osc.stop(t + 0.22);
+      });
+      setTimeout(() => ctx.close().catch(() => {}), 1000);
+    } catch {
+      /* audio unavailable or blocked by autoplay policy — ignore */
+    }
   }
 
   get isOnline(): boolean { return this.online(); }

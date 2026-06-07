@@ -80,6 +80,53 @@ interface quicklinks {
     }
     .df-spin { animation: df-spin 1s linear infinite; }
     @keyframes df-spin { to { transform: rotate(360deg); } }
+
+    /* ── Animated "back online" greeting ───────────────────────────────── */
+    .df-reconnect-overlay {
+      position: fixed; inset: 0; z-index: 2000;
+      display: flex; align-items: center; justify-content: center;
+      background: rgba(15, 23, 42, .55); backdrop-filter: blur(4px);
+      animation: df-overlay-in .35s ease both;
+      cursor: pointer;
+    }
+    .df-reconnect-card {
+      position: relative;
+      display: flex; flex-direction: column; align-items: center; text-align: center;
+      gap: 10px; padding: 36px 44px; border-radius: 20px;
+      color: #fff; box-shadow: 0 24px 60px rgba(0,0,0,.35);
+      animation: df-card-pop .5s cubic-bezier(.18,.89,.32,1.28) both;
+    }
+    .df-reconnect-card--online  { background: linear-gradient(150deg, #0D7A5F 0%, #0b6650 100%); }
+    .df-reconnect-card--offline { background: linear-gradient(150deg, #b91c1c 0%, #7f1d1d 100%); }
+    .df-reconnect-ring {
+      position: absolute; top: 36px; left: 50%; margin-left: -38px;
+      width: 76px; height: 76px; border-radius: 50%;
+      border: 3px solid rgba(255,255,255,.5);
+      animation: df-ring 1.4s ease-out infinite;
+    }
+    .df-reconnect-icon {
+      width: 76px; height: 76px; border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      background: rgba(255,255,255,.18);
+      animation: df-icon-pulse 1.6s ease-in-out infinite;
+    }
+    .df-reconnect-icon svg { width: 40px; height: 40px; }
+    .df-reconnect-title { font-size: 22px; font-weight: 700; letter-spacing: .2px; }
+    .df-reconnect-sub   { font-size: 13.5px; opacity: .9; }
+
+    @keyframes df-overlay-in { from { opacity: 0; } to { opacity: 1; } }
+    @keyframes df-card-pop {
+      from { opacity: 0; transform: translateY(18px) scale(.9); }
+      to   { opacity: 1; transform: translateY(0) scale(1); }
+    }
+    @keyframes df-icon-pulse {
+      0%,100% { transform: scale(1); }
+      50%     { transform: scale(1.08); }
+    }
+    @keyframes df-ring {
+      0%   { transform: scale(.85); opacity: .7; }
+      100% { transform: scale(1.6); opacity: 0; }
+    }
   `],
   encapsulation: ViewEncapsulation.None,
 })

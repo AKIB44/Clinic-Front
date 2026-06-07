@@ -7,6 +7,14 @@ $columns: 48;
     .icon-#{$i} {
       height: #{$i}px !important;
       width: #{$i}px !important;
+
+      // Tabler renders its <svg> at the default size (24px), so on a smaller
+      // host the oversized svg overflows and "unsafe" flex centering nudges the
+      // glyph to the right. Sizing the svg to the host keeps it truly centred.
+      svg {
+        height: #{$i}px !important;
+        width: #{$i}px !important;
+      }
     }
   }
 }
