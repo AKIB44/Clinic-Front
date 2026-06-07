@@ -1,3 +1,21 @@
+<!-- ============================================================== -->
+<!-- Global offline / sync banner -->
+<!-- ============================================================== -->
+@if (!offline.online()) {
+  <div class="df-offline-banner df-offline-banner--off">
+    <i-tabler name="wifi-off" class="icon-18"></i-tabler>
+    <span>You're offline — changes are being saved and will sync automatically.</span>
+    @if (offline.queueDepth() > 0) {
+      <span class="df-offline-count">{{ offline.queueDepth() }} pending</span>
+    }
+  </div>
+} @else if (offline.queueDepth() > 0) {
+  <div class="df-offline-banner df-offline-banner--sync">
+    <i-tabler name="refresh" class="icon-18 df-spin"></i-tabler>
+    <span>Syncing {{ offline.queueDepth() }} offline change(s)…</span>
+  </div>
+}
+
 <mat-sidenav-container class="mainWrapper" autosize autoFocus [ngClass]="{
   'sidebarNav-mini':
     options.sidenavCollapsed &&
@@ -23,7 +41,7 @@
       <app-sidebar (toggleMobileNav)="sidenav.toggle()" [showToggle]="isOver"></app-sidebar>
       <ng-scrollbar class="position-relative" style="height: 100%">
         <mat-nav-list class="sidebar-list">
-          @for(item of navItems; track item) {
+          @for(item of navItems; track (item.displayName || item.navCap || item.route)) {
           <app-nav-item [item]="item" (notify)="sidenav.toggle()">
           </app-nav-item>
           }
@@ -56,7 +74,7 @@
     <app-sidebar> </app-sidebar>
     <ng-scrollbar class="position-relative" style="height: 100%">
       <mat-nav-list class="sidebar-list">
-        @for(item of navItems; track item) {
+        @for(item of navItems; track (item.displayName || item.navCap || item.route)) {
         <app-nav-item [item]="item" (notify)="sidenav.toggle()"> </app-nav-item>
         }
       </mat-nav-list>
@@ -91,8 +109,6 @@
       <app-horizontal-sidebar></app-horizontal-sidebar>
     </ng-container>
     }
-
-    <app-break-glass-banner></app-break-glass-banner>
 
     <main class="pageWrapper" [ngClass]="{
       maxWidth: options.boxed

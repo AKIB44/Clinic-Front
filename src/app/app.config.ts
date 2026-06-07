@@ -20,6 +20,7 @@ import { MAT_SNACK_BAR_DEFAULT_OPTIONS } from '@angular/material/snack-bar';
 import { TranslateLoader, TranslateModule } from '@ngx-translate/core';
 import { TranslateHttpLoader } from '@ngx-translate/http-loader';
 import { authInterceptor } from './auth/auth.interceptor';
+import { offlineInterceptor } from './core/offline/offline.interceptor';
 import { AuthService } from './auth/auth.service';
 
 // icons
@@ -53,7 +54,7 @@ export const appConfig: ApplicationConfig = {
       }),
       withComponentInputBinding()
     ),
-    provideHttpClient(withInterceptors([authInterceptor])),
+    provideHttpClient(withInterceptors([offlineInterceptor, authInterceptor])),
     {
       provide: APP_INITIALIZER,
       useFactory: (auth: AuthService) => () => auth.initPermissions(),

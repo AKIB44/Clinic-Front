@@ -58,7 +58,7 @@
   <!-- children -->
   @if(expanded) {
   <div>
-    @for(child of item.children; track child) {
+    @for(child of item.children; track (child.displayName || child.route)) {
     <app-nav-item
       [item]="child"
       (click)="onSubItemSelected(child)"

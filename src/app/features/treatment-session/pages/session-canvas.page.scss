@@ -38,12 +38,6 @@
 .sc-s-paused            { background: #fff8e1; color: #e65100; }
 .sc-s-abandoned         { background: #fce4ec; color: #880e4f; }
 
-.sc-offline-pill {
-  display: flex; align-items: center; gap: 4px;
-  font-size: 11px; font-weight: 600; padding: 3px 10px;
-  border-radius: 20px; background: #fef3c7; color: #92400e;
-}
-
 .sc-sealed-pill {
   display: flex; align-items: center; gap: 5px;
   font-size: 12px; font-weight: 600; color: #1b5e20;

@@ -1,37 +1,63 @@
 .med-item {
   border-bottom: 1px solid #F1F5F9;
-  padding: 8px 12px;
+  padding: 10px 14px 12px;
   &:last-of-type { border-bottom: none; }
 
   &-header {
     display: flex;
     align-items: center;
     gap: 8px;
-    margin-bottom: 5px;
-  }
-
-  &-fields {
-    display: grid;
-    grid-template-columns: 2fr 2fr 1.5fr 1.5fr;
-    gap: 6px;
+    margin-bottom: 8px;
   }
 }
 
-.med-name     { flex: 1; font-size: 12px; font-weight: 600; color: #1E293B; }
-.med-strength { font-size: 10.5px; color: #64748B; font-weight: 400; margin-left: 4px; }
+.med-name     { flex: 1; font-size: 13px; font-weight: 600; color: #1E293B; }
+.med-strength { font-size: 11px; color: #64748B; font-weight: 400; margin-left: 4px; }
 .med-remove   {
-  background: none; border: none; color: #EF4444; font-size: 16px;
-  cursor: pointer; padding: 0 4px; opacity: 0.6;
+  background: none; border: none; color: #EF4444; font-size: 18px;
+  cursor: pointer; padding: 0 6px; opacity: 0.6;
   &:hover { opacity: 1; }
 }
 
-.med-field {
-  label {
-    display: block; font-size: 9.5px; color: #94A3B8; margin-bottom: 2px;
-  }
-  input {
-    width: 100%; padding: 4px 7px; border: 1px solid #E2E8F0;
-    border-radius: 5px; font-size: 11px; color: #1E293B;
-    &:focus { border-color: #12A07C; outline: none; }
-  }
+.med-row        { margin-top: 8px; }
+.med-row-label  { display: block; font-size: 10px; color: #94A3B8; margin-bottom: 4px;
+                  font-weight: 600; text-transform: uppercase; letter-spacing: .04em; }
+.med-row-split  { display: grid; grid-template-columns: 1fr 110px; gap: 12px; }
+.med-split-qty  { min-width: 0; }
+
+.chip-row {
+  display: flex; flex-wrap: wrap; gap: 4px; align-items: center;
 }
+.chip {
+  display: inline-flex; align-items: center;
+  padding: 4px 10px;
+  border-radius: 999px;
+  border: 1.5px solid #E2E8F0;
+  background: #fff;
+  font-size: 11.5px; font-weight: 600;
+  color: #475569;
+  cursor: pointer;
+  transition: all .15s;
+  white-space: nowrap;
+}
+.chip-sm  { padding: 3px 8px; font-size: 11px; }
+.chip:hover { border-color: #12A07C; color: #12A07C; }
+.chip-on {
+  background: linear-gradient(135deg, #12A07C, #0E8C6B);
+  border-color: transparent;
+  color: #fff;
+  box-shadow: 0 2px 6px rgba(18,160,124,.30);
+}
+
+.chip-input {
+  flex: 1; min-width: 80px;
+  padding: 4px 8px;
+  border: 1.5px solid #E2E8F0;
+  border-radius: 6px;
+  font-size: 11.5px; color: #1E293B;
+  background: #fff;
+  &:focus { border-color: #12A07C; outline: none; }
+  &::placeholder { color: #CBD5E1; font-style: italic; }
+}
+.chip-input-sm  { padding: 3px 8px; font-size: 11px; min-width: 64px; }
+.chip-input-qty { width: 100%; min-width: 0; }

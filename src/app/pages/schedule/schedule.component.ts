@@ -523,9 +523,15 @@ export class RescheduleDialog {
     .notes-block        { background: #f9f9f9; border-radius: 8px; padding: 12px; margin-bottom: 12px; }
     .cancel-reason-block { background: #fff8f8; border: 1px solid #fecaca; }
     .notes-text         { font-size: 14px; color: #444; margin-top: 4px; }
-    .action-row         { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 12px; }
-    .action-row-secondary { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 8px;
-                            padding-top: 8px; border-top: 1px solid #f1f5f9; }
+    .action-row         { display: flex; gap: 12px; flex-wrap: wrap; margin-top: 16px; }
+    .action-row > button { min-width: 110px; }
+    .action-row-secondary { display: flex; gap: 12px; flex-wrap: wrap; margin-top: 14px;
+                            padding-top: 14px; border-top: 1px solid #f1f5f9; }
+    .action-row-secondary > button { min-width: 130px; }
+    mat-dialog-actions { gap: 10px; padding: 12px 24px 16px !important;
+                         border-top: 1px solid #f1f5f9; flex-wrap: wrap; }
+    mat-dialog-actions > button + button { margin-left: 0 !important; }
+    mat-dialog-actions i-tabler { margin-right: 6px; }
     .dialog-error       { color: #c62828; font-size: 13px; margin-top: 8px; }
     .status-badge       { font-size: 11px; font-weight: 600; padding: 4px 10px; border-radius: 20px;
                           text-transform: uppercase; letter-spacing: .4px; white-space: nowrap; flex-shrink: 0; }

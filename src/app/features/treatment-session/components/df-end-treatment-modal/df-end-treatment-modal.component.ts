@@ -31,8 +31,8 @@ export class DfEndTreatmentModalComponent implements OnInit {
   readonly error        = signal<string | null>(null);
   readonly variance     = signal<VarianceInfo | null>(null);
 
-  varianceReason    = '';
-  patientAcked      = false;
+  readonly varianceReason = signal('');
+  readonly patientAcked   = signal(false);
 
   readonly failures = signal(this.store.validateSealPublic());
 
@@ -46,7 +46,8 @@ export class DfEndTreatmentModalComponent implements OnInit {
 
   readonly varianceBlocked = computed(() => {
     const v = this.variance();
-    return v?.variance_flag && !this.varianceReason.trim();
+    if (!v?.variance_flag) return false;
+    return !this.varianceReason().trim() || !this.patientAcked();
   });
 
   ngOnInit(): void {
@@ -65,13 +66,13 @@ export class DfEndTreatmentModalComponent implements OnInit {
     this.sealing.set(true);
     this.error.set(null);
 
-    this.api.endTreatment(sessionId, this.varianceReason || undefined).subscribe({
+    this.api.endTreatment(sessionId, this.varianceReason() || undefined).subscribe({
       next: ({ session }) => {
         this.sealing.set(false);
         this.store.sealedAt.set(session.sealed_at);
         this.store.status.set(session.status);
         this.dialogRef.close({ sealed: true });
-        this.toast.success('Treatment session sealed successfully.');
+        this.toast.success('Treatment session sealed. Summary & invoice saved to patient records.');
         this.router.navigate(['/schedule']);
       },
       error: (err) => {

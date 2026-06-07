@@ -7,29 +7,61 @@
     <button class="med-remove" (click)="remove.emit()" aria-label="Remove">×</button>
   </div>
 
-  <div class="med-item-fields">
-    <div class="med-field">
-      <label>Dosage</label>
-      <input [value]="item.dosage"
-             placeholder="e.g. 1-0-1"
+  <!-- Dosage — chip presets + custom input -->
+  <div class="med-row">
+    <label class="med-row-label">Dosage</label>
+    <div class="chip-row">
+      @for (d of dosagePresets; track d) {
+        <button type="button" class="chip"
+                [class.chip-on]="isOn('dosage', d)"
+                (click)="setField('dosage', d)">
+          {{ d }}
+        </button>
+      }
+      <input class="chip-input"
+             [value]="item.dosage"
+             placeholder="custom"
              (input)="onField('dosage', $event)">
     </div>
-    <div class="med-field">
-      <label>Frequency</label>
-      <input [value]="item.frequency"
-             placeholder="e.g. After food"
-             (input)="onField('frequency', $event)">
+  </div>
+
+  <!-- Food timing — quick chips -->
+  <div class="med-row">
+    <label class="med-row-label">Timing</label>
+    <div class="chip-row">
+      @for (f of foodPresets; track f) {
+        <button type="button" class="chip"
+                [class.chip-on]="isOn('frequency', f)"
+                (click)="setField('frequency', f)">
+          {{ f }}
+        </button>
+      }
     </div>
-    <div class="med-field">
-      <label>Duration</label>
-      <input [value]="item.duration"
-             placeholder="e.g. 5 days"
-             (input)="onField('duration', $event)">
+  </div>
+
+  <!-- Duration + Qty — duration chip auto-fills qty -->
+  <div class="med-row med-row-split">
+    <div class="med-split">
+      <label class="med-row-label">Duration</label>
+      <div class="chip-row">
+        @for (d of durationPresets; track d) {
+          <button type="button" class="chip chip-sm"
+                  [class.chip-on]="isOn('duration', d + ' days')"
+                  (click)="setDuration(d)">
+            {{ d }}d
+          </button>
+        }
+        <input class="chip-input chip-input-sm"
+               [value]="item.duration"
+               placeholder="custom"
+               (input)="onField('duration', $event)">
+      </div>
     </div>
-    <div class="med-field">
-      <label>Qty</label>
-      <input [value]="item.quantity"
-             placeholder="e.g. 10 tabs"
+    <div class="med-split med-split-qty">
+      <label class="med-row-label">Qty</label>
+      <input class="chip-input chip-input-qty"
+             [value]="item.quantity"
+             placeholder="auto"
              (input)="onField('quantity', $event)">
     </div>
   </div>

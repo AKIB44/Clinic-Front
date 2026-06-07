@@ -69,6 +69,20 @@ export const navItems: NavItem[] = [
     route: '/org-master/feature-flags',
     permissions: ['feature_flag.manage'],
   },
+  {
+    displayName: 'Staff Attributes',
+    iconName: 'shield-check',
+    bgcolor: 'primary',
+    route: '/org-master/staff-attrs',
+    permissions: ['staff.manage'],
+  },
+  {
+    displayName: 'Decision Log',
+    iconName: 'file-search',
+    bgcolor: 'accent',
+    route: '/org-master/decision-log',
+    permissions: ['audit.view'],
+  },
   // {
   //   displayName: 'Security (MFA)',
   //   iconName: 'shield-lock',

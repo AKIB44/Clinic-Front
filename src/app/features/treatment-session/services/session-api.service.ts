@@ -386,6 +386,13 @@ export class SessionApiService {
     );
   }
 
+  /** GET /sessions/:id/summary-pdf — presigned URL for the treatment summary + invoice PDF */
+  getSummaryPdf(sessionId: string): Observable<{ url: string; invoice_no: string | null }> {
+    return this.http.get<{ url: string; invoice_no: string | null }>(
+      `${this.base}/sessions/${sessionId}/summary-pdf`
+    );
+  }
+
   // ── T5 Surgical gating ─────────────────────────────────────────────────────
 
   /** GET /sessions/:id/consents */

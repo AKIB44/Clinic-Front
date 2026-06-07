@@ -11,7 +11,6 @@ import {
 } from './auth.models';
 import { AuthStorageService } from './auth-storage.service';
 import { PermissionService } from '../core/rbac/permission.service';
-import { BreakGlassService } from '../core/rbac/break-glass.service';
 import { FeatureFlagsService } from '../services/feature-flags.service';
 
 @Injectable({ providedIn: 'root' })
@@ -19,7 +18,6 @@ export class AuthService {
   private readonly http        = inject(HttpClient);
   private readonly authStorage = inject(AuthStorageService);
   private readonly permissions = inject(PermissionService);
-  private readonly breakGlass  = inject(BreakGlassService);
   private readonly featureFlags = inject(FeatureFlagsService);
   private readonly router      = inject(Router);
 
@@ -93,7 +91,6 @@ export class AuthService {
     const refreshToken = this.authStorage.getRefreshToken();
     this.authStorage.clearSession();
     this.permissions.clear();
-    this.breakGlass.clear();
     this._user.set(null);
     return this.http.post<void>(`${authApiConfig.baseUrl}/auth/logout`, {
       refresh_token: refreshToken,

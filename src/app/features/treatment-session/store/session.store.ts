@@ -26,10 +26,12 @@ import {
   emptyExamination,
 } from '../models/session.model';
 import { SessionApiService } from '../services/session-api.service';
+import { OfflineQueueService } from '../../../core/offline/offline-queue.service';
 
 @Injectable({ providedIn: 'root' })
 export class SessionStore {
-  private api = inject(SessionApiService);
+  private api     = inject(SessionApiService);
+  private offline = inject(OfflineQueueService);
 
   // ── Root session state ────────────────────────────────────────────────────
   readonly sessionId       = signal<SessionId | null>(null);
@@ -82,7 +84,9 @@ export class SessionStore {
   readonly variance         = signal<VarianceInfo | null>(null);
 
   // ── Offline sync state (EC-16) ────────────────────────────────────────────
-  readonly offlineQueueDepth = signal(0);
+  // Delegates to the app-wide offline queue so the seal-gate and the canvas
+  // "unsynced" pill reflect the real pending-replay count.
+  readonly offlineQueueDepth = this.offline.queueDepth;
 
   // ── Derived ───────────────────────────────────────────────────────────────
   readonly isSealed = computed(() => !!this.sealedAt());

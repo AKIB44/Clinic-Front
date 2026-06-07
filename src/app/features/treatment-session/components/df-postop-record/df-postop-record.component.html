@@ -1,4 +1,3 @@
-@if (shouldShow() || postop()) {
 <div class="postop-card">
 
   <!-- Header -->
@@ -43,6 +42,10 @@
   }
 
   <!-- Form -->
+  @if (store.isSealed() && !postop() && !showForm) {
+    <div class="postop-empty">No post-op record was added for this session.</div>
+  }
+
   @if (showForm) {
     <div class="postop-form">
 
@@ -243,4 +246,3 @@
   }
 
 </div>
-}

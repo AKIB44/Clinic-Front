@@ -1,0 +1,99 @@
+<div class="sa-wrap">
+  <div class="sa-header">
+    <div>
+      <h2 class="sa-title">
+        <i-tabler name="shield-check" size="22"></i-tabler>
+        Staff Access Attributes
+      </h2>
+      <p class="sa-sub">Tune ABAC attributes — specialty tags and discount cap.</p>
+    </div>
+  </div>
+
+  @if (error()) {
+    <div class="sa-banner sa-banner-err"><i-tabler name="alert-triangle" size="16"></i-tabler>{{ error() }}</div>
+  }
+  @if (toast()) {
+    <div class="sa-banner sa-banner-ok"><i-tabler name="check" size="16"></i-tabler>{{ toast() }}</div>
+  }
+
+  <div class="sa-grid">
+    <!-- ── Staff list ─────────────────────────────────────────── -->
+    <aside class="sa-list">
+      @if (loading() && !staff().length) {
+        <div class="sa-loading">
+          <mat-spinner diameter="22"></mat-spinner>
+          <span>Loading staff…</span>
+        </div>
+      } @else {
+        @for (s of staff(); track s.id) {
+          <button class="sa-row" [class.sa-row-on]="selectedId() === s.id"
+                  (click)="select(s.id)">
+            <span class="sa-avatar">{{ initials(s) }}</span>
+            <span class="sa-row-body">
+              <span class="sa-name">{{ fullName(s) }}</span>
+              <span class="sa-role">{{ s.role }}</span>
+            </span>
+          </button>
+        }
+      }
+    </aside>
+
+    <!-- ── Editor ──────────────────────────────────────────────── -->
+    <section class="sa-editor">
+      @if (!selected()) {
+        <div class="sa-empty">
+          <i-tabler name="user-cog" size="32"></i-tabler>
+          <p>Select a staff member to edit their attributes.</p>
+        </div>
+      } @else {
+        <div class="sa-section">
+          <h3 class="sa-section-title">{{ selected()!.first_name }} {{ selected()!.last_name }}</h3>
+          <p class="sa-section-meta">
+            {{ selected()!.email }} ·
+            <span class="sa-chip-mono">{{ selected()!.role }}</span> ·
+            hierarchy {{ selected()!.hierarchy_level }}
+          </p>
+        </div>
+
+        <!-- Specialty tags -->
+        <div class="sa-section">
+          <div class="sa-label">
+            <i-tabler name="tag" size="14"></i-tabler> Specialty tags
+          </div>
+          <p class="sa-hint">Drives <code>specialty_case.read.own_specialty</code> matching.</p>
+          <div class="sa-tags">
+            @for (tag of specialtyOptions; track tag) {
+              <button class="sa-tag"
+                      [class.sa-tag-on]="selectedTags().includes(tag)"
+                      (click)="toggleTag(tag)">
+                {{ tag.replace('_', ' ').toLowerCase() }}
+              </button>
+            }
+          </div>
+        </div>
+
+        <!-- Max discount -->
+        <div class="sa-section">
+          <div class="sa-label"><i-tabler name="percentage" size="14"></i-tabler> Max auto-approve discount</div>
+          <p class="sa-hint">Discounts above this require manager+ hierarchy. Hard cap (30 %) still applies.</p>
+          <div class="sa-slider-row">
+            <input class="sa-slider" type="range" min="0" max="30" step="0.5"
+                   [value]="d().max_discount_pct ?? 10"
+                   (input)="setField('max_discount_pct', +$any($event.target).value)">
+            <span class="sa-pct">{{ d().max_discount_pct ?? 10 }} %</span>
+          </div>
+        </div>
+
+        <div class="sa-actions">
+          <button mat-stroked-button (click)="reset()" [disabled]="pendingId() === selectedId()">
+            Reset
+          </button>
+          <button class="sa-save" [disabled]="pendingId() === selectedId()" (click)="save()">
+            @if (pendingId() === selectedId()) { <mat-spinner diameter="16"></mat-spinner> }
+            Save attributes
+          </button>
+        </div>
+      }
+    </section>
+  </div>
+</div>

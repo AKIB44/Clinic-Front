@@ -28,13 +28,6 @@
     </div>
 
     <div class="sc-topbar-right">
-      @if (store.offlineQueueDepth() > 0) {
-        <div class="sc-offline-pill" title="{{ store.offlineQueueDepth() }} change(s) pending sync">
-          <i-tabler name="wifi-off" size="13"></i-tabler>
-          {{ store.offlineQueueDepth() }} unsynced
-        </div>
-      }
-
       @if (!store.isSealed() && store.sessionId()) {
         @if (store.status() === 'PAUSED') {
           <button mat-stroked-button (click)="resumeSession()" [disabled]="pausing()" class="sc-action-btn">
@@ -55,8 +48,7 @@
         @if (store.status() !== 'PAUSED') {
           <button mat-flat-button color="warn"
                   class="sc-end-btn"
-                  [disabled]="!store.canEndTreatment()"
-                  [title]="store.canEndTreatment() ? 'End treatment session' : 'Complete or abandon all in-progress services first'"
+                  [title]="store.canEndTreatment() ? 'End treatment session' : 'Click to see what needs to be resolved'"
                   (click)="openEndTreatment()">
             <i-tabler name="flag-check" size="15"></i-tabler> End Treatment
           </button>

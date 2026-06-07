@@ -23,8 +23,8 @@ import { AppHorizontalHeaderComponent } from './horizontal/header/header.compone
 import { AppHorizontalSidebarComponent } from './horizontal/sidebar/sidebar.component';
 import { AppBreadcrumbComponent } from './shared/breadcrumb/breadcrumb.component';
 import { CustomizerComponent } from './shared/customizer/customizer.component';
-import { BreakGlassBannerComponent } from './shared/break-glass-banner/break-glass-banner.component';
 import { VoiceAssistantComponent } from '../../components/voice-assistant/voice-assistant.component';
+import { OfflineQueueService } from '../../core/offline/offline-queue.service';
 
 const MOBILE_VIEW = 'screen and (max-width: 768px)';
 const TABLET_VIEW = 'screen and (min-width: 769px) and (max-width: 1024px)';
@@ -62,17 +62,32 @@ interface quicklinks {
     AppHorizontalSidebarComponent,
     AppBreadcrumbComponent,
     CustomizerComponent,
-    BreakGlassBannerComponent,
     VoiceAssistantComponent,
   ],
   templateUrl: './full.component.html',
-  styleUrls: [],
+  styles: [`
+    .df-offline-banner {
+      position: fixed; top: 0; left: 0; right: 0; z-index: 1200;
+      display: flex; align-items: center; justify-content: center; gap: 8px;
+      padding: 6px 16px; font-size: 13px; font-weight: 500; line-height: 1.3;
+      box-shadow: 0 1px 4px rgba(0,0,0,.15);
+    }
+    .df-offline-banner--off  { background: #b91c1c; color: #fff; }
+    .df-offline-banner--sync { background: #0D7A5F; color: #fff; }
+    .df-offline-count {
+      background: rgba(255,255,255,.22); border-radius: 10px;
+      padding: 1px 8px; font-size: 12px;
+    }
+    .df-spin { animation: df-spin 1s linear infinite; }
+    @keyframes df-spin { to { transform: rotate(360deg); } }
+  `],
   encapsulation: ViewEncapsulation.None,
 })
 export class FullComponent implements OnInit {
   private rbac        = inject(RbacService);
   private authService = inject(AuthService);
   private permissions = inject(PermissionService);
+  readonly offline    = inject(OfflineQueueService);
 
   get loggedInUserName(): string {
     const user = this.authService.getUser();
@@ -297,6 +312,12 @@ export class FullComponent implements OnInit {
       .pipe(filter((event) => event instanceof NavigationEnd))
       .subscribe((e) => {
         this.content.scrollTo({ top: 0 });
+        // Pick up newly-granted permissions when the user navigates after an
+        // admin grants a role — avoids the "logged in but missing menu" trap.
+        if (this.authService.getUser()) {
+          const clinicId = this.authService.getActiveClinicId();
+          this.permissions.refresh(clinicId ?? undefined).catch(() => { /* ignore */ });
+        }
       });
   }
 

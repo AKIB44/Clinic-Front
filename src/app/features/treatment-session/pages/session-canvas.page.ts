@@ -1,5 +1,5 @@
 import {
-  Component, OnInit, OnDestroy, inject, signal, computed, ChangeDetectionStrategy,
+  Component, OnInit, OnDestroy, inject, signal, computed, effect, ChangeDetectionStrategy,
 } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { CommonModule } from '@angular/common';
@@ -27,6 +27,7 @@ import { DfSessionBlockComponent } from '../components/df-session-block/df-sessi
 import { forkJoin, of, switchMap } from 'rxjs';
 import { catchError } from 'rxjs/operators';
 import { ToastService } from '../../../services/toast.service';
+import { OfflineQueueService } from '../../../core/offline/offline-queue.service';
 import type { BlockStatus } from '../components/df-session-block/df-session-block.component';
 
 export interface ProgressStep {
@@ -62,6 +63,19 @@ export class SessionCanvasPage implements OnInit, OnDestroy {
   private api     = inject(SessionApiService);
   private dialog  = inject(MatDialog);
   private toast   = inject(ToastService);
+  private offline = inject(OfflineQueueService);
+
+  private sessionId = '';
+  private _lastSync = 0;
+
+  // Re-hydrate after the offline queue drains so offline-created data appears.
+  private _reloadOnSync = effect(() => {
+    const ts = this.offline.lastSyncedAt();
+    if (ts && ts !== this._lastSync && this.sessionId) {
+      this._lastSync = ts;
+      this.loadSession(this.sessionId);
+    }
+  });
 
   readonly pausing   = signal(false);
   readonly reopening = signal(false);
@@ -179,7 +193,14 @@ export class SessionCanvasPage implements OnInit, OnDestroy {
   ngOnInit(): void {
     this._timer = setInterval(() => this._tick.set(Date.now()), 1000);
 
-    const sessionId = this.route.snapshot.paramMap.get('sessionId') ?? '';
+    this.sessionId = this.route.snapshot.paramMap.get('sessionId') ?? '';
+    this.loadSession(this.sessionId);
+  }
+
+  /** Re-hydrate the whole session from the server. Called on init and again
+   *  after the offline queue drains, so offline-created data appears. */
+  private loadSession(sessionId: string): void {
+    if (!sessionId) return;
     this.store.loading.set(true);
     this.store.error.set(null);
 

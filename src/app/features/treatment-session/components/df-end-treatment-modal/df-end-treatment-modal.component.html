@@ -51,11 +51,14 @@
           </div>
           <div class="etm-field etm-field--required">
             <label>Variance reason</label>
-            <textarea [(ngModel)]="varianceReason" rows="2"
+            <textarea [ngModel]="varianceReason()" (ngModelChange)="varianceReason.set($event)"
+                      rows="2"
                       placeholder="Explain why charges exceeded the accepted estimate…"></textarea>
           </div>
           <label class="etm-check">
-            <input type="checkbox" [(ngModel)]="patientAcked">
+            <input type="checkbox"
+                   [ngModel]="patientAcked()"
+                   (ngModelChange)="patientAcked.set($event)">
             <span>Patient has been informed of the variance</span>
           </label>
         }
@@ -94,7 +97,7 @@
     @if (failures().length === 0) {
       <button mat-flat-button color="primary"
               [disabled]="sealing() || varianceBlocked()"
-              [title]="varianceBlocked() ? 'Provide a variance reason first' : ''"
+              [title]="varianceBlocked() ? 'Provide a variance reason and confirm patient is informed' : ''"
               (click)="seal()">
         @if (sealing()) {
           <mat-spinner diameter="18" style="display:inline-block;margin-right:8px"></mat-spinner>

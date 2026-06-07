@@ -1,0 +1,111 @@
+<div class="dl-wrap">
+  <div class="dl-header">
+    <div>
+      <h2 class="dl-title">
+        <i-tabler name="file-search" size="22"></i-tabler>
+        Access Decision Log
+      </h2>
+      <p class="dl-sub">Every authorize() decision in the last 90 days.</p>
+    </div>
+    <button mat-stroked-button (click)="search()" [disabled]="loading()">
+      <i-tabler name="refresh" size="16"></i-tabler>
+      Refresh
+    </button>
+  </div>
+
+  <div class="dl-stats">
+    <div class="dl-stat dl-stat-permit">
+      <span class="dl-stat-num">{{ statsMap()['PERMIT'] || 0 }}</span>
+      <span class="dl-stat-lbl">Permits</span>
+    </div>
+    <div class="dl-stat dl-stat-deny">
+      <span class="dl-stat-num">{{ statsMap()['DENY'] || 0 }}</span>
+      <span class="dl-stat-lbl">Denies</span>
+    </div>
+  </div>
+
+  <div class="dl-filters">
+    <select class="dl-input" [value]="filters().decision ?? ''"
+            (change)="setFilter('decision', $any($event.target).value || undefined)">
+      <option value="">All decisions</option>
+      <option value="PERMIT">Permit</option>
+      <option value="DENY">Deny</option>
+    </select>
+    <select class="dl-input" [value]="filters().resource_type ?? ''"
+            (change)="setFilter('resource_type', $any($event.target).value || undefined)">
+      <option value="">All resources</option>
+      @for (r of resourceOptions; track r) { <option [value]="r">{{ r }}</option> }
+    </select>
+    <select class="dl-input" [value]="filters().action ?? ''"
+            (change)="setFilter('action', $any($event.target).value || undefined)">
+      <option value="">All actions</option>
+      @for (a of actionOptions; track a) { <option [value]="a">{{ a }}</option> }
+    </select>
+    <button class="dl-btn-primary" (click)="search()">Apply</button>
+    <button class="dl-btn-ghost"   (click)="reset()">Reset</button>
+  </div>
+
+  @if (error()) {
+    <div class="dl-banner dl-banner-err">
+      <i-tabler name="alert-triangle" size="16"></i-tabler> {{ error() }}
+    </div>
+  }
+
+  @if (loading() && !entries().length) {
+    <div class="dl-loading">
+      <mat-spinner diameter="28"></mat-spinner>
+      <span>Searching…</span>
+    </div>
+  } @else if (!entries().length) {
+    <div class="dl-empty">
+      <i-tabler name="search-off" size="32"></i-tabler>
+      <p>No decisions match the current filters.</p>
+    </div>
+  } @else {
+    <div class="dl-table">
+      <div class="dl-row dl-row-head">
+        <span>Decision</span>
+        <span>User</span>
+        <span>Resource</span>
+        <span>Action</span>
+        <span>Policy</span>
+        <span>When</span>
+      </div>
+      @for (e of entries(); track e.id) {
+        <button class="dl-row"
+                [class.dl-row-deny]="e.decision === 'DENY'"
+                [class.dl-row-open]="expanded() === e.id"
+                (click)="toggleRow(e.id)">
+          <span>
+            <span class="dl-pill dl-pill-{{ e.decision.toLowerCase() }}">
+              {{ e.decision }}
+            </span>
+          </span>
+          <span class="dl-user">
+            <span class="dl-user-name">{{ e.user_name || e.user_email || e.user_id.substring(0,8) }}</span>
+            <span class="dl-user-role">{{ e.role }}</span>
+          </span>
+          <span class="dl-mono">{{ e.resource_type }}</span>
+          <span class="dl-mono">{{ e.action }}</span>
+          <span class="dl-mono dl-policy">{{ e.policy_name }}</span>
+          <span class="dl-when">{{ e.decided_at | date:'d MMM, h:mm:ss a' }}</span>
+        </button>
+        @if (expanded() === e.id) {
+          <div class="dl-detail">
+            <div class="dl-detail-row"><span>Resource ID</span><code>{{ e.resource_id || '—' }}</code></div>
+            <div class="dl-detail-row"><span>IP</span><code>{{ e.ip_address || '—' }}</code></div>
+            @if (e.reason) {
+              <div class="dl-detail-row"><span>Reason</span><span>{{ e.reason }}</span></div>
+            }
+            @if (e.attributes) {
+              <div class="dl-detail-row dl-detail-attrs">
+                <span>Attributes</span>
+                <pre>{{ e.attributes | json }}</pre>
+              </div>
+            }
+          </div>
+        }
+      }
+    </div>
+  }
+</div>

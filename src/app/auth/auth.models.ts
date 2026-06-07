@@ -1,4 +1,16 @@
-export type AppRole = 'admin' | 'doctor' | 'receptionist';
+export type AppRole =
+  | 'super_admin'
+  | 'admin'
+  | 'clinic_admin'
+  | 'org_admin'
+  | 'manager'
+  | 'doctor'
+  | 'hygienist'
+  | 'assistant'
+  | 'reception'
+  | 'receptionist'
+  | 'lab_tech'
+  | 'patient';
 export type PermissionScope = 'own' | 'clinic' | 'org' | 'platform';
 
 export interface ClinicRef {
@@ -40,7 +52,26 @@ export interface LoginResponse {
 
 export interface PermissionsResponse {
   permissions: Record<string, PermissionGrant>;
+  // ABAC manifest (PRD §9.1) — optional so older backends still parse.
+  role?:            string;
+  hierarchyLevel?:  number;
+  specialtyTags?:   string[];
+  branchId?:        string | null;
+  actions?:         Record<string, string[]>;
+  fieldVisibility?: Record<string, string[]>;
 }
+
+export type AbacAction =
+  | 'read' | 'create' | 'update' | 'delete'
+  | 'export' | 'seal' | 'reopen'
+  | 'approve_discount'
+  | 'assign' | 'transfer' | 'archive';
+
+export type AbacResource =
+  | 'session' | 'patient' | 'clinical_note' | 'examination' | 'diagnosis'
+  | 'prescription' | 'charge_line' | 'payment' | 'invoice'
+  | 'service_performed' | 'booking' | 'specialty_case' | 'treatment_plan'
+  | 'inventory_item' | 'stock_movement' | 'lab_order';
 
 export interface SwitchClinicResponse {
   access_token: string;
@@ -51,16 +82,6 @@ export interface StepUpResponse {
   access_token: string;
 }
 
-export interface BreakGlassRequest {
-  reason: string;
-  durationMinutes?: number;
-}
-
-export interface BreakGlassResponse {
-  access_token: string;
-  session_id: string;
-  expires_at: string;
-}
 
 export interface OtpRequestResponse {
   sent: boolean;

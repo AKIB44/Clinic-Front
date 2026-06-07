@@ -10,6 +10,7 @@ import { catchError, filter, switchMap, take, finalize } from 'rxjs/operators';
 import { AuthStorageService } from './auth-storage.service';
 import { AuthService } from './auth.service';
 import { Router } from '@angular/router';
+import { ToastService } from '../services/toast.service';
 
 let isRefreshing = false;
 const refreshDone$ = new BehaviorSubject<string | null>(null);
@@ -31,20 +32,32 @@ function isPublicAuthRequest(req: HttpRequest<unknown>): boolean {
   );
 }
 
+function showForbiddenToast(toast: ToastService, err: HttpErrorResponse) {
+  const msg = err.error?.message
+    || "You don't have permission for that action. Ask your admin if you need access.";
+  toast.error(msg);
+}
+
 // Retry the request with a known-good token. If the retry itself fails with
-// 401/403, treat it as a permissions problem (not a session problem) and
-// navigate to the forbidden page instead of clearing the session.
+// 401/403, surface it as a toast instead of stranding the user on a forbidden
+// page they can't get out of.
 function retryWithToken(
   req: HttpRequest<unknown>,
   next: HttpHandlerFn,
   token: string,
   clinicId: string | null,
   router: Router,
+  toast: ToastService,
 ) {
   return next(addAuthHeaders(req, token, clinicId)).pipe(
     catchError((retryErr: HttpErrorResponse) => {
-      if (retryErr.status === 401 || retryErr.status === 403) {
-        router.navigate(['/authentication/forbidden']);
+      if (retryErr.status === 403) {
+        showForbiddenToast(toast, retryErr);
+        return throwError(() => retryErr);
+      }
+      if (retryErr.status === 401) {
+        // Session genuinely dead on retry — bounce to login.
+        router.navigate(['/authentication/login']);
         return EMPTY;
       }
       return throwError(() => retryErr);
@@ -59,6 +72,7 @@ export const authInterceptor: HttpInterceptorFn = (
   const storage     = inject(AuthStorageService);
   const authService = inject(AuthService);
   const router      = inject(Router);
+  const toast       = inject(ToastService);
 
   const token    = storage.getAccessToken();
   const clinicId = authService.getActiveClinicId();
@@ -70,15 +84,18 @@ export const authInterceptor: HttpInterceptorFn = (
   return next(authedReq).pipe(
     catchError((err: HttpErrorResponse) => {
       // Pass non-401 errors through (components handle 4xx/5xx themselves).
-      // Exception: 403 → forbidden page; unless clinic_inactive → login with reason.
+      // Exception: 403 → friendly toast; clinic_inactive is a session problem
+      // and goes to login. All other 403s we toast AND re-throw so the
+      // component's own error handler can flip its loading flag and render
+      // a "no access" state instead of being stuck on a spinner.
       if (err.status === 403) {
         if (err.error?.error === 'clinic_inactive') {
           storage.clearSession();
           router.navigate(['/authentication/login'], { queryParams: { reason: 'clinic_inactive' } });
-        } else {
-          router.navigate(['/authentication/forbidden']);
+          return EMPTY;
         }
-        return EMPTY;
+        showForbiddenToast(toast, err);
+        return throwError(() => err);
       }
       if (err.status !== 401) return throwError(() => err);
       if (isPublicAuthRequest(req)) return throwError(() => err);
@@ -106,7 +123,7 @@ export const authInterceptor: HttpInterceptorFn = (
       // with the current (already-refreshed) token; no second refresh needed.
       const currentToken = storage.getAccessToken();
       if (currentToken && currentToken !== sentToken) {
-        return retryWithToken(req, next, currentToken, clinicId, router);
+        return retryWithToken(req, next, currentToken, clinicId, router, toast);
       }
 
       const refreshToken = storage.getRefreshToken();
@@ -128,7 +145,7 @@ export const authInterceptor: HttpInterceptorFn = (
               router.navigate(['/authentication/login']);
               return EMPTY;
             }
-            return retryWithToken(req, next, newToken, clinicId, router);
+            return retryWithToken(req, next, newToken, clinicId, router, toast);
           })
         );
       }
@@ -139,7 +156,7 @@ export const authInterceptor: HttpInterceptorFn = (
       return authService.refresh(refreshToken).pipe(
         switchMap((res) => {
           refreshDone$.next(res.access_token);
-          return retryWithToken(req, next, res.access_token, clinicId, router);
+          return retryWithToken(req, next, res.access_token, clinicId, router, toast);
         }),
         catchError((refreshErr: HttpErrorResponse) => {
           storage.clearSession();

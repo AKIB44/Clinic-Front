@@ -12,8 +12,6 @@ import { MatMenuModule } from '@angular/material/menu';
 import { MatButtonModule } from '@angular/material/button';
 import { MatSidenavModule } from '@angular/material/sidenav';
 import { AuthService } from 'src/app/auth/auth.service';
-import { BreakGlassService } from 'src/app/core/rbac/break-glass.service';
-import { BreakGlassDialogComponent } from 'src/app/core/rbac/break-glass-dialog/break-glass-dialog.component';
 import { ClinicSwitcherComponent } from 'src/app/core/tenant/clinic-switcher.component';
 import { PermissionService } from 'src/app/core/rbac/permission.service';
 import { InventoryAlertsService } from 'src/app/services/inventory-alerts.service';
@@ -33,7 +31,6 @@ interface QuickLink { id: number; title: string; link: string; }
   encapsulation: ViewEncapsulation.None,
 })
 export class HeaderComponent implements OnInit {
-  readonly bgService     = inject(BreakGlassService);
   private authService    = inject(AuthService);
   private perms          = inject(PermissionService);
   readonly alertsSvc     = inject(InventoryAlertsService);
@@ -84,10 +81,6 @@ export class HeaderComponent implements OnInit {
     if (this.canSeeInventoryAlerts) {
       this.alertsSvc.refresh();
     }
-  }
-
-  openBreakGlass(): void {
-    this.dialog.open(BreakGlassDialogComponent, { width: '480px', disableClose: true });
   }
 
   logout(): void {

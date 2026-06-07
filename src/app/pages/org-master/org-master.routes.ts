@@ -27,5 +27,15 @@ export const OrgMasterRoutes: Routes = [
     loadComponent: () => import('./feature-flags/feature-flags.component').then(m => m.FeatureFlagsAdminComponent),
     canActivate: [permissionGuard('feature_flag.manage')],
   },
+  {
+    path: 'staff-attrs',
+    loadComponent: () => import('./staff-attrs/staff-attrs.component').then(m => m.StaffAttrsComponent),
+    canActivate: [permissionGuard('staff.manage')],
+  },
+  {
+    path: 'decision-log',
+    loadComponent: () => import('./decision-log/decision-log.component').then(m => m.DecisionLogComponent),
+    canActivate: [permissionGuard('audit.view')],
+  },
   { path: '', redirectTo: 'hr', pathMatch: 'full' },
 ];
