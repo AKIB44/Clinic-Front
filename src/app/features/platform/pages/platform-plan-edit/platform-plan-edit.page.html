@@ -1,0 +1,104 @@
+<div class="pe-wrap">
+  <div class="pe-head">
+    <button mat-icon-button (click)="cancel()" title="Back">
+      <i-tabler name="arrow-left" class="icon-20"></i-tabler>
+    </button>
+    <h1 class="pe-title">{{ isEdit() ? 'Edit plan' : 'New plan' }}</h1>
+  </div>
+
+  @if (loading()) {
+    <div class="pe-state"><mat-spinner diameter="28"></mat-spinner></div>
+  } @else {
+    <form class="pe-form" (ngSubmit)="save()">
+      <!-- Identity -->
+      <section class="pe-card">
+        <h2 class="pe-sec">Identity</h2>
+        <div class="pe-grid">
+          <label class="pe-field">
+            <span>Display name *</span>
+            <input matInput name="display_name" [(ngModel)]="form.display_name" placeholder="Pro" />
+          </label>
+          <label class="pe-field">
+            <span>Slug * <em>(immutable)</em></span>
+            <input matInput name="slug" [(ngModel)]="form.slug" [disabled]="isEdit()"
+                   placeholder="pro" pattern="[a-z0-9_]+" />
+          </label>
+          <label class="pe-field pe-field--full">
+            <span>Description</span>
+            <input matInput name="description" [(ngModel)]="form.description"
+                   placeholder="Full-featured with specialty modules" />
+          </label>
+        </div>
+      </section>
+
+      <!-- Pricing -->
+      <section class="pe-card">
+        <h2 class="pe-sec">Pricing</h2>
+        <div class="pe-grid">
+          <label class="pe-field">
+            <span>Monthly price (₹) *</span>
+            <input matInput type="number" min="0" name="price" [(ngModel)]="form.price_monthly_rupees" placeholder="5499" />
+          </label>
+          <label class="pe-field">
+            <span>Billing cycle</span>
+            <select matNativeControl name="cycle" [(ngModel)]="form.billing_cycle">
+              <option value="MONTHLY">Monthly</option>
+              <option value="QUARTERLY">Quarterly</option>
+              <option value="YEARLY">Yearly</option>
+            </select>
+          </label>
+          <label class="pe-field">
+            <span>GST %</span>
+            <input matInput type="number" min="0" max="100" name="gst" [(ngModel)]="form.gst_pct" />
+          </label>
+        </div>
+      </section>
+
+      <!-- Limits -->
+      <section class="pe-card">
+        <h2 class="pe-sec">Limits <em>(blank = unlimited)</em></h2>
+        <div class="pe-grid">
+          <label class="pe-field"><span>Max staff</span>
+            <input matInput type="number" min="0" name="max_staff" [(ngModel)]="form.max_staff" /></label>
+          <label class="pe-field"><span>Max patients</span>
+            <input matInput type="number" min="0" name="max_patients" [(ngModel)]="form.max_patients" /></label>
+          <label class="pe-field"><span>Max daily appts</span>
+            <input matInput type="number" min="0" name="max_appts" [(ngModel)]="form.max_daily_appointments" /></label>
+          <label class="pe-field"><span>Storage (GB)</span>
+            <input matInput type="number" min="0" name="max_storage" [(ngModel)]="form.max_storage_gb" /></label>
+        </div>
+      </section>
+
+      <!-- Features -->
+      <section class="pe-card">
+        <h2 class="pe-sec">Included features</h2>
+        <df-plan-feature-picker [selected]="form.features_included" (selectedChange)="onFeatures($event)">
+        </df-plan-feature-picker>
+      </section>
+
+      <!-- Lifecycle -->
+      <section class="pe-card">
+        <h2 class="pe-sec">Lifecycle</h2>
+        <div class="pe-grid">
+          <label class="pe-field"><span>Trial days</span>
+            <input matInput type="number" min="0" max="90" name="trial" [(ngModel)]="form.trial_days" /></label>
+          <label class="pe-field"><span>Grace days</span>
+            <input matInput type="number" min="0" max="60" name="grace" [(ngModel)]="form.grace_period_days" /></label>
+        </div>
+        <div class="pe-toggles">
+          <label class="pe-check"><input type="checkbox" name="is_active" [(ngModel)]="form.is_active" /> Active</label>
+          <label class="pe-check"><input type="checkbox" name="is_visible" [(ngModel)]="form.is_visible" /> Visible on pricing page</label>
+          <label class="pe-check"><input type="checkbox" name="is_custom" [(ngModel)]="form.is_custom" /> Custom (tenant-specific)</label>
+        </div>
+      </section>
+
+      <div class="pe-actions">
+        <button mat-stroked-button type="button" (click)="cancel()">Cancel</button>
+        <button mat-flat-button color="primary" type="submit" [disabled]="!valid || saving()">
+          @if (saving()) { <mat-spinner diameter="16" style="display:inline-block;margin-right:6px"></mat-spinner> }
+          {{ isEdit() ? 'Save changes' : 'Create plan' }}
+        </button>
+      </div>
+    </form>
+  }
+</div>

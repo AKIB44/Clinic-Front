@@ -32,118 +32,9 @@ export const navItems: NavItem[] = [
     permissions: ['patient.view'],
   },
 
-  // ── Org Master ─────────────────────────────────────────────────────────────
-  { navCap: 'Org Master', permissions: ['org.manage'] },
-  {
-    displayName: 'Human Resources',
-    iconName: 'users',
-    bgcolor: 'success',
-    route: '/org-master/hr',
-    permissions: ['org.manage'],
-  },
-  {
-    displayName: 'Role Management',
-    iconName: 'shield-check',
-    bgcolor: 'warning',
-    route: '/org-master/roles',
-    permissions: ['org.manage'],
-  },
-  {
-    displayName: 'Accounts',
-    iconName: 'report-money',
-    bgcolor: 'primary',
-    route: '/org-master/accounts',
-    permissions: ['org.manage'],
-  },
-  {
-    displayName: 'Release Notes',
-    iconName: 'sparkles',
-    bgcolor: 'accent',
-    route: '/org-master/release-notes',
-    permissions: ['org.manage'],
-  },
-  {
-    displayName: 'Feature Flags',
-    iconName: 'toggle-right',
-    bgcolor: 'warning',
-    route: '/org-master/feature-flags',
-    permissions: ['feature_flag.manage'],
-  },
-  {
-    displayName: 'Staff Attributes',
-    iconName: 'shield-check',
-    bgcolor: 'primary',
-    route: '/org-master/staff-attrs',
-    permissions: ['staff.manage'],
-  },
-  {
-    displayName: 'Decision Log',
-    iconName: 'file-search',
-    bgcolor: 'accent',
-    route: '/org-master/decision-log',
-    permissions: ['audit.view'],
-  },
-  // {
-  //   displayName: 'Security (MFA)',
-  //   iconName: 'shield-lock',
-  //   bgcolor: 'accent',
-  //   route: '/authentication/mfa-setup',
-  //   permissions: ['org.manage'],
-  // },
-
-  // ── Specialty Modules ──────────────────────────────────────────────────────
-  { navCap: 'Specialty Modules', permissions: ['specialty.view'] },
-  {
-    displayName: 'Orthodontics',
-    iconName: 'teeth',
-    bgcolor: 'primary',
-    permissions: ['specialty.view'],
-    children: [
-      { displayName: 'All Cases', route: '/specialty/orthodontic/cases',     iconName: 'list',  bgcolor: 'primary' },
-      { displayName: 'New Case',  route: '/specialty/orthodontic/cases/new', iconName: 'plus',  bgcolor: 'primary' },
-    ],
-  },
-  {
-    displayName: 'Implantology',
-    iconName: 'screw',
-    bgcolor: 'accent',
-    permissions: ['specialty.view'],
-    children: [
-      { displayName: 'All Cases',     route: '/specialty/implantology/cases',            iconName: 'list',   bgcolor: 'accent' },
-      { displayName: 'New Case',      route: '/specialty/implantology/cases/new',        iconName: 'plus',   bgcolor: 'accent' },
-      { displayName: 'Recall Search', route: '/specialty/implantology/recall-search',    iconName: 'search', bgcolor: 'accent' },
-    ],
-  },
-  {
-    displayName: 'Paediatric',
-    iconName: 'baby-carriage',
-    bgcolor: 'success',
-    permissions: ['specialty.view'],
-    children: [
-      { displayName: 'All Cases', route: '/specialty/paediatric/cases',     iconName: 'list', bgcolor: 'success' },
-      { displayName: 'New Case',  route: '/specialty/paediatric/cases/new', iconName: 'plus', bgcolor: 'success' },
-    ],
-  },
-  {
-    displayName: 'Endodontics',
-    iconName: 'tooth',
-    bgcolor: 'warning',
-    permissions: ['specialty.view'],
-    children: [
-      { displayName: 'All Cases', route: '/specialty/endodontic/cases',     iconName: 'list', bgcolor: 'warning' },
-      { displayName: 'New Case',  route: '/specialty/endodontic/cases/new', iconName: 'plus', bgcolor: 'warning' },
-    ],
-  },
-  {
-    displayName: 'TMJ & Orofacial',
-    iconName: 'brain',
-    bgcolor: 'error',
-    permissions: ['specialty.view'],
-    children: [
-      { displayName: 'All Cases', route: '/specialty/tmj/cases',     iconName: 'list', bgcolor: 'error' },
-      { displayName: 'New Case',  route: '/specialty/tmj/cases/new', iconName: 'plus', bgcolor: 'error' },
-    ],
-  },
+  // Org-admin & subscription tools (HR, Roles, Decision Log, Staff Attributes,
+  // Feature Flags, Release Notes, Billing, Subscriptions) now live in the header
+  // Shortcuts menu — see header.component.ts.
 
   // ── Operations ─────────────────────────────────────────────────────────────
   { navCap: 'Operations' },
@@ -238,6 +129,63 @@ export const navItems: NavItem[] = [
     route: '/master/activity-log',
     roles: ['admin'],
     permissions: ['audit.view'],
+  },
+
+  // ── Specialty Modules (single collapsible parent → 5 specialties) ──────────
+  { navCap: 'Specialty', permissions: ['specialty.view'] },
+  {
+    displayName: 'Specialty Modules',
+    iconName: 'dental',
+    bgcolor: 'primary',
+    permissions: ['specialty.view'],
+    children: [
+      {
+        displayName: 'Orthodontics',
+        iconName: 'teeth',
+        bgcolor: 'primary',
+        children: [
+          { displayName: 'All Cases', route: '/specialty/orthodontic/cases',     iconName: 'list',  bgcolor: 'primary' },
+          { displayName: 'New Case',  route: '/specialty/orthodontic/cases/new', iconName: 'plus',  bgcolor: 'primary' },
+        ],
+      },
+      {
+        displayName: 'Implantology',
+        iconName: 'screw',
+        bgcolor: 'accent',
+        children: [
+          { displayName: 'All Cases',     route: '/specialty/implantology/cases',         iconName: 'list',   bgcolor: 'accent' },
+          { displayName: 'New Case',      route: '/specialty/implantology/cases/new',     iconName: 'plus',   bgcolor: 'accent' },
+          { displayName: 'Recall Search', route: '/specialty/implantology/recall-search', iconName: 'search', bgcolor: 'accent' },
+        ],
+      },
+      {
+        displayName: 'Paediatric',
+        iconName: 'baby-carriage',
+        bgcolor: 'success',
+        children: [
+          { displayName: 'All Cases', route: '/specialty/paediatric/cases',     iconName: 'list', bgcolor: 'success' },
+          { displayName: 'New Case',  route: '/specialty/paediatric/cases/new', iconName: 'plus', bgcolor: 'success' },
+        ],
+      },
+      {
+        displayName: 'Endodontics',
+        iconName: 'tooth',
+        bgcolor: 'warning',
+        children: [
+          { displayName: 'All Cases', route: '/specialty/endodontic/cases',     iconName: 'list', bgcolor: 'warning' },
+          { displayName: 'New Case',  route: '/specialty/endodontic/cases/new', iconName: 'plus', bgcolor: 'warning' },
+        ],
+      },
+      {
+        displayName: 'TMJ & Orofacial',
+        iconName: 'brain',
+        bgcolor: 'error',
+        children: [
+          { displayName: 'All Cases', route: '/specialty/tmj/cases',     iconName: 'list', bgcolor: 'error' },
+          { displayName: 'New Case',  route: '/specialty/tmj/cases/new', iconName: 'plus', bgcolor: 'error' },
+        ],
+      },
+    ],
   },
 
 ];

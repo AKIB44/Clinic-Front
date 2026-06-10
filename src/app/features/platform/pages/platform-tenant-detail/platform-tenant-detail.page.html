@@ -1,0 +1,91 @@
+<div class="td-wrap">
+  <div class="td-head">
+    <button mat-icon-button (click)="back()" title="Back"><i-tabler name="arrow-left" class="icon-20"></i-tabler></button>
+    @if (detail(); as d) {
+      <h1 class="td-title">{{ d.clinic.name }}</h1>
+      <span class="td-badge td-badge--{{ d.clinic.tenant_status.toLowerCase() }}">{{ d.clinic.tenant_status | titlecase }}</span>
+    }
+  </div>
+
+  @if (loading()) {
+    <div class="td-state"><mat-spinner diameter="28"></mat-spinner></div>
+  } @else {
+   @if (detail(); as d) {
+    <!-- Actions -->
+    <div class="td-actions">
+      @if (d.clinic.tenant_status === 'TRIAL') {
+        <button mat-stroked-button [disabled]="busy()" (click)="extend()"><i-tabler name="clock-plus" class="icon-16"></i-tabler> Extend trial</button>
+      }
+      @if (d.clinic.tenant_status === 'SUSPENDED' || d.clinic.tenant_status === 'REVOKED') {
+        <button mat-flat-button color="primary" [disabled]="busy()" (click)="reactivate()"><i-tabler name="rotate" class="icon-16"></i-tabler> Reactivate</button>
+      } @else {
+        <button mat-stroked-button [disabled]="busy()" (click)="suspend()"><i-tabler name="player-pause" class="icon-16"></i-tabler> Suspend</button>
+      }
+      @if (d.clinic.tenant_status !== 'REVOKED') {
+        <button mat-stroked-button color="warn" [disabled]="busy()" (click)="revoke()"><i-tabler name="ban" class="icon-16"></i-tabler> Revoke</button>
+      }
+    </div>
+
+    <div class="td-grid">
+      <!-- Subscription -->
+      <section class="td-card">
+        <h2 class="td-card-title">Subscription</h2>
+        @if (d.subscription; as s) {
+          <div class="td-row"><span>Plan</span><strong>{{ s.plan_name || '—' }}</strong></div>
+          <div class="td-row"><span>Status</span><strong>{{ s.status | titlecase }}</strong></div>
+          <div class="td-row"><span>Amount / mo</span><strong>{{ inr(s.total_paise) }}</strong></div>
+          <div class="td-row"><span>Next billing</span><strong>{{ s.next_billing_date ? (s.next_billing_date | date:'dd MMM yyyy') : '—' }}</strong></div>
+        } @else {
+          <div class="td-empty">No subscription.</div>
+        }
+        @if (d.clinic.trial_ends_at) {
+          <div class="td-row"><span>Trial ends</span><strong>{{ d.clinic.trial_ends_at | date:'dd MMM yyyy' }}</strong></div>
+        }
+        @if (d.clinic.revoke_reason) {
+          <div class="td-row td-row--warn"><span>Revoked</span><strong>{{ d.clinic.revoke_reason }}</strong></div>
+        }
+      </section>
+
+      <!-- Usage -->
+      <section class="td-card">
+        <h2 class="td-card-title">Usage</h2>
+        <div class="td-usage">
+          <div class="td-usage-label">Staff <strong>{{ d.usage.staff_count }}{{ d.usage.max_staff ? ' / ' + d.usage.max_staff : '' }}</strong></div>
+          <div class="td-bar"><div class="td-bar-fill" [style.width.%]="usagePct(d.usage.staff_count, d.usage.max_staff)"></div></div>
+        </div>
+        <div class="td-usage">
+          <div class="td-usage-label">Patients <strong>{{ d.usage.patient_count }}{{ d.usage.max_patients ? ' / ' + d.usage.max_patients : '' }}</strong></div>
+          <div class="td-bar"><div class="td-bar-fill" [style.width.%]="usagePct(d.usage.patient_count, d.usage.max_patients)"></div></div>
+        </div>
+        @if (!d.usage.max_staff && !d.usage.max_patients) { <div class="td-empty">Unlimited plan.</div> }
+      </section>
+
+      <!-- Contacts -->
+      <section class="td-card">
+        <h2 class="td-card-title">Contacts</h2>
+        @if (d.contacts.length === 0) { <div class="td-empty">No contacts.</div> }
+        @for (c of d.contacts; track c.id) {
+          <div class="td-contact">
+            <strong>{{ c.name }}</strong> @if (c.role_title) { <span class="td-muted">· {{ c.role_title }}</span> }
+            <div class="td-muted">{{ c.phone }}{{ c.email ? ' · ' + c.email : '' }}</div>
+          </div>
+        }
+      </section>
+
+      <!-- Access log -->
+      <section class="td-card td-card--wide">
+        <h2 class="td-card-title">Access history</h2>
+        @if (d.access_log.length === 0) { <div class="td-empty">No history.</div> }
+        @for (l of d.access_log; track l.occurred_at) {
+          <div class="td-log">
+            <span class="td-log-action">{{ l.action }}</span>
+            <span class="td-muted">{{ l.from_status }} → {{ l.to_status }}</span>
+            @if (l.reason) { <span class="td-muted">· {{ l.reason }}</span> }
+            <span class="td-log-time">{{ l.occurred_at | date:'dd MMM, HH:mm' }}</span>
+          </div>
+        }
+      </section>
+    </div>
+   }
+  }
+</div>

@@ -1,0 +1,67 @@
+<div class="pl-wrap">
+  <div class="pl-head">
+    <div>
+      <h1 class="pl-title">Subscription Plans</h1>
+      <p class="pl-sub">DentaFlow's product catalog. Price edits apply to new subscriptions only.</p>
+    </div>
+    <button mat-flat-button color="primary" (click)="newPlan()">
+      <i-tabler name="plus" class="icon-18"></i-tabler> New plan
+    </button>
+  </div>
+
+  @if (store.loading()) {
+    <div class="pl-state"><mat-spinner diameter="28"></mat-spinner></div>
+  } @else if (store.error()) {
+    <div class="pl-state pl-error">{{ store.error() }}</div>
+  } @else if (store.plans().length === 0) {
+    <div class="pl-state pl-muted">No plans yet. Create your first plan.</div>
+  } @else {
+    <div class="pl-table-card">
+      <table class="pl-table">
+        <thead>
+          <tr>
+            <th>Plan</th>
+            <th>Price / mo</th>
+            <th>Cycle</th>
+            <th>Trial</th>
+            <th>Features</th>
+            <th>Status</th>
+            <th class="r">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (p of store.plans(); track p.id) {
+            <tr>
+              <td>
+                <div class="pl-name">{{ p.display_name }}
+                  @if (p.is_custom) { <span class="pl-tag">custom</span> }
+                </div>
+                <div class="pl-slug">{{ p.slug }}</div>
+              </td>
+              <td class="pl-price">{{ rupees(p.price_monthly_paise) }}</td>
+              <td>{{ p.billing_cycle | titlecase }}</td>
+              <td>{{ p.trial_days }}d</td>
+              <td>{{ p.features_included.length }}</td>
+              <td>
+                <span class="pl-badge" [class.pl-badge--on]="p.is_active" [class.pl-badge--off]="!p.is_active">
+                  {{ p.is_active ? 'Active' : 'Archived' }}
+                </span>
+                @if (!p.is_visible) { <span class="pl-tag">hidden</span> }
+              </td>
+              <td class="r">
+                <button mat-icon-button (click)="edit(p)" title="Edit">
+                  <i-tabler name="edit" class="icon-18"></i-tabler>
+                </button>
+                @if (p.is_active) {
+                  <button mat-icon-button (click)="archive(p)" title="Archive">
+                    <i-tabler name="archive" class="icon-18"></i-tabler>
+                  </button>
+                }
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  }
+</div>

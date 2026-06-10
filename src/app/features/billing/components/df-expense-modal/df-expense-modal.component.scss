@@ -1,0 +1,18 @@
+.em-title { font-size: 17px; font-weight: 700; margin: 0 0 16px; color: #0f172a; }
+
+.em-body {
+  display: grid; grid-template-columns: 1fr 1fr; gap: 14px 16px;
+  min-width: 420px;
+}
+.em-field {
+  display: flex; flex-direction: column; gap: 4px;
+  &--full { grid-column: 1 / -1; }
+  span { font-size: 12px; font-weight: 600; color: #475569; }
+  input, select {
+    border: 1px solid #cbd5e1; border-radius: 8px; padding: 8px 10px; font-size: 13px;
+  }
+}
+
+.em-actions {
+  display: flex; justify-content: flex-end; gap: 10px; margin-top: 20px;
+}

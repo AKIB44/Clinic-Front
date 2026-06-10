@@ -1,0 +1,11 @@
+<div class="fp-grid">
+  @for (f of features; track f.slug) {
+    <button type="button"
+            class="fp-chip"
+            [class.fp-chip--on]="isOn(f.slug)"
+            (click)="toggle(f.slug)">
+      <span class="fp-tick">{{ isOn(f.slug) ? '✓' : '+' }}</span>
+      {{ f.label }}
+    </button>
+  }
+</div>

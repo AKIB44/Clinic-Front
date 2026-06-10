@@ -25,6 +25,7 @@ import { AppBreadcrumbComponent } from './shared/breadcrumb/breadcrumb.component
 import { CustomizerComponent } from './shared/customizer/customizer.component';
 import { VoiceAssistantComponent } from '../../components/voice-assistant/voice-assistant.component';
 import { OfflineQueueService } from '../../core/offline/offline-queue.service';
+import { TenantStatusService } from '../../core/tenant/tenant-status.service';
 
 const MOBILE_VIEW = 'screen and (max-width: 768px)';
 const TABLET_VIEW = 'screen and (min-width: 769px) and (max-width: 1024px)';
@@ -81,6 +82,20 @@ interface quicklinks {
     .df-spin { animation: df-spin 1s linear infinite; }
     @keyframes df-spin { to { transform: rotate(360deg); } }
 
+    /* ── Trial / subscription status bar ───────────────────────────────── */
+    .df-tenant-bar {
+      position: relative; z-index: 1100;
+      display: flex; align-items: center; justify-content: center; gap: 10px;
+      padding: 7px 16px; font-size: 13px; font-weight: 500; line-height: 1.3;
+    }
+    .df-tenant-bar--trial   { background: #fffbeb; color: #92400e; border-bottom: 1px solid #fde68a; }
+    .df-tenant-bar--blocked { background: #7f1d1d; color: #fff; }
+    .df-tenant-cta {
+      font-weight: 700; text-decoration: underline; cursor: pointer;
+      color: inherit;
+    }
+    .df-tenant-bar--trial .df-tenant-cta { color: #92400e; }
+
     /* ── Animated "back online" greeting ───────────────────────────────── */
     .df-reconnect-overlay {
       position: fixed; inset: 0; z-index: 2000;
@@ -135,6 +150,7 @@ export class FullComponent implements OnInit {
   private authService = inject(AuthService);
   private permissions = inject(PermissionService);
   readonly offline    = inject(OfflineQueueService);
+  readonly tenant     = inject(TenantStatusService);
 
   get loggedInUserName(): string {
     const user = this.authService.getUser();
@@ -364,6 +380,7 @@ export class FullComponent implements OnInit {
         if (this.authService.getUser()) {
           const clinicId = this.authService.getActiveClinicId();
           this.permissions.refresh(clinicId ?? undefined).catch(() => { /* ignore */ });
+          this.tenant.refresh();
         }
       });
   }
@@ -380,6 +397,9 @@ export class FullComponent implements OnInit {
     };
     document.addEventListener('visibilitychange', this.visibilityHandler);
     window.addEventListener('focus', this.visibilityHandler);
+
+    // Trial / subscription status for the banner + read-only overlay.
+    if (this.authService.getUser()) this.tenant.refresh();
   }
 
   private visibilityHandler: (() => void) | null = null;

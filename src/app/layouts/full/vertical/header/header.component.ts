@@ -18,6 +18,8 @@ import { InventoryAlertsService } from 'src/app/services/inventory-alerts.servic
 
 interface AppLink   { id: number; img: string; title: string; subtitle: string; link: string; }
 interface QuickLink { id: number; title: string; link: string; }
+interface Shortcut      { title: string; subtitle: string; link: string; icon: string; accent: string; perm: string; }
+interface ShortcutGroup { label: string; items: Shortcut[]; }
 
 @Component({
   selector: 'app-header',
@@ -28,6 +30,47 @@ interface QuickLink { id: number; title: string; link: string; }
     MatButtonModule, ClinicSwitcherComponent,
   ],
   templateUrl: './header.component.html',
+  styles: [`
+    /* Let the dropdown grow wider than Material's default 280px cap. */
+    .mat-mdc-menu-panel.topbar-dd { max-width: min(94vw, 520px); }
+
+    .sc-shortcuts {
+      width: min(94vw, 520px);
+      max-height: min(72vh, 620px);
+      overflow-y: auto;
+      padding: 6px 0 10px;
+    }
+    .sc-group-label {
+      padding: 12px 18px 6px; font-size: 11px; font-weight: 700;
+      text-transform: uppercase; letter-spacing: .05em; color: #94a3b8;
+    }
+    /* Auto-fit columns: more on wide menus (shorter), fewer on small screens. */
+    .sc-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+      gap: 8px; padding: 0 12px;
+    }
+    .sc-card {
+      display: flex; flex-direction: column; align-items: center; text-align: center; gap: 6px;
+      padding: 12px 8px; border: 1px solid #eef2f6; border-radius: 12px;
+      text-decoration: none; transition: all .14s ease; cursor: pointer;
+    }
+    .sc-card:hover { border-color: #0d7a5f33; box-shadow: 0 6px 18px rgba(13,122,95,.12); transform: translateY(-2px); }
+    .sc-card-icon {
+      width: 44px; height: 44px; border-radius: 50%;
+      display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+    }
+    .sc-card-icon svg { width: 22px; height: 22px; }
+    .sc-card-title { margin: 0; font-size: 13px; font-weight: 700; color: #0f172a; line-height: 1.2; }
+    .sc-card-sub   { margin: 0; font-size: 10.5px; color: #94a3b8; line-height: 1.2; }
+
+    @media (max-width: 480px) {
+      .sc-grid { grid-template-columns: repeat(auto-fill, minmax(96px, 1fr)); gap: 6px; }
+      .sc-card { padding: 10px 6px; }
+      .sc-card-icon { width: 38px; height: 38px; }
+      .sc-card-icon svg { width: 19px; height: 19px; }
+    }
+  `],
   encapsulation: ViewEncapsulation.None,
 })
 export class HeaderComponent implements OnInit {
@@ -75,6 +118,41 @@ export class HeaderComponent implements OnInit {
 
   get canSeeInventoryAlerts(): boolean {
     return this.perms.has('inventory.adjust');
+  }
+
+  // ── Shortcuts dropdown (permission-gated) ───────────────────────────────────
+  private readonly allShortcutGroups: ShortcutGroup[] = [
+    {
+      label: 'Subscription Management',
+      items: [
+        { title: 'Dashboard',            subtitle: 'MRR & metrics',    link: '/platform/dashboard',     icon: 'chart-bar',     accent: 'info',    perm: 'platform.plan.manage' },
+        { title: 'Subscriptions',        subtitle: 'Plans per clinic', link: '/platform/subscriptions', icon: 'building-store', accent: 'primary', perm: 'platform.plan.manage' },
+        { title: 'Plans',                subtitle: 'Manage catalog',   link: '/platform/plans',         icon: 'receipt-2',     accent: 'success', perm: 'platform.plan.manage' },
+      ],
+    },
+    {
+      label: 'Administration',
+      items: [
+        { title: 'Billing',          subtitle: 'Revenue & expense', link: '/billing',                  icon: 'report-money', accent: 'success', perm: 'billing.view' },
+        { title: 'Human Resources',  subtitle: 'Staff & roles',     link: '/org-master/hr',            icon: 'users',        accent: 'primary', perm: 'org.manage' },
+        { title: 'Role Management',  subtitle: 'Roles & access',    link: '/org-master/roles',         icon: 'shield-lock',  accent: 'info',    perm: 'org.manage' },
+        { title: 'Staff Attributes', subtitle: 'Access attributes', link: '/org-master/staff-attrs',   icon: 'shield-check', accent: 'warning', perm: 'staff.manage' },
+        { title: 'Decision Log',     subtitle: 'Access audit',      link: '/org-master/decision-log',  icon: 'file-search',  accent: 'accent',  perm: 'audit.view' },
+        { title: 'Feature Flags',    subtitle: 'Toggle features',   link: '/org-master/feature-flags', icon: 'toggle-right', accent: 'accent',  perm: 'feature_flag.manage' },
+        { title: 'Release Notes',    subtitle: "What's new",        link: '/org-master/release-notes', icon: 'sparkles',     accent: 'error',   perm: 'org.manage' },
+      ],
+    },
+  ];
+
+  /** Groups with only the items the current user is permitted to see; empty groups dropped. */
+  get shortcutGroups(): ShortcutGroup[] {
+    return this.allShortcutGroups
+      .map((g) => ({ label: g.label, items: g.items.filter((i) => this.perms.has(i.perm)) }))
+      .filter((g) => g.items.length > 0);
+  }
+
+  get hasShortcuts(): boolean {
+    return this.shortcutGroups.length > 0;
   }
 
   ngOnInit(): void {

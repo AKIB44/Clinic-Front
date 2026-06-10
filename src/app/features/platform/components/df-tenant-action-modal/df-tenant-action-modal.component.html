@@ -1,0 +1,25 @@
+<h2 class="ta-title" mat-dialog-title>
+  {{ isExtend ? 'Extend trial' : 'Revoke access' }} — {{ data.clinicName }}
+</h2>
+
+<div class="ta-body" mat-dialog-content>
+  @if (isExtend) {
+    <label class="ta-field">
+      <span>Additional days (total trial capped at 30)</span>
+      <input type="number" min="1" max="30" [(ngModel)]="days" name="days" />
+    </label>
+  } @else {
+    <p class="ta-warn">This locks all users out and cancels the subscription. Data is retained.</p>
+    <label class="ta-field">
+      <span>Reason *</span>
+      <textarea rows="3" [(ngModel)]="reason" name="reason" placeholder="Why is access being revoked?"></textarea>
+    </label>
+  }
+</div>
+
+<div class="ta-actions" mat-dialog-actions align="end">
+  <button mat-stroked-button (click)="cancel()">Cancel</button>
+  <button mat-flat-button [color]="isExtend ? 'primary' : 'warn'" [disabled]="!valid" (click)="confirm()">
+    {{ isExtend ? 'Extend' : 'Revoke' }}
+  </button>
+</div>

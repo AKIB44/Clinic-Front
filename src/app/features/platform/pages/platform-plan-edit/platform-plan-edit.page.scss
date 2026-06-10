@@ -1,0 +1,42 @@
+.pe-wrap { padding: 20px 24px; max-width: 860px; }
+
+.pe-head { display: flex; align-items: center; gap: 8px; margin-bottom: 18px; }
+.pe-title { font-size: 20px; font-weight: 700; margin: 0; color: #0f172a; }
+
+.pe-state { padding: 40px; text-align: center; color: #64748b; }
+
+.pe-form { display: flex; flex-direction: column; gap: 16px; }
+
+.pe-card {
+  background: #fff; border: 1px solid #e2e8f0; border-radius: 12px; padding: 18px 20px;
+}
+.pe-sec {
+  font-size: 12px; text-transform: uppercase; letter-spacing: .05em;
+  color: #64748b; font-weight: 700; margin: 0 0 14px;
+  em { text-transform: none; letter-spacing: 0; font-weight: 400; color: #94a3b8; }
+}
+
+.pe-grid {
+  display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px 18px;
+}
+.pe-field {
+  display: flex; flex-direction: column; gap: 4px;
+  &--full { grid-column: 1 / -1; }
+  span { font-size: 12px; font-weight: 600; color: #475569;
+         em { font-weight: 400; color: #94a3b8; } }
+  input, select {
+    border: 1px solid #cbd5e1; border-radius: 8px; padding: 8px 10px;
+    font-size: 13px; background: #fff;
+    &:disabled { background: #f1f5f9; color: #94a3b8; }
+  }
+}
+
+.pe-toggles { display: flex; flex-wrap: wrap; gap: 18px; margin-top: 14px; }
+.pe-check {
+  display: inline-flex; align-items: center; gap: 6px; font-size: 13px; color: #475569;
+  input { width: 15px; height: 15px; }
+}
+
+.pe-actions {
+  display: flex; justify-content: flex-end; gap: 10px; padding-top: 4px;
+}

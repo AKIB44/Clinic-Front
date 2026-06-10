@@ -1,0 +1,58 @@
+<div class="db-wrap">
+  <h1 class="db-title">Subscription Dashboard</h1>
+  <p class="db-sub">Org-wide subscription health across all clinics.</p>
+
+  @if (loading()) {
+    <div class="db-state"><mat-spinner diameter="28"></mat-spinner></div>
+  } @else if (error()) {
+    <div class="db-state db-error">{{ error() }}</div>
+  } @else {
+   @if (metrics(); as m) {
+    <div class="db-cards">
+      <div class="db-card db-card--mrr">
+        <span class="db-label">MRR</span>
+        <span class="db-value">{{ inr(m.mrr_paise) }}</span>
+        <span class="db-meta">Active subscriptions · ex-GST</span>
+      </div>
+      <div class="db-card db-card--bill">
+        <span class="db-label">Billing / mo</span>
+        <span class="db-value">{{ inr(m.billing_paise) }}</span>
+        <span class="db-meta">Incl. GST</span>
+      </div>
+      <div class="db-card">
+        <span class="db-label">Active</span>
+        <span class="db-value">{{ m.counts.active }}</span>
+        <span class="db-meta">of {{ m.counts.total }} clinics</span>
+      </div>
+      <div class="db-card db-card--trial">
+        <span class="db-label">On trial</span>
+        <span class="db-value">{{ m.counts.trialing }}</span>
+      </div>
+      <div class="db-card db-card--susp">
+        <span class="db-label">Suspended / revoked</span>
+        <span class="db-value">{{ m.counts.suspended }}</span>
+      </div>
+    </div>
+
+    <section class="db-panel">
+      <h2 class="db-panel-title">Trials expiring soon (next 7 days)</h2>
+      @if (m.expiring_soon.length === 0) {
+        <div class="db-empty">No trials expiring soon.</div>
+      } @else {
+        <table class="db-table">
+          <thead><tr><th>Clinic</th><th>Days left</th><th class="r"></th></tr></thead>
+          <tbody>
+            @for (e of m.expiring_soon; track e.clinic_id) {
+              <tr>
+                <td>{{ e.clinic_name }}</td>
+                <td><span class="db-chip" [class.db-chip--urgent]="e.days_remaining <= 2">{{ e.days_remaining }}d</span></td>
+                <td class="r"><button mat-stroked-button (click)="openTenant(e.clinic_id)">View</button></td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      }
+    </section>
+   }
+  }
+</div>

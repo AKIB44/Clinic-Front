@@ -1,0 +1,30 @@
+.fp-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.fp-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  border: 1px solid #cbd5e1;
+  border-radius: 20px;
+  background: #fff;
+  color: #475569;
+  font-size: 12.5px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all .12s ease;
+
+  &:hover { border-color: #0d7a5f; }
+
+  &--on {
+    background: #0d7a5f;
+    border-color: #0d7a5f;
+    color: #fff;
+  }
+
+  .fp-tick { font-weight: 700; }
+}

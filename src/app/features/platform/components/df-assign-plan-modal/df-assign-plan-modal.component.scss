@@ -1,0 +1,16 @@
+.ap-title { font-size: 17px; font-weight: 700; margin: 0 0 12px; color: #0f172a; }
+.ap-body { min-width: 380px; }
+.ap-current { font-size: 13px; color: #475569; margin: 0 0 12px; }
+.ap-none { color: #94a3b8; }
+
+.ap-list { display: flex; flex-direction: column; gap: 8px; }
+.ap-opt {
+  display: flex; align-items: center; gap: 10px;
+  border: 1px solid #cbd5e1; border-radius: 10px; padding: 10px 12px; cursor: pointer;
+  &--on { border-color: #0d7a5f; background: #f0fdf9; }
+  input { accent-color: #0d7a5f; }
+}
+.ap-opt-name  { font-weight: 600; color: #0f172a; flex: 1; }
+.ap-opt-price { font-size: 12.5px; color: #0d7a5f; font-weight: 700; }
+
+.ap-actions { display: flex; justify-content: flex-end; gap: 10px; margin-top: 20px; }

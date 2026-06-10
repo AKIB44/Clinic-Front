@@ -1,0 +1,35 @@
+.td-wrap { padding: 20px 24px; max-width: 1000px; }
+.td-head { display: flex; align-items: center; gap: 10px; margin-bottom: 16px; }
+.td-title { font-size: 20px; font-weight: 700; margin: 0; color: #0f172a; }
+
+.td-badge { padding: 2px 10px; border-radius: 12px; font-size: 11px; font-weight: 700; background: #f1f5f9; color: #64748b; }
+.td-badge--active   { background: #dcfce7; color: #166534; }
+.td-badge--trial    { background: #dbeafe; color: #1e40af; }
+.td-badge--suspended,.td-badge--revoked,.td-badge--churned { background: #fee2e2; color: #991b1b; }
+
+.td-state { padding: 40px; text-align: center; color: #64748b; }
+
+.td-actions { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 18px; }
+
+.td-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+@media (max-width: 900px) { .td-grid { grid-template-columns: 1fr; } }
+.td-card { background: #fff; border: 1px solid #e2e8f0; border-radius: 12px; padding: 16px 18px; }
+.td-card--wide { grid-column: 1 / -1; }
+.td-card-title { font-size: 13px; font-weight: 700; color: #0f172a; margin: 0 0 12px; text-transform: uppercase; letter-spacing: .04em; }
+
+.td-row { display: flex; justify-content: space-between; padding: 5px 0; font-size: 13px; border-bottom: 1px solid #f8fafc; }
+.td-row span { color: #64748b; }
+.td-row--warn strong { color: #b91c1c; }
+.td-empty { color: #94a3b8; font-size: 13px; padding: 6px 0; }
+
+.td-usage { margin-bottom: 12px; }
+.td-usage-label { font-size: 12.5px; color: #475569; display: flex; justify-content: space-between; margin-bottom: 4px; }
+.td-bar { height: 7px; background: #f1f5f9; border-radius: 4px; overflow: hidden; }
+.td-bar-fill { height: 100%; background: #0d7a5f; }
+
+.td-contact { padding: 6px 0; font-size: 13px; border-bottom: 1px solid #f8fafc; }
+.td-muted { color: #94a3b8; font-size: 12px; }
+
+.td-log { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; padding: 6px 0; font-size: 12.5px; border-bottom: 1px solid #f8fafc; }
+.td-log-action { font-weight: 700; color: #0f172a; }
+.td-log-time { margin-left: auto; color: #94a3b8; font-size: 11.5px; }

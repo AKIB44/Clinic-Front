@@ -1,0 +1,24 @@
+<h2 class="ap-title" mat-dialog-title>Assign plan — {{ row.clinic_name }}</h2>
+
+<div class="ap-body" mat-dialog-content>
+  @if (row.plan_name) {
+    <p class="ap-current">Current: <strong>{{ row.plan_name }}</strong> ({{ row.status | titlecase }})</p>
+  } @else {
+    <p class="ap-current ap-none">No active subscription.</p>
+  }
+
+  <div class="ap-list">
+    @for (p of plans; track p.id) {
+      <label class="ap-opt" [class.ap-opt--on]="planId === p.id">
+        <input type="radio" name="plan" [value]="p.id" [(ngModel)]="planId" />
+        <span class="ap-opt-name">{{ p.display_name }}</span>
+        <span class="ap-opt-price">{{ inr(p.price_monthly_paise) }}/mo</span>
+      </label>
+    }
+  </div>
+</div>
+
+<div class="ap-actions" mat-dialog-actions align="end">
+  <button mat-stroked-button (click)="cancel()">Cancel</button>
+  <button mat-flat-button color="primary" [disabled]="!planId" (click)="confirm()">Assign</button>
+</div>

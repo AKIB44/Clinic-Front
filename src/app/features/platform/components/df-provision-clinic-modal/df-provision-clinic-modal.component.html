@@ -1,0 +1,41 @@
+<h2 class="pc-title" mat-dialog-title>New clinic — 14-day trial</h2>
+
+<div class="pc-body" mat-dialog-content>
+  <h3 class="pc-sec">Clinic</h3>
+  <div class="pc-grid">
+    <label class="pc-field pc-field--full"><span>Clinic name *</span>
+      <input [(ngModel)]="form.clinic_name" name="cn" /></label>
+    <label class="pc-field"><span>Phone *</span>
+      <input [(ngModel)]="form.phone" name="ph" /></label>
+    <label class="pc-field"><span>Email *</span>
+      <input [(ngModel)]="form.email" name="em" type="email" /></label>
+    <label class="pc-field"><span>City</span>
+      <input [(ngModel)]="form.city" name="ct" /></label>
+    <label class="pc-field"><span>Subdomain</span>
+      <input [(ngModel)]="form.subdomain" name="sd" placeholder="optional" /></label>
+  </div>
+
+  <h3 class="pc-sec">Owner login</h3>
+  <div class="pc-grid">
+    <label class="pc-field"><span>First name *</span>
+      <input [(ngModel)]="form.owner_first_name" name="ofn" /></label>
+    <label class="pc-field"><span>Last name</span>
+      <input [(ngModel)]="form.owner_last_name" name="oln" /></label>
+    <label class="pc-field"><span>Owner email *</span>
+      <input [(ngModel)]="form.owner_email" name="oem" type="email" /></label>
+    <label class="pc-field"><span>Temp password * (min 8)</span>
+      <input [(ngModel)]="form.owner_password" name="opw" type="text" /></label>
+  </div>
+
+  <h3 class="pc-sec">Trial plan</h3>
+  <label class="pc-field pc-field--full">
+    <select [(ngModel)]="form.plan_id" name="pl">
+      @for (p of plans; track p.id) { <option [value]="p.id">{{ p.display_name }} — ₹{{ p.price_monthly_paise / 100 }}/mo</option> }
+    </select>
+  </label>
+</div>
+
+<div class="pc-actions" mat-dialog-actions align="end">
+  <button mat-stroked-button (click)="cancel()">Cancel</button>
+  <button mat-flat-button color="primary" [disabled]="!valid" (click)="save()">Start trial</button>
+</div>

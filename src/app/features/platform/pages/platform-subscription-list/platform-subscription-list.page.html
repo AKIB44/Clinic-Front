@@ -1,0 +1,56 @@
+<div class="sl-wrap">
+  <div class="sl-head">
+    <div>
+      <h1 class="sl-title">Clinic Subscriptions</h1>
+      <p class="sl-sub">Every clinic in your organization and its DentaFlow plan.</p>
+    </div>
+    <div class="sl-head-right">
+      <div class="sl-total">
+        <span class="sl-total-label">Monthly subscription billing</span>
+        <span class="sl-total-value">{{ inr(store.subtotalPaise()) }}</span>
+      </div>
+      <button mat-flat-button color="primary" (click)="provisionClinic()">
+        <i-tabler name="plus" class="icon-18"></i-tabler> Add clinic (trial)
+      </button>
+    </div>
+  </div>
+
+  @if (store.loading()) {
+    <div class="sl-state"><mat-spinner diameter="28"></mat-spinner></div>
+  } @else if (store.error()) {
+    <div class="sl-state sl-error">{{ store.error() }}</div>
+  } @else if (store.subscriptions().length === 0) {
+    <div class="sl-state sl-muted">No clinics found in this organization.</div>
+  } @else {
+    <div class="sl-card">
+      <table class="sl-table">
+        <thead>
+          <tr><th>Clinic</th><th>Plan</th><th>Status</th><th class="r">Amount / mo</th><th>Next billing</th><th class="r">Actions</th></tr>
+        </thead>
+        <tbody>
+          @for (s of store.subscriptions(); track s.clinic_id) {
+            <tr>
+              <td class="sl-clinic">{{ s.clinic_name }}</td>
+              <td>{{ s.plan_name || '—' }}</td>
+              <td>
+                @if (s.status) {
+                  <span class="sl-badge sl-badge--{{ (s.status || '').toLowerCase() }}">{{ s.status | titlecase }}</span>
+                } @else {
+                  <span class="sl-badge sl-badge--none">No plan</span>
+                }
+              </td>
+              <td class="r">{{ inr(s.total_paise) }}</td>
+              <td>{{ s.next_billing_date ? (s.next_billing_date | date:'dd MMM yyyy') : '—' }}</td>
+              <td class="r">
+                <button mat-button (click)="view(s.clinic_id)">View</button>
+                <button mat-stroked-button (click)="assign(s)">
+                  {{ s.plan_id ? 'Change plan' : 'Assign plan' }}
+                </button>
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  }
+</div>

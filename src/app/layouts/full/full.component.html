@@ -39,6 +39,23 @@
   </div>
 }
 
+<!-- ============================================================== -->
+<!-- Trial / subscription status -->
+<!-- ============================================================== -->
+@if (tenant.isBlocked()) {
+  <div class="df-tenant-bar df-tenant-bar--blocked">
+    <i-tabler name="lock" class="icon-18"></i-tabler>
+    <span>Subscription inactive — this clinic is in read-only mode.</span>
+    <a routerLink="/platform/subscriptions" class="df-tenant-cta">Manage subscription</a>
+  </div>
+} @else if (tenant.isTrial()) {
+  <div class="df-tenant-bar df-tenant-bar--trial">
+    <i-tabler name="clock-hour-4" class="icon-18"></i-tabler>
+    <span>Trial — {{ tenant.daysRemaining() }} day{{ tenant.daysRemaining() === 1 ? '' : 's' }} remaining.</span>
+    <a routerLink="/platform/subscriptions" class="df-tenant-cta">Subscribe</a>
+  </div>
+}
+
 <mat-sidenav-container class="mainWrapper" autosize autoFocus [ngClass]="{
   'sidebarNav-mini':
     options.sidenavCollapsed &&

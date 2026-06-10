@@ -1,0 +1,50 @@
+.cb-wrap { padding: 20px 24px; }
+
+.cb-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; margin-bottom: 18px; }
+.cb-title { font-size: 20px; font-weight: 700; margin: 0; color: #0f172a; }
+.cb-sub   { font-size: 13px; color: #64748b; margin: 2px 0 0; }
+
+.cb-period { display: flex; gap: 6px; }
+.cb-period-btn {
+  padding: 6px 12px; border: 1px solid #cbd5e1; background: #fff; border-radius: 8px;
+  font-size: 12.5px; color: #475569; cursor: pointer;
+  &--on { background: #0d7a5f; border-color: #0d7a5f; color: #fff; }
+}
+
+.cb-state { padding: 16px; }
+.cb-error { color: #b91c1c; }
+
+.cb-cards { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin-bottom: 20px; }
+.cb-card {
+  background: #fff; border: 1px solid #e2e8f0; border-radius: 12px; padding: 16px 18px;
+  display: flex; flex-direction: column; gap: 4px;
+  border-left: 4px solid #94a3b8;
+  &--rev  { border-left-color: #0d7a5f; }
+  &--exp  { border-left-color: #f59e0b; }
+  &--net  { border-left-color: #2563eb; }
+  &--loss { border-left-color: #b91c1c; }
+}
+.cb-card-label { font-size: 11px; text-transform: uppercase; letter-spacing: .05em; color: #64748b; font-weight: 700; }
+.cb-card-value { font-size: 24px; font-weight: 700; color: #0f172a; }
+.cb-card-meta  { font-size: 11.5px; color: #94a3b8; }
+
+.cb-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+@media (max-width: 1100px) { .cb-grid, .cb-cards { grid-template-columns: 1fr; } }
+
+.cb-panel { background: #fff; border: 1px solid #e2e8f0; border-radius: 12px; padding: 16px 18px; }
+.cb-panel-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; }
+.cb-panel-title { font-size: 14px; font-weight: 700; color: #0f172a; margin: 0 0 10px; }
+.cb-panel-head .cb-panel-title { margin: 0; }
+
+.cb-empty { padding: 24px; text-align: center; color: #94a3b8; font-size: 13px; }
+
+.cb-table {
+  width: 100%; border-collapse: collapse; font-size: 12.5px;
+  th, td { padding: 8px 10px; text-align: left; border-bottom: 1px solid #f1f5f9; }
+  th { font-size: 10.5px; text-transform: uppercase; letter-spacing: .04em; color: #64748b; font-weight: 700; }
+  .r { text-align: right; }
+  tbody tr:last-child td { border-bottom: none; }
+}
+.cb-cat  { font-weight: 600; color: #0f172a; }
+.cb-desc { font-size: 11px; color: #94a3b8; }
+.cb-chip { background: #f1f5f9; color: #475569; border-radius: 10px; padding: 1px 8px; font-size: 11px; font-weight: 600; }

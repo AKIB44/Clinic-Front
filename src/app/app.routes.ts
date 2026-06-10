@@ -82,6 +82,20 @@ export const routes: Routes = [
           import('./pages/org-master/org-master.routes').then((m) => m.OrgMasterRoutes),
       },
       {
+        path: 'platform',
+        canActivate: [permissionGuard('platform.plan.manage')],
+        loadChildren: () =>
+          import('./features/platform/platform.routes').then((m) => m.PlatformRoutes),
+      },
+      {
+        path: 'billing',
+        canActivate: [permissionGuard('billing.view')],
+        loadComponent: () =>
+          import('./features/billing/pages/clinic-billing/clinic-billing.page').then(
+            (m) => m.ClinicBillingPage
+          ),
+      },
+      {
         path: 'treatment/:sessionId',
         canActivate: [permissionGuard('appointment.view')],
         loadComponent: () =>

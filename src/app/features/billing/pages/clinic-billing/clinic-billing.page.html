@@ -1,0 +1,98 @@
+<div class="cb-wrap">
+  <div class="cb-head">
+    <div>
+      <h1 class="cb-title">Billing</h1>
+      <p class="cb-sub">This clinic's revenue & expenses.</p>
+    </div>
+    <div class="cb-period">
+      @for (p of periods; track p.days) {
+        <button class="cb-period-btn" [class.cb-period-btn--on]="store.period() === p.days" (click)="setPeriod(p.days)">
+          {{ p.label }}
+        </button>
+      }
+    </div>
+  </div>
+
+  @if (store.error()) {
+    <div class="cb-state cb-error">{{ store.error() }}</div>
+  }
+
+  <!-- Summary cards -->
+  <div class="cb-cards">
+    <div class="cb-card cb-card--rev">
+      <span class="cb-card-label">Revenue</span>
+      <span class="cb-card-value">{{ inr(store.summary()?.revenue_paise) }}</span>
+      <span class="cb-card-meta">Sealed treatment charges</span>
+    </div>
+    <div class="cb-card cb-card--exp">
+      <span class="cb-card-label">Expense</span>
+      <span class="cb-card-value">{{ inr(store.summary()?.expense_paise) }}</span>
+      <span class="cb-card-meta">
+        Inventory {{ inr(store.summary()?.expense_po_paise) }} · Manual {{ inr(store.summary()?.expense_manual_paise) }}
+      </span>
+    </div>
+    <div class="cb-card cb-card--net" [class.cb-card--loss]="(store.summary()?.net_paise ?? 0) < 0">
+      <span class="cb-card-label">Net</span>
+      <span class="cb-card-value">{{ inr(store.summary()?.net_paise) }}</span>
+      <span class="cb-card-meta">Revenue − Expense</span>
+    </div>
+  </div>
+
+  <div class="cb-grid">
+    <!-- Revenue list -->
+    <section class="cb-panel">
+      <h2 class="cb-panel-title">Revenue — recent charges</h2>
+      @if (store.revenue().length === 0) {
+        <div class="cb-empty">No charges in this period.</div>
+      } @else {
+        <table class="cb-table">
+          <thead><tr><th>Service</th><th>Date</th><th>Status</th><th class="r">Amount</th></tr></thead>
+          <tbody>
+            @for (r of store.revenue(); track r.id) {
+              <tr>
+                <td>{{ r.service_name }}</td>
+                <td>{{ r.charged_at | date:'dd MMM yyyy' }}</td>
+                <td><span class="cb-chip">{{ r.status | titlecase }}</span></td>
+                <td class="r">{{ inrRupees(r.final_charge) }}</td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      }
+    </section>
+
+    <!-- Expense ledger -->
+    <section class="cb-panel">
+      <div class="cb-panel-head">
+        <h2 class="cb-panel-title">Expense ledger</h2>
+        <button mat-flat-button color="primary" (click)="addExpense()">
+          <i-tabler name="plus" class="icon-18"></i-tabler> Add
+        </button>
+      </div>
+      @if (store.expenses().length === 0) {
+        <div class="cb-empty">No manual expenses logged.</div>
+      } @else {
+        <table class="cb-table">
+          <thead><tr><th>Category</th><th>Date</th><th>Vendor</th><th class="r">Amount</th><th class="r"></th></tr></thead>
+          <tbody>
+            @for (e of store.expenses(); track e.id) {
+              <tr>
+                <td>
+                  <div class="cb-cat">{{ e.category | titlecase }}</div>
+                  @if (e.description) { <div class="cb-desc">{{ e.description }}</div> }
+                </td>
+                <td>{{ e.expense_date | date:'dd MMM yyyy' }}</td>
+                <td>{{ e.vendor || '—' }}</td>
+                <td class="r">{{ inr(e.amount_paise) }}</td>
+                <td class="r">
+                  <button mat-icon-button (click)="editExpense(e)" title="Edit"><i-tabler name="edit" class="icon-16"></i-tabler></button>
+                  <button mat-icon-button (click)="deleteExpense(e)" title="Delete"><i-tabler name="trash" class="icon-16"></i-tabler></button>
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      }
+    </section>
+  </div>
+</div>

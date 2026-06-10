@@ -1,0 +1,15 @@
+.pc-title { font-size: 17px; font-weight: 700; margin: 0 0 12px; color: #0f172a; }
+.pc-body { min-width: 460px; }
+.pc-sec {
+  font-size: 11px; text-transform: uppercase; letter-spacing: .05em;
+  color: #64748b; font-weight: 700; margin: 14px 0 8px;
+  &:first-child { margin-top: 0; }
+}
+.pc-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px 14px; }
+.pc-field {
+  display: flex; flex-direction: column; gap: 4px;
+  &--full { grid-column: 1 / -1; }
+  span { font-size: 12px; font-weight: 600; color: #475569; }
+  input, select { border: 1px solid #cbd5e1; border-radius: 8px; padding: 8px 10px; font-size: 13px; }
+}
+.pc-actions { display: flex; justify-content: flex-end; gap: 10px; margin-top: 20px; }

@@ -1,0 +1,37 @@
+<h2 class="em-title">{{ isEdit ? 'Edit expense' : 'Add expense' }}</h2>
+
+<div class="em-body">
+  <label class="em-field">
+    <span>Category</span>
+    <select [(ngModel)]="form.category" name="category">
+      @for (c of categories; track c) { <option [value]="c">{{ c | titlecase }}</option> }
+    </select>
+  </label>
+
+  <label class="em-field">
+    <span>Amount (₹) *</span>
+    <input type="number" min="0" [(ngModel)]="form.amount_rupees" name="amount" placeholder="0" />
+  </label>
+
+  <label class="em-field">
+    <span>Date</span>
+    <input type="date" [(ngModel)]="form.expense_date" name="date" />
+  </label>
+
+  <label class="em-field">
+    <span>Vendor</span>
+    <input [(ngModel)]="form.vendor" name="vendor" placeholder="Optional" />
+  </label>
+
+  <label class="em-field em-field--full">
+    <span>Description</span>
+    <input [(ngModel)]="form.description" name="description" placeholder="Optional" />
+  </label>
+</div>
+
+<div class="em-actions">
+  <button mat-stroked-button (click)="cancel()">Cancel</button>
+  <button mat-flat-button color="primary" [disabled]="!valid" (click)="save()">
+    {{ isEdit ? 'Save' : 'Add expense' }}
+  </button>
+</div>
