@@ -1,0 +1,63 @@
+<div class="pf-wrap">
+  <div class="pf-head">
+    <button mat-icon-button (click)="back()" title="Back to patient"><i-tabler name="arrow-left" class="icon-20"></i-tabler></button>
+    <h1 class="pf-title">Files &amp; Scans</h1>
+    @if (uploads().length > 0) {
+      <span class="pf-uploading"><mat-spinner diameter="16"></mat-spinner> Uploading {{ uploads().length }}…</span>
+    }
+  </div>
+
+  <div class="pf-grid">
+    <!-- Left: list + upload -->
+    <div class="pf-side">
+      <label class="pf-drop" [class.over]="dragOver()"
+             (drop)="onDrop($event)" (dragover)="onDragOver($event)" (dragleave)="onDragLeave()">
+        <input type="file" multiple hidden (change)="onPick($event)" />
+        <i-tabler name="cloud-upload" class="icon-24"></i-tabler>
+        <span>Drop files or <strong>browse</strong></span>
+        <small>STL / OBJ / PLY / GLB · DICOM · images · PDF · video</small>
+      </label>
+
+      @if (uploads().length > 0) {
+        <div class="pf-uploads">
+          @for (j of uploads(); track j.id) {
+            <div class="pf-up">
+              <div class="pf-up-row">
+                <i-tabler name="file-upload" class="icon-16"></i-tabler>
+                <span class="pf-up-name">{{ j.name }}</span>
+                <span class="pf-up-pct">{{ j.progress }}%</span>
+              </div>
+              <div class="pf-up-bar"><div class="pf-up-fill" [style.width.%]="j.progress"></div></div>
+            </div>
+          }
+        </div>
+      }
+
+      @if (loading()) {
+        <div class="pf-state"><mat-spinner diameter="22"></mat-spinner></div>
+      } @else if (files().length === 0) {
+        <div class="pf-state pf-muted">No files yet.</div>
+      } @else {
+        <div class="pf-list">
+          @for (f of files(); track f.id) {
+            <button class="pf-item" [class.active]="selected()?.id === f.id" (click)="select(f)">
+              <span class="pf-icon" [style.background]="meta(f).accent + '1f'" [style.color]="meta(f).accent">
+                <i-tabler [name]="meta(f).icon" class="icon-18"></i-tabler>
+              </span>
+              <span class="pf-meta">
+                <span class="pf-name">{{ f.filename }}</span>
+                <span class="pf-sub">{{ meta(f).label }} · {{ humanSize(f.file_size) }}</span>
+              </span>
+              <span class="pf-del" (click)="remove(f, $event)" title="Delete"><i-tabler name="trash" class="icon-16"></i-tabler></span>
+            </button>
+          }
+        </div>
+      }
+    </div>
+
+    <!-- Right: viewer -->
+    <div class="pf-viewer">
+      <df-file-viewer [file]="selected()" [patientId]="patientId()"></df-file-viewer>
+    </div>
+  </div>
+</div>

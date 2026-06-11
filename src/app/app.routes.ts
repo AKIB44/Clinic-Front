@@ -46,6 +46,14 @@ export const routes: Routes = [
           ),
       },
       {
+        path: 'patients/:id/files',
+        canActivate: [permissionGuard('patient.view')],
+        loadComponent: () =>
+          import('./features/patient-files/pages/patient-files/patient-files.page').then(
+            (m) => m.PatientFilesPage
+          ),
+      },
+      {
         path: 'rx/new',
         canActivate: [permissionGuard('prescription.create')],
         loadComponent: () =>

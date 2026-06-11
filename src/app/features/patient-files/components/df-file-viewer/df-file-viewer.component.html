@@ -1,0 +1,52 @@
+@if (!file()) {
+  <div class="fv-empty">
+    <i-tabler name="files" class="icon-32"></i-tabler>
+    <p>Select a file to preview</p>
+  </div>
+} @else {
+  <div class="fv-head">
+    <div class="fv-title">
+      <span class="fv-kind" [style.background]="meta(file()!).accent + '22'" [style.color]="meta(file()!).accent">
+        <i-tabler [name]="meta(file()!).icon" class="icon-16"></i-tabler> {{ meta(file()!).label }}
+      </span>
+      <span class="fv-name">{{ file()!.filename }}</span>
+      <span class="fv-size">{{ humanSize(file()!.file_size) }}</span>
+    </div>
+    <a class="fv-dl" [href]="file()!.url" target="_blank" rel="noopener" download>
+      <i-tabler name="download" class="icon-16"></i-tabler> Download
+    </a>
+  </div>
+
+  <div class="fv-stage">
+    @switch (file()!.kind) {
+      @case ('model3d') {
+        <df-3d-viewer [patientId]="patientId()" [fileId]="file()!.id" [filename]="file()!.filename"></df-3d-viewer>
+      }
+      @case ('dicom') {
+        <df-dicom-viewer [patientId]="patientId()" [fileId]="file()!.id"></df-dicom-viewer>
+      }
+      @case ('image') {
+        <div class="fv-img-wrap" (wheel)="onWheel($event)"
+             (mousedown)="onDown($event)" (mousemove)="onMove($event)" (mouseup)="onUp()" (mouseleave)="onUp()">
+          <img [src]="file()!.url" [alt]="file()!.filename"
+               [style.transform]="'translate(' + panX() + 'px,' + panY() + 'px) scale(' + zoom() + ')'"
+               [style.cursor]="zoom() > 1 ? 'grab' : 'zoom-in'" draggable="false" />
+          @if (zoom() > 1) { <button class="fv-reset" (click)="resetZoom()">Reset</button> }
+        </div>
+      }
+      @case ('pdf') {
+        <iframe class="fv-frame" [src]="pdfUrl()" title="PDF"></iframe>
+      }
+      @case ('video') {
+        <video class="fv-video" [src]="file()!.url" controls></video>
+      }
+      @default {
+        <div class="fv-empty">
+          <i-tabler name="file-download" class="icon-32"></i-tabler>
+          <p>No in-app preview for this file type.</p>
+          <a class="fv-dl" [href]="file()!.url" target="_blank" rel="noopener" download>Download file</a>
+        </div>
+      }
+    }
+  </div>
+}
