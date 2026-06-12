@@ -169,3 +169,26 @@
   display: flex; flex-direction: column; gap: 10px;
   min-width: 0;
 }
+
+// ── Responsive ────────────────────────────────────────────────────────────────
+@media (max-width: 1024px) {
+  .sc-layout { grid-template-columns: 220px 1fr; }
+}
+
+// Tablet / mobile: drop the fixed sidebar column and stack it above the content
+// so the work area gets the full width (was crushed to ~100px before).
+@media (max-width: 820px) {
+  .sc-layout { grid-template-columns: 1fr; }
+  .sc-sidebar {
+    position: static;
+    height: auto;
+    border-right: none;
+    border-bottom: 1px solid #e5eaf0;
+  }
+}
+
+@media (max-width: 600px) {
+  .sc-topbar      { flex-wrap: wrap; padding: 8px 12px; }
+  .sc-topbar-right { width: 100%; flex-wrap: wrap; }
+  .sc-content     { padding: 12px 10px; }
+}

@@ -68,9 +68,13 @@
 }
 .sb-chevron-open { transform: rotate(180deg); color: #6366f1; }
 
-// Body connector – provides visual continuation from the header strip to inner card
+// Body connector – provides visual continuation from the header strip to inner card.
+// overflow-x:auto lets wide content (tooth chart, tables) scroll *inside* the block
+// instead of blowing out the page width; overflow-y stays clipped for the radius.
 .sb-body {
-  overflow: hidden;
+  overflow-x: auto;
+  overflow-y: hidden;
+  -webkit-overflow-scrolling: touch;
   border: 1px solid #c7d2fe;
   border-top: none;
   border-radius: 0 0 10px 10px;
