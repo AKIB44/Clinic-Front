@@ -4,6 +4,14 @@ import { Observable } from 'rxjs';
 import { authApiConfig } from '../auth/auth.config';
 import { StaffUser } from '../models/clinic.model';
 
+export interface OrgClinic {
+  id: string;
+  name: string;
+  city: string | null;
+  address: string | null;
+  logo_url: string | null;
+}
+
 @Injectable({ providedIn: 'root' })
 export class StaffService {
   private http = inject(HttpClient);
@@ -28,5 +36,16 @@ export class StaffService {
 
   deleteUser(id: string): Observable<void> {
     return this.http.delete<void>(`${this.base}/${id}`);
+  }
+
+  /** Active clinics in the org — for the "Transfer to clinic" dialog. */
+  listClinics(): Observable<{ clinics: OrgClinic[] }> {
+    return this.http.get<{ clinics: OrgClinic[] }>(`${this.base}/clinics`);
+  }
+
+  /** Assign / move a user to another clinic in the org. */
+  transferClinic(id: string, clinicId: string): Observable<{ ok: boolean; user: StaffUser & { clinic_name: string } }> {
+    return this.http.post<{ ok: boolean; user: StaffUser & { clinic_name: string } }>(
+      `${this.base}/${id}/transfer-clinic`, { clinic_id: clinicId });
   }
 }

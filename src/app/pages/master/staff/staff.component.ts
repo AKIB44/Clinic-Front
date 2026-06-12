@@ -1,5 +1,5 @@
 import {
-  Component, OnInit, ChangeDetectionStrategy, ChangeDetectorRef, inject, Inject
+  Component, OnInit, ChangeDetectionStrategy, ChangeDetectorRef, inject, Inject, signal, computed
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule, FormGroup, FormControl, Validators, FormsModule } from '@angular/forms';
@@ -7,7 +7,7 @@ import { MaterialModule } from '../../../material.module';
 import { TablerIconsModule } from 'angular-tabler-icons';
 import { MatDialog, MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
 import { MatSnackBar } from '@angular/material/snack-bar';
-import { StaffService } from '../../../services/staff.service';
+import { StaffService, OrgClinic } from '../../../services/staff.service';
 import { RbacAdminService, RbacUser, Role, UserPermissionsResult, PermissionDef, PermissionOverride } from '../../../core/rbac/rbac-admin.service';
 import { AuthStorageService } from '../../../auth/auth-storage.service';
 
@@ -182,6 +182,189 @@ export class UserFormDialog implements OnInit {
         },
       });
     }
+  }
+}
+
+// ─── Transfer to Clinic Dialog ─────────────────────────────────────────────────
+
+@Component({
+  selector: 'transfer-clinic-dialog',
+  standalone: true,
+  imports: [CommonModule, FormsModule, MaterialModule, TablerIconsModule],
+  template: `
+    <div mat-dialog-title class="tc-title">
+      <span class="tc-title-ic"><i-tabler name="building-hospital" size="18"></i-tabler></span>
+      Transfer to Clinic
+    </div>
+
+    <mat-dialog-content class="tc-content">
+      <!-- who moves → where -->
+      <div class="tc-flow">
+        <div class="tc-person">
+          <div class="tc-avatar">{{ initials() }}</div>
+          <div class="tc-person-meta">
+            <span class="tc-person-name">{{ data.user.first_name }} {{ data.user.last_name }}</span>
+            <span class="tc-person-role">{{ data.user.role_name || 'Staff' }}</span>
+          </div>
+        </div>
+        <i-tabler name="arrow-right" size="20" class="tc-arrow"></i-tabler>
+        <div class="tc-dest" [class.filled]="!!selected()">
+          @if (selected(); as s) {
+            <span class="tc-dest-logo">
+              @if (s.logo_url) { <img [src]="s.logo_url" alt="" /> } @else { <i-tabler name="building-hospital" size="16"></i-tabler> }
+            </span>
+            <span class="tc-dest-name">{{ s.name }}</span>
+          } @else {
+            <i-tabler name="map-pin" size="16"></i-tabler><span>Choose clinic</span>
+          }
+        </div>
+      </div>
+
+      <!-- search -->
+      <div class="tc-search">
+        <i-tabler name="search" size="16" class="tc-search-ic"></i-tabler>
+        <input [(ngModel)]="query" (ngModelChange)="onSearch()" placeholder="Search clinics by name or city…" autocomplete="off" />
+        @if (query) { <button class="tc-clear" type="button" (click)="clearSearch()"><i-tabler name="x" size="15"></i-tabler></button> }
+      </div>
+
+      @if (loading()) {
+        <div class="tc-load"><mat-spinner diameter="30"></mat-spinner></div>
+      } @else {
+        <div class="tc-list">
+          @for (c of filtered(); track c.id) {
+            <button class="tc-item" type="button"
+                    [class.sel]="selectedId() === c.id" [class.cur]="c.id === data.currentClinicId"
+                    [disabled]="c.id === data.currentClinicId" (click)="pick(c)">
+              <span class="tc-logo">
+                @if (c.logo_url) { <img [src]="c.logo_url" alt="" /> } @else { <i-tabler name="building-hospital" size="20"></i-tabler> }
+              </span>
+              <span class="tc-info">
+                <span class="tc-name">{{ c.name }}</span>
+                <span class="tc-sub"><i-tabler name="map-pin" size="12"></i-tabler>{{ c.city || c.address || 'No location set' }}</span>
+              </span>
+              @if (c.id === data.currentClinicId) {
+                <span class="tc-tag">Current</span>
+              } @else if (selectedId() === c.id) {
+                <i-tabler name="circle-check-filled" size="22" class="tc-tick"></i-tabler>
+              } @else {
+                <i-tabler name="chevron-right" size="18" class="tc-chev"></i-tabler>
+              }
+            </button>
+          }
+          @if (filtered().length === 0) {
+            <div class="tc-empty">
+              <i-tabler name="mood-empty" size="26"></i-tabler>
+              <span>No clinics match “{{ query }}”</span>
+            </div>
+          }
+        </div>
+      }
+    </mat-dialog-content>
+
+    <mat-dialog-actions align="end">
+      <button mat-stroked-button mat-dialog-close [disabled]="saving()">Cancel</button>
+      <button mat-flat-button color="primary" [disabled]="!selectedId() || saving()" (click)="transfer()">
+        <i-tabler name="transfer" size="16"></i-tabler>
+        {{ saving() ? 'Transferring…' : 'Transfer' }}
+      </button>
+    </mat-dialog-actions>
+  `,
+  styles: [`
+    .tc-title { display: flex; align-items: center; gap: 9px; font-size: 17px; font-weight: 700; }
+    .tc-title-ic { display: flex; align-items: center; justify-content: center; width: 30px; height: 30px; border-radius: 8px; background: #e0e7ff; color: #4338ca; }
+    .tc-content { width: 440px; max-width: 86vw; padding-top: 6px; }
+
+    .tc-flow { display: flex; align-items: center; gap: 10px; padding: 10px 12px; background: #f8fafc; border: 1px solid #eef2f7; border-radius: 12px; margin-bottom: 14px; }
+    .tc-person { display: flex; align-items: center; gap: 9px; flex: 1; min-width: 0; }
+    .tc-avatar { width: 38px; height: 38px; border-radius: 50%; flex-shrink: 0; display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 700; color: #fff; background: linear-gradient(135deg,#6366f1,#4338ca); }
+    .tc-person-meta { display: flex; flex-direction: column; min-width: 0; }
+    .tc-person-name { font-size: 13.5px; font-weight: 700; color: #1e293b; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .tc-person-role { font-size: 11px; color: #94a3b8; }
+    .tc-arrow { color: #cbd5e1; flex-shrink: 0; }
+    .tc-dest { display: flex; align-items: center; gap: 7px; flex: 1; min-width: 0; justify-content: flex-end; color: #94a3b8; font-size: 12.5px; font-weight: 600; }
+    .tc-dest.filled { color: #0d9488; }
+    .tc-dest-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .tc-dest-logo { width: 26px; height: 26px; border-radius: 7px; overflow: hidden; flex-shrink: 0; display: flex; align-items: center; justify-content: center; background: #ccfbf1; color: #0d9488; }
+    .tc-dest-logo img { width: 100%; height: 100%; object-fit: cover; }
+
+    .tc-search { display: flex; align-items: center; gap: 8px; border: 1.5px solid #e2e8f0; border-radius: 10px; padding: 0 10px; height: 42px; transition: border-color .15s; margin-bottom: 10px; }
+    .tc-search:focus-within { border-color: #6366f1; }
+    .tc-search-ic { color: #94a3b8; flex-shrink: 0; }
+    .tc-search input { border: none; outline: none; flex: 1; font-size: 14px; background: transparent; color: #1e293b; }
+    .tc-clear { border: none; background: #f1f5f9; color: #64748b; cursor: pointer; display: flex; border-radius: 6px; padding: 3px; }
+    .tc-clear:hover { background: #e2e8f0; }
+
+    .tc-load { display: flex; justify-content: center; padding: 30px; }
+    .tc-list { display: flex; flex-direction: column; gap: 6px; max-height: 320px; overflow-y: auto; padding: 2px; }
+
+    .tc-item { display: flex; align-items: center; gap: 11px; text-align: left; cursor: pointer; width: 100%; padding: 9px 11px; border: 1.5px solid #eef2f7; border-radius: 11px; background: #fff; transition: border-color .14s, background .14s, transform .08s; }
+    .tc-item:hover:not(:disabled) { border-color: #c7d2fe; background: #f5f7ff; }
+    .tc-item:active:not(:disabled) { transform: scale(.99); }
+    .tc-item.sel { border-color: #0d9488; background: #f0fdfa; box-shadow: 0 0 0 3px rgba(13,148,136,.1); }
+    .tc-item.cur { opacity: .65; cursor: default; }
+
+    .tc-logo { width: 40px; height: 40px; border-radius: 10px; flex-shrink: 0; display: flex; align-items: center; justify-content: center; overflow: hidden; background: #eef2ff; color: #6366f1; }
+    .tc-logo img { width: 100%; height: 100%; object-fit: cover; }
+    .tc-info { display: flex; flex-direction: column; min-width: 0; flex: 1; }
+    .tc-name { font-size: 14px; font-weight: 600; color: #1e293b; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .tc-sub { display: flex; align-items: center; gap: 4px; font-size: 11.5px; color: #94a3b8; }
+    .tc-tag { font-size: 10px; font-weight: 700; letter-spacing: .4px; text-transform: uppercase; padding: 3px 8px; border-radius: 20px; background: #e2e8f0; color: #64748b; flex-shrink: 0; }
+    .tc-tick { color: #0d9488; flex-shrink: 0; }
+    .tc-chev { color: #cbd5e1; flex-shrink: 0; }
+
+    .tc-empty { display: flex; flex-direction: column; align-items: center; gap: 8px; padding: 30px; color: #94a3b8; font-size: 13px; }
+
+    mat-dialog-actions button { gap: 6px; }
+  `],
+})
+export class TransferClinicDialog implements OnInit {
+  dialogRef = inject(MatDialogRef<TransferClinicDialog>);
+  data = inject<{ user: RbacUser; currentClinicId: string | null }>(MAT_DIALOG_DATA);
+  private staffSvc = inject(StaffService);
+  private snack = inject(MatSnackBar);
+
+  private all: OrgClinic[] = [];
+  readonly filtered   = signal<OrgClinic[]>([]);
+  readonly loading    = signal(true);
+  readonly saving     = signal(false);
+  readonly selectedId = signal<string | null>(null);
+  readonly selected   = computed(() => this.all.find(c => c.id === this.selectedId()) ?? null);
+  query = '';
+
+  initials(): string {
+    const u = this.data.user;
+    return `${(u.first_name || '')[0] || ''}${(u.last_name || '')[0] || ''}`.toUpperCase();
+  }
+
+  ngOnInit() {
+    this.staffSvc.listClinics().subscribe({
+      next: (r) => { this.all = r.clinics; this.filtered.set(r.clinics); this.loading.set(false); },
+      error: () => { this.loading.set(false); this.snack.open('Failed to load clinics', 'Close', { duration: 3000 }); },
+    });
+  }
+
+  onSearch() {
+    const q = this.query.toLowerCase().trim();
+    this.filtered.set(!q ? this.all : this.all.filter(c =>
+      c.name.toLowerCase().includes(q) ||
+      (c.city || '').toLowerCase().includes(q) ||
+      (c.address || '').toLowerCase().includes(q)));
+  }
+  clearSearch() { this.query = ''; this.onSearch(); }
+
+  pick(c: OrgClinic) { if (c.id !== this.data.currentClinicId) this.selectedId.set(c.id); }
+
+  transfer() {
+    const id = this.selectedId();
+    if (!id) return;
+    this.saving.set(true);
+    this.staffSvc.transferClinic(this.data.user.id, id).subscribe({
+      next: (r) => { this.saving.set(false); this.dialogRef.close(r.user); },
+      error: (err) => {
+        this.saving.set(false);
+        this.snack.open(err?.error?.error || 'Transfer failed', 'Close', { duration: 4000 });
+      },
+    });
   }
 }
 
@@ -510,6 +693,23 @@ export class StaffMasterComponent implements OnInit {
 
   openPermissionsDialog(user: RbacUser) {
     this.dialog.open(UserPermissionsDialog, { data: user, width: '640px', maxHeight: '90vh' });
+  }
+
+  openTransferDialog(user: RbacUser) {
+    // "Current" must reflect THIS user's clinic (fallback to the admin's own clinic).
+    const currentClinicId = user.clinic_id
+      ?? (this.authStorage.getUser() as { clinic_id?: string } | null)?.clinic_id
+      ?? null;
+    const ref = this.dialog.open(TransferClinicDialog, { data: { user, currentClinicId }, width: '480px' });
+    ref.afterClosed().subscribe((moved: (RbacUser & { clinic_name: string }) | undefined) => {
+      if (!moved) return;
+      this.snack.open(`${user.first_name} transferred to ${moved.clinic_name}`, 'Close', { duration: 3000 });
+      // The user left this clinic's roster — drop them from the view immediately,
+      // then resync from the server so the list can't show a stale "current" clinic.
+      this.users = this.users.filter(u => u.id !== user.id);
+      this.applyFilter();
+      this.loadUsers();
+    });
   }
 
   toggleActive(user: RbacUser) {

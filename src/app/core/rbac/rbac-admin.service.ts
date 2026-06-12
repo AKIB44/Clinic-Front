@@ -21,6 +21,8 @@ export interface RbacUser {
   role_code: string | null;
   role_name: string | null;
   override_count: number;
+  clinic_id?: string | null;
+  clinic_name?: string | null;
 }
 
 export interface PermissionDef {

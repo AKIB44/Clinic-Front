@@ -77,6 +77,7 @@
 
 .user-name  { font-weight: 600; font-size: .9rem; color: #212121; }
 .user-email { font-size: .78rem; color: #757575; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.user-clinic { display: inline-flex; align-items: center; gap: 4px; margin-top: 3px; font-size: .72rem; font-weight: 600; color: #4338ca; background: #eef2ff; padding: 1px 7px; border-radius: 10px; width: fit-content; }
 
 // ── Role Chip ─────────────────────────────────────────────────────────────────
 

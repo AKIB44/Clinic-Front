@@ -52,6 +52,9 @@
               <div class="user-info">
                 <div class="user-name">{{ u.first_name }} {{ u.last_name }}</div>
                 <div class="user-email">{{ u.email }}</div>
+                @if (u.clinic_name) {
+                  <div class="user-clinic"><i-tabler name="building-hospital" size="12"></i-tabler>{{ u.clinic_name }}</div>
+                }
               </div>
             </div>
           </td>
@@ -134,6 +137,10 @@
     <button mat-menu-item (click)="openPermissionsDialog(u)">
       <i-tabler name="shield" size="16"></i-tabler>
       <span>Manage Permissions</span>
+    </button>
+    <button mat-menu-item (click)="openTransferDialog(u)">
+      <i-tabler name="building-hospital" size="16"></i-tabler>
+      <span>Transfer to Clinic</span>
     </button>
     <mat-divider></mat-divider>
     <button mat-menu-item (click)="toggleActive(u)">
