@@ -1,6 +1,7 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { Observable } from 'rxjs';
+import { Observable, of } from 'rxjs';
+import { tap } from 'rxjs/operators';
 import { authApiConfig } from '../auth/auth.config';
 import { StaffUser } from '../models/clinic.model';
 
@@ -38,9 +39,31 @@ export class StaffService {
     return this.http.delete<void>(`${this.base}/${id}`);
   }
 
-  /** Active clinics in the org — for the "Transfer to clinic" dialog. */
+  // Short-lived cache of the clinics list. Reusing the same response means the
+  // presigned logo URLs stay identical, so the browser serves logos from cache
+  // instead of re-downloading them every time the dialog opens.
+  private clinicsCache?: { at: number; data: OrgClinic[] };
+  private static readonly CLINICS_TTL = 5 * 60 * 1000; // < the 900s presign window
+
+  /** Active clinics in the org — for the "Transfer to clinic" dialog (cached + logos preloaded). */
   listClinics(): Observable<{ clinics: OrgClinic[] }> {
-    return this.http.get<{ clinics: OrgClinic[] }>(`${this.base}/clinics`);
+    const c = this.clinicsCache;
+    if (c && Date.now() - c.at < StaffService.CLINICS_TTL) {
+      return of({ clinics: c.data });
+    }
+    return this.http.get<{ clinics: OrgClinic[] }>(`${this.base}/clinics`).pipe(
+      tap((r) => {
+        this.clinicsCache = { at: Date.now(), data: r.clinics };
+        this.preloadLogos(r.clinics);
+      }),
+    );
+  }
+
+  /** Warm the browser image cache so logos are ready before the dialog renders. */
+  private preloadLogos(clinics: OrgClinic[]): void {
+    for (const c of clinics) {
+      if (c.logo_url) { const img = new Image(); img.src = c.logo_url; }
+    }
   }
 
   /** Assign / move a user to another clinic in the org. */

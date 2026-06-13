@@ -603,6 +603,8 @@ export class StaffMasterComponent implements OnInit {
 
   ngOnInit() {
     this.loadUsers();
+    // Warm the clinics cache + preload logos so the transfer dialog opens instantly.
+    this.staffSvc.listClinics().subscribe({ error: () => {} });
   }
 
   loadUsers() {
