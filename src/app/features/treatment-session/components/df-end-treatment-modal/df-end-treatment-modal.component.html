@@ -55,12 +55,12 @@
                       rows="2"
                       placeholder="Explain why charges exceeded the accepted estimate…"></textarea>
           </div>
-          <label class="etm-check">
+          <div class="etm-check">
             <input type="checkbox"
                    [ngModel]="patientAcked()"
                    (ngModelChange)="patientAcked.set($event)">
             <span>Patient has been informed of the variance</span>
-          </label>
+          </div>
         }
       }
 

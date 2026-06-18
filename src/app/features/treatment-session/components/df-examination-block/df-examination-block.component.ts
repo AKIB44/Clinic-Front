@@ -30,7 +30,6 @@ export class DfExaminationBlockComponent implements OnInit, OnDestroy {
   private api    = inject(SessionApiService);
   private toast  = inject(ToastService);
 
-  expanded = signal(true);
   saving   = signal(false);
   saved    = signal(false);
 

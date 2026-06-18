@@ -1,0 +1,24 @@
+<div class="mk-shell">
+  <header class="mk-shell-head">
+    <div class="mk-shell-title">
+      <i-tabler name="speakerphone" class="mk-shell-icon"></i-tabler>
+      <div>
+        <h1>Marketing</h1>
+        <p>Campaigns, content calendar, pipeline &amp; ROI</p>
+      </div>
+    </div>
+  </header>
+
+  <nav class="mk-shell-nav">
+    @for (item of nav; track item.link) {
+      <a [routerLink]="item.link" routerLinkActive="is-active" class="mk-shell-tab">
+        <i-tabler [name]="item.icon"></i-tabler>
+        <span>{{ item.label }}</span>
+      </a>
+    }
+  </nav>
+
+  <div class="mk-shell-body">
+    <router-outlet></router-outlet>
+  </div>
+</div>

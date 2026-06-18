@@ -1,0 +1,36 @@
+<div class="mk-sl">
+  <div class="mk-sl-bar">
+    <p class="mk-sl-hint">Build reusable audience segments from your patient CRM, then target campaigns at them.</p>
+    <span class="mk-sl-spacer"></span>
+    @if (canCreate) {
+      <button mat-flat-button color="primary" (click)="showBuilder.set(!showBuilder())">
+        <i-tabler name="plus"></i-tabler> New segment
+      </button>
+    }
+  </div>
+
+  @if (showBuilder()) {
+    <mkt-segment-builder (saved)="onSaved($event)" (cancelled)="showBuilder.set(false)"></mkt-segment-builder>
+  }
+
+  @if (store.loading()) {
+    <div class="mk-state"><mat-spinner diameter="28"></mat-spinner></div>
+  } @else if (store.error()) {
+    <div class="mk-state mk-error">{{ store.error() }}</div>
+  } @else if (store.segments().length === 0) {
+    <div class="mk-empty">No segments yet. Create one to target campaigns.</div>
+  } @else {
+    <div class="mk-sl-grid">
+      @for (s of store.segments(); track s.id) {
+        <div class="mk-seg">
+          <div class="mk-seg-top">
+            <span class="mk-seg-name">{{ s.name }}</span>
+            <button mat-icon-button class="mk-seg-del" matTooltip="Delete" (click)="remove(s)"><i-tabler name="trash"></i-tabler></button>
+          </div>
+          <div class="mk-seg-count">{{ s.guest_count }} <span>patients</span></div>
+          <div class="mk-seg-desc">{{ describe(s) }}</div>
+        </div>
+      }
+    </div>
+  }
+</div>

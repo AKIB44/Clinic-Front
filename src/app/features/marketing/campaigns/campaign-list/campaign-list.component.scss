@@ -1,0 +1,44 @@
+.mk-cl { display: block; }
+
+.mk-cl-bar { display: flex; align-items: center; gap: 12px; margin-bottom: 14px; }
+.mk-cl-filter { width: 180px; }
+.mk-cl-spacer { flex: 1; }
+
+.mk-state { padding: 40px; text-align: center; color: #64748b; }
+.mk-error { color: #b91c1c; }
+.mk-empty {
+  padding: 40px; text-align: center; color: #94a3b8; font-size: 13px;
+  background: #fff; border: 1px solid #e2e8f0; border-radius: 12px;
+}
+
+.mk-table {
+  width: 100%; border-collapse: collapse; font-size: 13px;
+  background: #fff; border: 1px solid #e2e8f0; border-radius: 12px; overflow: hidden;
+  th, td { padding: 11px 14px; text-align: left; border-bottom: 1px solid #f1f5f9; }
+  th { font-size: 10.5px; text-transform: uppercase; color: #64748b; font-weight: 700; background: #f8fafc; }
+  .r { text-align: right; }
+  tbody tr:last-child td { border-bottom: none; }
+  tbody tr:hover { background: #fafafa; }
+}
+.mk-name { font-weight: 600; color: #0f172a; }
+.mk-dates { font-size: 12px; color: #475569; }
+.mk-dim { color: #94a3b8; }
+.mk-row-actions { white-space: nowrap; }
+
+.mk-chip {
+  display: inline-block; border-radius: 10px; padding: 2px 10px; font-size: 11.5px; font-weight: 600;
+  background: #f1f5f9; color: #475569;
+  &--whatsapp  { background: #dcfce7; color: #15803d; }
+  &--instagram { background: #fce7f3; color: #be185d; }
+  &--facebook  { background: #dbeafe; color: #1d4ed8; }
+  &--offline   { background: #f3f4f6; color: #4b5563; }
+}
+.mk-status {
+  display: inline-block; border-radius: 10px; padding: 2px 10px; font-size: 11.5px; font-weight: 700;
+  background: #f1f5f9; color: #475569;
+  &--draft     { background: #f1f5f9; color: #64748b; }
+  &--scheduled { background: #fef3c7; color: #92400e; }
+  &--active    { background: #dcfce7; color: #15803d; }
+  &--completed { background: #dbeafe; color: #1d4ed8; }
+  &--archived  { background: #e5e7eb; color: #6b7280; }
+}

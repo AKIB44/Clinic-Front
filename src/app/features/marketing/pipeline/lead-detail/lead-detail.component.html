@@ -1,0 +1,224 @@
+<div class="mk-ld">
+  <button mat-button class="mk-ld-back" (click)="back()">
+    <i-tabler name="arrow-left"></i-tabler> Pipeline
+  </button>
+
+  @if (loading()) {
+    <div class="mk-state"><mat-spinner diameter="28"></mat-spinner></div>
+  } @else if (lead()) {
+   @if (lead()!; as l) {
+    <header class="mk-ld-head">
+      <div>
+        <h1 class="mk-ld-title">
+          {{ l.clinic_name }}
+          @if (l.is_active_subscriber) { <span class="mk-badge">Active subscriber</span> }
+        </h1>
+        <p class="mk-ld-sub">
+          {{ l.contact_name || 'No contact' }}
+          @if (l.contact_phone) { · {{ l.contact_phone }} }
+          @if (l.city) { · {{ l.city }} }
+          · <span class="mk-src">{{ l.source | titlecase }}</span>
+        </p>
+      </div>
+      <span class="mk-ld-grow"></span>
+      @if (canEditPitch) {
+        <button mat-stroked-button [disabled]="generatingPitch()" (click)="generatePitch()">
+          <i-tabler name="file-text"></i-tabler> Generate pitch PDF
+        </button>
+      }
+    </header>
+
+    <div class="mk-ld-controls">
+      <mat-form-field appearance="outline" subscriptSizing="dynamic">
+        <mat-label>Stage</mat-label>
+        <mat-select [value]="l.stage" [disabled]="!canEditPipeline"
+                    (selectionChange)="changeStage($event.value)">
+          @for (s of stages; track s) { <mat-option [value]="s">{{ stageLabels[s] }}</mat-option> }
+        </mat-select>
+      </mat-form-field>
+
+      <mat-form-field appearance="outline" subscriptSizing="dynamic">
+        <mat-label>Final disposition</mat-label>
+        <mat-select [value]="l.final_disposition" [disabled]="!canEditAcceptance"
+                    (selectionChange)="changeDisposition($event.value)">
+          @for (d of dispositions; track d) { <mat-option [value]="d">{{ d | titlecase }}</mat-option> }
+        </mat-select>
+      </mat-form-field>
+    </div>
+
+    <!-- Onboarding checklist -->
+    @if (canViewOnboarding) {
+      <section class="mk-panel">
+        <div class="mk-onb-head">
+          <h2 class="mk-panel-title">Onboarding checklist</h2>
+          @if (onboarding().length > 0) {
+            <span class="mk-onb-prog">{{ onboardingDone() }}/{{ onboarding().length }} done</span>
+          }
+        </div>
+        @if (onboarding().length === 0) {
+          <div class="mk-onb-empty">
+            No checklist yet.
+            @if (canEditOnboarding) { <button mat-stroked-button (click)="seedOnboarding()">Add default checklist</button> }
+          </div>
+        } @else {
+          <div class="mk-onb-list">
+            @for (s of onboarding(); track s.id) {
+              <div class="mk-onb-step mk-onb-step--{{ s.status }}">
+                <i-tabler [name]="s.status === 'done' ? 'circle-check' : (s.status === 'in_progress' ? 'progress' : 'circle')"></i-tabler>
+                <span class="mk-onb-name">{{ s.step_name }}</span>
+                @if (s.due_date) { <span class="mk-onb-due">due {{ s.due_date | date:'MMM d' }}</span> }
+                <span class="mk-ld-grow"></span>
+                @if (canEditOnboarding) {
+                  <mat-button-toggle-group [value]="s.status" hideSingleSelectionIndicator
+                                           (change)="setStepStatus(s, $event.value)" class="mk-onb-toggle">
+                    @for (st of onboardingStatuses; track st) {
+                      <mat-button-toggle [value]="st">{{ st === 'in_progress' ? 'WIP' : (st | titlecase) }}</mat-button-toggle>
+                    }
+                  </mat-button-toggle-group>
+                }
+              </div>
+            }
+          </div>
+        }
+      </section>
+    }
+
+    <!-- Active-subscriber guard banner -->
+    @if (l.is_active_subscriber) {
+      <div class="mk-guard">
+        <i-tabler name="alert-triangle"></i-tabler>
+        This clinic is already an active subscriber — routing to a caller is blocked.
+      </div>
+    }
+
+    <!-- Routing & calls -->
+    @if (canEditPipeline || canViewCalls) {
+      <section class="mk-panel">
+        <h2 class="mk-panel-title">Routing &amp; calls</h2>
+
+        @if (canEditPipeline) {
+          <div class="mk-assign">
+            <mat-form-field appearance="outline" subscriptSizing="dynamic" class="mk-assign-sel">
+              <mat-label>Assign caller</mat-label>
+              <mat-select [(value)]="selectedCallerId" [disabled]="l.is_active_subscriber">
+                <mat-option value="">Unassigned</mat-option>
+                @for (c of callers(); track c.id) {
+                  <mat-option [value]="c.id">{{ c.first_name }} {{ c.last_name }}</mat-option>
+                }
+              </mat-select>
+            </mat-form-field>
+            <button mat-stroked-button [disabled]="l.is_active_subscriber" (click)="assignCaller()">
+              <i-tabler name="user-share"></i-tabler> Route to caller
+            </button>
+            @if (l.assigned_caller_id) {
+              <span class="mk-assigned">Assigned: {{ callerName(l.assigned_caller_id) }}</span>
+            }
+          </div>
+        }
+
+        @if (canLogCallOutcome) {
+          <div class="mk-callbox">
+            <mkt-call-outcome-form [leadId]="l.id" (saved)="onCallLogged($event.lead)"></mkt-call-outcome-form>
+          </div>
+        }
+
+        @if (canViewCalls) {
+          <div class="mk-calls">
+            @for (c of callLogs(); track c.id) {
+              <div class="mk-call">
+                <div class="mk-call-top">
+                  <span class="mk-call-out mk-call-out--{{ c.outcome }}">{{ outcomeLabels[c.outcome] }}</span>
+                  <span class="mk-call-att">Attempt #{{ c.attempt_number }}</span>
+                  <span class="mk-call-by">{{ authorName(c) }}</span>
+                  <span class="mk-call-date">{{ c.called_at | date:'MMM d, h:mm a' }}</span>
+                </div>
+                @if (c.notes) { <p class="mk-call-notes">{{ c.notes }}</p> }
+              </div>
+            } @empty {
+              <div class="mk-empty">No calls logged yet.</div>
+            }
+          </div>
+        }
+      </section>
+    }
+
+    <!-- Marketing feedback -->
+    <section class="mk-panel">
+      <h2 class="mk-panel-title">Marketing feedback</h2>
+      @if (canLogFeedback) {
+        <mkt-lead-feedback-form [leadId]="l.id"></mkt-lead-feedback-form>
+      }
+      <div class="mk-fb-list">
+        @for (f of leadFeedbacks(); track f.id) {
+          <div class="mk-fb">
+            <div class="mk-fb-top">
+              <span class="mk-fb-author">{{ authorName(f) }}</span>
+              <span class="mk-fb-disp">{{ dispositionLabels[f.disposition] }}</span>
+              <span class="mk-fb-date">{{ f.created_at | date:'MMM d, h:mm a' }}</span>
+            </div>
+            <p class="mk-fb-text">{{ f.feedback_text }}</p>
+            @if (f.rejection_reason) {
+              <span class="mk-fb-reason">Reason: {{ rejectionLabels[f.rejection_reason] }}</span>
+              @if (f.rejection_notes) { <span class="mk-fb-notes">— {{ f.rejection_notes }}</span> }
+            }
+          </div>
+        } @empty {
+          <div class="mk-empty">No marketing feedback yet.</div>
+        }
+      </div>
+    </section>
+
+    <!-- Caller feedback -->
+    @if (canViewCallerFeedback || canLogCallerFeedback) {
+      <section class="mk-panel">
+        <h2 class="mk-panel-title">Caller feedback</h2>
+        @if (canLogCallerFeedback) {
+          <mkt-caller-feedback-form [leadId]="l.id"></mkt-caller-feedback-form>
+        }
+        @if (canViewCallerFeedback) {
+          <div class="mk-fb-list">
+            @for (f of callerFeedbacks(); track f.id) {
+              <div class="mk-fb">
+                <div class="mk-fb-top">
+                  <span class="mk-fb-author">{{ authorName(f) }}</span>
+                  <span class="mk-sent mk-sent--{{ f.sentiment }}">{{ f.sentiment | titlecase }}</span>
+                  @if (f.follow_up_needed) { <span class="mk-followup">Follow-up</span> }
+                  <span class="mk-fb-date">{{ f.created_at | date:'MMM d, h:mm a' }}</span>
+                </div>
+                <p class="mk-fb-text">{{ f.feedback_text }}</p>
+                @if (f.key_objection) {
+                  <span class="mk-fb-reason">Objection: {{ rejectionLabels[f.key_objection] }}</span>
+                }
+              </div>
+            } @empty {
+              <div class="mk-empty">No caller feedback yet.</div>
+            }
+          </div>
+        }
+      </section>
+    }
+
+    <!-- Activity timeline -->
+    <section class="mk-panel">
+      <h2 class="mk-panel-title">Activity timeline</h2>
+      <div class="mk-tl">
+        @for (e of timeline(); track e.at) {
+          <div class="mk-tl-item mk-tl-item--{{ e.type }}">
+            <i-tabler [name]="timelineIcon(e.type)" class="mk-tl-icon"></i-tabler>
+            <div class="mk-tl-body">
+              <div class="mk-tl-top">
+                <span class="mk-tl-label">{{ e.label }}</span>
+                @if (e.actor) { <span class="mk-tl-actor">{{ e.actor }}</span> }
+                <span class="mk-tl-date">{{ e.at | date:'MMM d, h:mm a' }}</span>
+              </div>
+              @if (e.detail) { <p class="mk-tl-detail">{{ e.detail }}</p> }
+            </div>
+          </div>
+        } @empty {
+          <div class="mk-empty">No activity yet.</div>
+        }
+      </div>
+    </section>
+   }
+  }
+</div>

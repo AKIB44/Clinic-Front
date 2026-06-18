@@ -1,6 +1,43 @@
 // ── Root shell ────────────────────────────────────────────────────────────────
 .sc-root { display: flex; flex-direction: column; min-height: 100vh; background: #f0f4f8; }
 
+.sc-auto-pause-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1200;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  background: rgba(15, 23, 42, 0.45);
+  backdrop-filter: blur(4px);
+}
+
+.sc-auto-pause-card {
+  width: min(100%, 380px);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 12px;
+  padding: 28px 24px;
+  border-radius: 16px;
+  background: #fff;
+  box-shadow: 0 18px 48px rgba(15, 23, 42, 0.18);
+}
+
+.sc-auto-pause-title {
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: #0f172a;
+}
+
+.sc-auto-pause-sub {
+  font-size: 0.88rem;
+  line-height: 1.5;
+  color: #64748b;
+}
+
 // ── Top bar ───────────────────────────────────────────────────────────────────
 .sc-topbar {
   display: flex; align-items: center; justify-content: space-between;

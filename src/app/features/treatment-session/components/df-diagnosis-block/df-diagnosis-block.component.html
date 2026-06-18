@@ -1,13 +1,5 @@
 <div class="dx-card">
 
-  <div class="dx-header">
-    <i-tabler name="clipboard-list" size="18"></i-tabler>
-    <span>Diagnosis</span>
-    @if (store.diagnoses().length) {
-      <span class="dx-count">{{ store.diagnoses().length }}</span>
-    }
-  </div>
-
   <!-- Add form (when not sealed) -->
   @if (!store.isSealed()) {
     <div class="dx-add-area">

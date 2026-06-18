@@ -1,16 +1,5 @@
 <div class="postop-card">
 
-  <!-- Header -->
-  <div class="postop-header">
-    <i-tabler name="clipboard-check" size="18"></i-tabler>
-    <span>Post-operative Record</span>
-    @if (postop(); as p) {
-      <span class="postop-badge">
-        {{ p.complications.length }} complication{{ p.complications.length !== 1 ? 's' : '' }}
-      </span>
-    }
-  </div>
-
   <!-- Summary when closed -->
   @if (!showForm && postop(); as p) {
     <div class="postop-summary">
@@ -122,10 +111,10 @@
       <div class="pof-section-title" style="margin-top:8px">
         <i-tabler name="test-tube" size="14"></i-tabler> Specimen
       </div>
-      <label class="pof-check">
+      <div class="pof-check">
         <input type="checkbox" [(ngModel)]="specimenSent">
         <span>Specimen sent for histopathology</span>
-      </label>
+      </div>
       @if (specimenSent) {
         <div class="pof-row">
           <div class="pof-field">
@@ -191,10 +180,10 @@
       <div class="pof-section-title" style="margin-top:8px">
         <i-tabler name="notes" size="14"></i-tabler> Post-op Instructions
       </div>
-      <label class="pof-check">
+      <div class="pof-check">
         <input type="checkbox" [(ngModel)]="instructionsGiven">
         <span>Post-op instructions given to patient</span>
-      </label>
+      </div>
       @if (instructionsGiven) {
         <div class="pof-field">
           <label>Instructions</label>

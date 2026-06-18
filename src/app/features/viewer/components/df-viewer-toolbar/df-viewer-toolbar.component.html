@@ -1,0 +1,46 @@
+<div class="tb">
+  <button class="tb-btn" [class.is-on]="store.gestureEnabled()" (click)="emit({ kind: 'toggle-gesture' })"
+          aria-label="Toggle gesture control" matTooltip="Gesture control (G)">
+    <i-tabler name="hand-finger"></i-tabler><span>Gesture</span>
+  </button>
+
+  <span class="tb-sep"></span>
+
+  <button class="tb-btn" (click)="emit({ kind: 'reset' })" aria-label="Reset view" matTooltip="Reset view (R)">
+    <i-tabler name="refresh"></i-tabler><span>Reset</span>
+  </button>
+  <button class="tb-btn" [class.is-on]="store.measureMode()" (click)="emit({ kind: 'toggle-measure' })"
+          aria-label="Measure" matTooltip="Measure (M)">
+    <i-tabler name="ruler-2"></i-tabler><span>Measure</span>
+  </button>
+  <button class="tb-btn" [class.is-on]="store.sectionPlaneActive()" (click)="emit({ kind: 'toggle-section' })"
+          aria-label="Section plane" matTooltip="Section plane (C)">
+    <i-tabler name="slice"></i-tabler><span>Section</span>
+  </button>
+  <button class="tb-btn" [class.is-on]="store.annotateMode()" (click)="emit({ kind: 'toggle-annotate' })"
+          aria-label="Annotate" matTooltip="Annotate">
+    <i-tabler name="message-2"></i-tabler><span>Annotate</span>
+  </button>
+  <button class="tb-btn" [class.is-on]="store.compareActive()" (click)="emit({ kind: 'toggle-compare' })"
+          aria-label="Before / after comparison" matTooltip="Before / after">
+    <i-tabler name="versions"></i-tabler><span>Compare</span>
+  </button>
+  <button class="tb-btn" (click)="emit({ kind: 'screenshot' })" aria-label="Screenshot" matTooltip="Screenshot">
+    <i-tabler name="camera"></i-tabler><span>Snap</span>
+  </button>
+
+  <span class="tb-sep"></span>
+
+  <button class="tb-btn" [matMenuTriggerFor]="viewsMenu" #viewsTrigger="matMenuTrigger"
+          aria-label="Dental views" matTooltip="Dental views (1–8)">
+    <i-tabler name="eye"></i-tabler><span>Views</span><i-tabler name="chevron-up" class="tb-chev"></i-tabler>
+  </button>
+  <button class="tb-btn" [class.is-on]="store.isFullscreen()" (click)="emit({ kind: 'fullscreen' })"
+          aria-label="Fullscreen" matTooltip="Fullscreen (F)">
+    <i-tabler name="maximize"></i-tabler><span>Fullscreen</span>
+  </button>
+</div>
+
+<mat-menu #viewsMenu="matMenu" class="tb-views-menu" yPosition="above">
+  <df-view-presets-menu (select)="snap($event); viewsTrigger.closeMenu()"></df-view-presets-menu>
+</mat-menu>

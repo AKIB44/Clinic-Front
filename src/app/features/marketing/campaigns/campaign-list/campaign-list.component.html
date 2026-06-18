@@ -1,0 +1,64 @@
+<div class="mk-cl">
+  <div class="mk-cl-bar">
+    <mat-form-field appearance="outline" class="mk-cl-filter" subscriptSizing="dynamic">
+      <mat-label>Status</mat-label>
+      <mat-select [(value)]="statusFilter" (selectionChange)="applyFilter()">
+        <mat-option value="">All</mat-option>
+        @for (s of statuses; track s) {
+          <mat-option [value]="s">{{ s | titlecase }}</mat-option>
+        }
+      </mat-select>
+    </mat-form-field>
+
+    <span class="mk-cl-spacer"></span>
+
+    @if (canCreate) {
+      <button mat-flat-button color="primary" (click)="newCampaign()">
+        <i-tabler name="plus"></i-tabler> New campaign
+      </button>
+    }
+  </div>
+
+  @if (store.loading()) {
+    <div class="mk-state"><mat-spinner diameter="28"></mat-spinner></div>
+  } @else if (store.error()) {
+    <div class="mk-state mk-error">{{ store.error() }}</div>
+  } @else if (store.campaigns().length === 0) {
+    <div class="mk-empty">No campaigns yet. Create your first campaign to get started.</div>
+  } @else {
+    <table class="mk-table">
+      <thead>
+        <tr>
+          <th>Name</th><th>Goal</th><th>Channel</th><th>Status</th>
+          <th class="r">Budget</th><th>Dates</th><th class="r">Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (c of store.campaigns(); track c.id) {
+          <tr>
+            <td class="mk-name">{{ c.name }}</td>
+            <td>{{ c.goal | titlecase }}</td>
+            <td><span class="mk-chip mk-chip--{{ c.channel }}">{{ c.channel | titlecase }}</span></td>
+            <td><span class="mk-status mk-status--{{ c.status }}">{{ c.status | titlecase }}</span></td>
+            <td class="r">{{ inr(c.budget_paise) }}</td>
+            <td class="mk-dates">
+              {{ c.start_date || '—' }}<br>
+              <span class="mk-dim">{{ c.end_date || '' }}</span>
+            </td>
+            <td class="r mk-row-actions">
+              @if (canSend && (c.status === 'draft' || c.status === 'scheduled')) {
+                <button mat-icon-button matTooltip="Send" (click)="send(c)"><i-tabler name="send"></i-tabler></button>
+              }
+              @if (canEdit) {
+                <button mat-icon-button matTooltip="Edit" (click)="edit(c)"><i-tabler name="edit"></i-tabler></button>
+              }
+              @if (canDelete) {
+                <button mat-icon-button matTooltip="Delete" (click)="remove(c)"><i-tabler name="trash"></i-tabler></button>
+              }
+            </td>
+          </tr>
+        }
+      </tbody>
+    </table>
+  }
+</div>

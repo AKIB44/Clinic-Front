@@ -158,7 +158,10 @@ export class DfMaterialsCartComponent {
     this.api.removeCartItem(sessionId, id)
       .pipe(finalize(() => this.removing.set(null)))
       .subscribe({
-        next: () => this.store.removeCartItem(id),
+        next: () => {
+          this.store.removeCartItem(id);
+          this.toast.warn('Item removed from cart.');
+        },
         error: () => this.toast.error('Could not remove item.'),
       });
   }

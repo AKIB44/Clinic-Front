@@ -1,10 +1,12 @@
 import { Component, input, computed, effect, signal, inject, ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { DomSanitizer } from '@angular/platform-browser';
+import { Router } from '@angular/router';
 import { TablerIconsModule } from 'angular-tabler-icons';
 import { Df3dViewerComponent } from '../df-3d-viewer/df-3d-viewer.component';
 import { DfDicomViewerComponent } from '../df-dicom-viewer/df-dicom-viewer.component';
 import { PatientFile, KIND_META, humanSize } from '../../models/patient-file.model';
+import { FeatureFlagsService, GESTURE_VIEWER_FLAG } from '../../../../services/feature-flags.service';
 
 @Component({
   selector: 'df-file-viewer',
@@ -16,9 +18,21 @@ import { PatientFile, KIND_META, humanSize } from '../../models/patient-file.mod
 })
 export class DfFileViewerComponent {
   private sanitizer = inject(DomSanitizer);
+  private router = inject(Router);
+  private featureFlags = inject(FeatureFlagsService);
 
   readonly file = input<PatientFile | null>(null);
   readonly patientId = input('');
+
+  /** Gesture viewer is gated behind an org feature flag (DB-backed). */
+  readonly gestureViewerEnabled = computed(() => this.featureFlags.isOn(GESTURE_VIEWER_FLAG));
+
+  /** Launch the full gesture-controlled 3D viewer for this patient model. */
+  openGestureViewer(): void {
+    const f = this.file();
+    if (!f || f.kind !== 'model3d' || !this.patientId() || !this.gestureViewerEnabled()) return;
+    this.router.navigate(['/viewer', this.patientId(), f.id], { queryParams: { name: f.filename } });
+  }
 
   readonly pdfUrl = computed(() => {
     const f = this.file();

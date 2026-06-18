@@ -1,13 +1,9 @@
 <div class="rx-card">
-
-  <!-- Header -->
-  <div class="rx-header">
-    <i-tabler name="pill" size="18"></i-tabler>
-    <span>Prescriptions</span>
-    <span class="rx-count">{{ store.prescriptions().length }}</span>
+  <div class="rx-toolbar">
     @if (!store.isSealed()) {
-      <button mat-icon-button class="rx-add-icon-btn" (click)="openForm()" title="New prescription">
-        <i-tabler name="plus" size="18"></i-tabler>
+      <button mat-stroked-button class="rx-add-btn" (click)="openForm()">
+        <i-tabler name="plus" size="16"></i-tabler>
+        New prescription
       </button>
     }
   </div>

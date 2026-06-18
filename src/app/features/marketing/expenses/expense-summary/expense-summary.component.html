@@ -1,0 +1,44 @@
+<div class="mk-es">
+  <div class="mk-es-bar">
+    <a mat-button routerLink="../expenses" class="mk-es-back"><i-tabler name="arrow-left"></i-tabler> Expenses</a>
+    <span class="mk-es-spacer"></span>
+    <mat-form-field appearance="outline" subscriptSizing="dynamic">
+      <mat-label>Month</mat-label>
+      <input matInput type="month" [(ngModel)]="month" (ngModelChange)="load()">
+    </mat-form-field>
+  </div>
+
+  @if (loading()) {
+    <div class="mk-state"><mat-spinner diameter="28"></mat-spinner></div>
+  } @else if (summary()) {
+   @if (summary()!; as s) {
+    <div class="mk-es-cards">
+      <div class="mk-card mk-card--total">
+        <span class="mk-label">This month</span>
+        <span class="mk-value">{{ inr(s.this_month_paise) }}</span>
+      </div>
+      <div class="mk-card">
+        <span class="mk-label">Last month</span>
+        <span class="mk-value">{{ inr(s.last_month_paise) }}</span>
+      </div>
+      <div class="mk-card" [class.mk-card--up]="s.delta_paise > 0" [class.mk-card--down]="s.delta_paise < 0">
+        <span class="mk-label">Change (MoM)</span>
+        <span class="mk-value">
+          <i-tabler [name]="s.delta_paise > 0 ? 'trending-up' : (s.delta_paise < 0 ? 'trending-down' : 'minus')"></i-tabler>
+          {{ inr(s.delta_paise >= 0 ? s.delta_paise : -s.delta_paise) }}
+        </span>
+      </div>
+    </div>
+
+    <section class="mk-panel">
+      <h2 class="mk-panel-title">Spend by category</h2>
+      @if (!hasData()) {
+        <div class="mk-empty">No expenses in this month.</div>
+      } @else {
+        <apx-chart [series]="chart().series" [chart]="chart().chart" [plotOptions]="chart().plotOptions"
+                   [colors]="chart().colors" [dataLabels]="chart().dataLabels" [xaxis]="chart().xaxis"></apx-chart>
+      }
+    </section>
+   }
+  }
+</div>

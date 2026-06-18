@@ -94,7 +94,11 @@ export class DfTpaBlockComponent {
     this.api.updateTpa(tpaId, { status: newStatus }).subscribe({
       next: ({ tpa }) => {
         this.store.updateTpa(tpa);
-        this.toast.success('TPA status updated.');
+        if (newStatus === 'CANCELLED' || newStatus === 'REJECTED') {
+          this.toast.warn(`TPA ${newStatus === 'CANCELLED' ? 'cancelled' : 'rejected'}.`);
+        } else {
+          this.toast.success('TPA status updated.');
+        }
       },
       error: () => this.toast.error('Could not update TPA status.'),
     });

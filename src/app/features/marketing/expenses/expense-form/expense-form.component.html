@@ -1,0 +1,56 @@
+<div class="mk-ef">
+  <div class="mk-ef-row">
+    <mat-form-field appearance="outline">
+      <mat-label>Category</mat-label>
+      <mat-select name="category" [(ngModel)]="category">
+        @for (c of categories; track c[0]) { <mat-option [value]="c[0]">{{ c[1] }}</mat-option> }
+      </mat-select>
+    </mat-form-field>
+    <mat-form-field appearance="outline">
+      <mat-label>Amount (₹)</mat-label>
+      <input matInput type="number" min="0" name="amount" [(ngModel)]="amountRupees">
+    </mat-form-field>
+    <mat-form-field appearance="outline">
+      <mat-label>Spent on</mat-label>
+      <input matInput type="date" name="spentOn" [(ngModel)]="spentOn">
+    </mat-form-field>
+    <mat-form-field appearance="outline">
+      <mat-label>Payment</mat-label>
+      <mat-select name="paymentMode" [(ngModel)]="paymentMode">
+        <mat-option value="">—</mat-option>
+        @for (p of paymentModes; track p) { <mat-option [value]="p">{{ p | titlecase }}</mat-option> }
+      </mat-select>
+    </mat-form-field>
+  </div>
+
+  <div class="mk-ef-row">
+    <mat-form-field appearance="outline" class="mk-grow">
+      <mat-label>Vendor</mat-label>
+      <input matInput name="vendor" [(ngModel)]="vendor" maxlength="120">
+    </mat-form-field>
+    <mat-form-field appearance="outline" class="mk-grow">
+      <mat-label>Link to campaign</mat-label>
+      <mat-select name="campaignId" [(ngModel)]="campaignId">
+        <mat-option value="">None</mat-option>
+        @for (c of campaigns(); track c.id) { <mat-option [value]="c.id">{{ c.name }}</mat-option> }
+      </mat-select>
+    </mat-form-field>
+  </div>
+
+  <mat-form-field appearance="outline" class="mk-ef-full">
+    <mat-label>Description</mat-label>
+    <input matInput name="description" [(ngModel)]="description">
+  </mat-form-field>
+
+  <div class="mk-ef-file">
+    <button mat-stroked-button type="button" (click)="fileInput.click()">
+      <i-tabler name="paperclip"></i-tabler> {{ receipt ? receipt.name : 'Attach receipt' }}
+    </button>
+    <input #fileInput type="file" hidden accept="image/*,application/pdf" (change)="onFile($event)">
+  </div>
+
+  <div class="mk-ef-actions">
+    <button mat-stroked-button (click)="cancelled.emit()">Cancel</button>
+    <button mat-flat-button color="primary" [disabled]="saving()" (click)="submit()">File expense</button>
+  </div>
+</div>

@@ -1,0 +1,57 @@
+<div class="mk-ar">
+  <div class="mk-ar-bar">
+    <mat-form-field appearance="outline" subscriptSizing="dynamic">
+      <mat-label>From</mat-label>
+      <input matInput type="date" name="from" [(ngModel)]="from">
+    </mat-form-field>
+    <mat-form-field appearance="outline" subscriptSizing="dynamic">
+      <mat-label>To</mat-label>
+      <input matInput type="date" name="to" [(ngModel)]="to">
+    </mat-form-field>
+    <button mat-stroked-button (click)="apply()">
+      <i-tabler name="filter"></i-tabler> Apply
+    </button>
+  </div>
+
+  @if (store.loading()) {
+    <div class="mk-state"><mat-spinner diameter="28"></mat-spinner></div>
+  } @else if (store.error()) {
+    <div class="mk-state mk-error">{{ store.error() }}</div>
+  } @else if (store.acceptanceRatio()) {
+   @if (store.acceptanceRatio()!; as d) {
+    <div class="mk-ar-cards">
+      <div class="mk-card mk-card--ratio">
+        <span class="mk-label">Acceptance ratio</span>
+        <span class="mk-value">{{ d.ratio }}%</span>
+        <span class="mk-meta">{{ d.accepted }} of {{ d.total }} dispositioned</span>
+      </div>
+      <div class="mk-card"><span class="mk-label">Accepted</span><span class="mk-value">{{ d.accepted }}</span></div>
+      <div class="mk-card"><span class="mk-label">Rejected</span><span class="mk-value">{{ d.rejected }}</span></div>
+      <div class="mk-card"><span class="mk-label">Pending</span><span class="mk-value">{{ d.pending }}</span></div>
+    </div>
+
+    <div class="mk-ar-charts">
+      <section class="mk-panel">
+        <h2 class="mk-panel-title">Disposition split</h2>
+        @if (d.total === 0) {
+          <div class="mk-empty">No dispositioned leads in this range.</div>
+        } @else {
+          <apx-chart [series]="donut().series" [chart]="donut().chart" [labels]="donut().labels"
+                     [colors]="donut().colors" [legend]="donut().legend"
+                     [dataLabels]="donut().dataLabels" [stroke]="donut().stroke"></apx-chart>
+        }
+      </section>
+
+      <section class="mk-panel">
+        <h2 class="mk-panel-title">Rejection reasons</h2>
+        @if (!hasBreakdown()) {
+          <div class="mk-empty">No rejection reasons recorded yet.</div>
+        } @else {
+          <apx-chart [series]="bar().series" [chart]="bar().chart" [plotOptions]="bar().plotOptions"
+                     [colors]="bar().colors" [dataLabels]="bar().dataLabels" [xaxis]="bar().xaxis"></apx-chart>
+        }
+      </section>
+    </div>
+   }
+  }
+</div>

@@ -1,0 +1,6 @@
+<div class="fps" [class.fps--low]="store.fps() > 0 && store.fps() < 30">
+  <span class="fps-row"><b>{{ store.fps() }}</b> FPS</span>
+  @if (store.gestureDetected()) {
+    <span class="fps-g">Gesture: {{ store.gestureDetected() }}</span>
+  }
+</div>

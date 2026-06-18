@@ -1,0 +1,77 @@
+<div class="mk-en">
+  <div class="mk-en-bar">
+    <mat-form-field appearance="outline" class="mk-en-filter" subscriptSizing="dynamic">
+      <mat-label>Source</mat-label>
+      <mat-select [(value)]="sourceFilter" (selectionChange)="applyFilter()">
+        <mat-option value="">All sources</mat-option>
+        @for (s of sources; track s) { <mat-option [value]="s">{{ s | titlecase }}</mat-option> }
+      </mat-select>
+    </mat-form-field>
+    <span class="mk-en-spacer"></span>
+    @if (store.unprocessedCount() > 0) {
+      <span class="mk-en-new">{{ store.unprocessedCount() }} new</span>
+    }
+    @if (canEdit) {
+      <button mat-stroked-button (click)="toggleKey()">
+        <i-tabler name="key"></i-tabler> Webhook key
+      </button>
+    }
+  </div>
+
+  @if (showKey()) {
+    <div class="mk-key">
+      <p class="mk-key-help">POST website/referral form submissions to this endpoint with the API key in an <code>X-Api-Key</code> header.</p>
+      <div class="mk-key-row">
+        <span class="mk-key-label">Endpoint</span>
+        <code class="mk-key-val">{{ ingestPath }}</code>
+        <button mat-icon-button (click)="copy(ingestPath)"><i-tabler name="copy"></i-tabler></button>
+      </div>
+      <div class="mk-key-row">
+        <span class="mk-key-label">API key</span>
+        <code class="mk-key-val">{{ ingestKey()?.api_key || '…' }}</code>
+        @if (ingestKey()) {
+          <button mat-icon-button (click)="copy(ingestKey()!.api_key)"><i-tabler name="copy"></i-tabler></button>
+        }
+      </div>
+      <button mat-button color="warn" (click)="rotateKey()">
+        <i-tabler name="refresh"></i-tabler> Rotate key
+      </button>
+    </div>
+  }
+
+  @if (store.loading()) {
+    <div class="mk-state"><mat-spinner diameter="28"></mat-spinner></div>
+  } @else if (store.error()) {
+    <div class="mk-state mk-error">{{ store.error() }}</div>
+  } @else if (store.enquiries().length === 0) {
+    <div class="mk-empty">No enquiries yet. They appear here when your website form posts to the webhook.</div>
+  } @else {
+    <table class="mk-table">
+      <thead>
+        <tr><th>Clinic</th><th>Contact</th><th>Source</th><th>UTM</th><th>Received</th><th>Status</th><th class="r">Actions</th></tr>
+      </thead>
+      <tbody>
+        @for (e of store.enquiries(); track e.id) {
+          <tr (click)="open(e)" class="mk-row">
+            <td class="mk-name">{{ e.clinic_name || '—' }}</td>
+            <td>{{ e.contact_name || '—' }}<br><span class="mk-dim">{{ e.contact_phone || '' }}</span></td>
+            <td><span class="mk-src mk-src--{{ e.source }}">{{ e.source | titlecase }}</span></td>
+            <td class="mk-utm">{{ e.utm_campaign || e.utm_source || '—' }}</td>
+            <td class="mk-dim">{{ e.received_at | date:'MMM d, h:mm a' }}</td>
+            <td>
+              @if (e.is_duplicate) { <span class="mk-st mk-st--dup">Duplicate</span> }
+              @else if (e.lead_id) { <span class="mk-st mk-st--lead">Lead</span> }
+              @else { <span class="mk-st mk-st--new">New</span> }
+            </td>
+            <td class="r mk-actions">
+              @if (canEdit && !e.lead_id && !e.is_duplicate) {
+                <button mat-stroked-button (click)="convert(e, $event)">Convert</button>
+                <button mat-button (click)="markDuplicate(e, $event)">Duplicate</button>
+              }
+            </td>
+          </tr>
+        }
+      </tbody>
+    </table>
+  }
+</div>

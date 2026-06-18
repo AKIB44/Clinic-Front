@@ -1,0 +1,71 @@
+<div class="mk-pb">
+  <div class="mk-pb-bar">
+    <p class="mk-pb-hint">Drag leads between stages. Click a card to open the full lead.</p>
+    <span class="mk-pb-spacer"></span>
+    @if (canEdit) {
+      <button mat-flat-button color="primary" (click)="openCreate()">
+        <i-tabler name="plus"></i-tabler> New lead
+      </button>
+    }
+  </div>
+
+  @if (showCreate()) {
+    <div class="mk-pb-create">
+      <mat-form-field appearance="outline" class="mk-grow">
+        <mat-label>Clinic name</mat-label>
+        <input matInput name="clinic_name" [(ngModel)]="draft.clinic_name" maxlength="160">
+      </mat-form-field>
+      <mat-form-field appearance="outline">
+        <mat-label>Contact</mat-label>
+        <input matInput name="contact_name" [(ngModel)]="draft.contact_name">
+      </mat-form-field>
+      <mat-form-field appearance="outline">
+        <mat-label>Phone</mat-label>
+        <input matInput name="contact_phone" [(ngModel)]="draft.contact_phone">
+      </mat-form-field>
+      <mat-form-field appearance="outline">
+        <mat-label>City</mat-label>
+        <input matInput name="city" [(ngModel)]="draft.city">
+      </mat-form-field>
+      <button mat-stroked-button (click)="showCreate.set(false)">Cancel</button>
+      <button mat-flat-button color="primary" (click)="saveDraft()">Add</button>
+    </div>
+  }
+
+  @if (store.loading()) {
+    <div class="mk-state"><mat-spinner diameter="28"></mat-spinner></div>
+  } @else if (store.error()) {
+    <div class="mk-state mk-error">{{ store.error() }}</div>
+  } @else {
+    <div class="mk-board" cdkDropListGroup>
+      @for (stage of stages; track stage; let i = $index) {
+        <div class="mk-col">
+          <div class="mk-col-head mk-col-head--{{ stage }}">
+            <span>{{ stageLabels[stage] }}</span>
+            <span class="mk-col-count">{{ forStage(stage).length }}</span>
+          </div>
+          <div class="mk-col-list" [id]="dropListIds[i]" cdkDropList
+               [cdkDropListData]="forStage(stage)" [cdkDropListConnectedTo]="dropListIds"
+               (cdkDropListDropped)="drop($event, stage)">
+            @for (l of forStage(stage); track l.id) {
+              <div class="mk-card" [cdkDragDisabled]="!canEdit" cdkDrag (click)="open(l)">
+                <div class="mk-card-name">
+                  {{ l.clinic_name }}
+                  @if (l.is_active_subscriber) { <span class="mk-badge">active</span> }
+                </div>
+                @if (l.contact_name || l.city) {
+                  <div class="mk-card-meta">{{ l.contact_name || '—' }}@if (l.city) { · {{ l.city }} }</div>
+                }
+                <div class="mk-card-foot">
+                  <span class="mk-src mk-src--{{ l.source }}">{{ l.source }}</span>
+                  @if (l.final_disposition) { <span class="mk-disp mk-disp--{{ l.final_disposition }}">{{ l.final_disposition }}</span> }
+                </div>
+              </div>
+            }
+            @if (forStage(stage).length === 0) { <div class="mk-col-empty">—</div> }
+          </div>
+        </div>
+      }
+    </div>
+  }
+</div>

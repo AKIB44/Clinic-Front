@@ -10,6 +10,7 @@ import { ChairsService } from '../../services/chairs.service';
 import { AssistantService, AssistantResult } from '../../services/assistant.service';
 import { AuthService } from '../../auth/auth.service';
 import { FeatureFlagsService, FRIDAY_FLAG } from '../../services/feature-flags.service';
+import { SpeechRecognitionCoordinatorService } from '../../core/speech/speech-recognition-coordinator.service';
 import { ClinicService, Chair } from '../../models/clinic.model';
 import { addDays } from 'date-fns';
 
@@ -496,6 +497,7 @@ export class VoiceAssistantComponent implements OnInit, OnDestroy {
   private readonly featureFlags = inject(FeatureFlagsService);
   private readonly clinicSvc    = inject(ClinicServicesService);
   private readonly chairsSvc    = inject(ChairsService);
+  private readonly speechCoord  = inject(SpeechRecognitionCoordinatorService);
 
   /** Mounted-but-hidden when the org has Friday disabled. */
   readonly enabled = computed(() => this.featureFlags.flags().some(f => f.key === FRIDAY_FLAG && f.enabled));
@@ -546,6 +548,20 @@ export class VoiceAssistantComponent implements OnInit, OnDestroy {
         }
         this.open.set(false);
       } else if (this.speechSupported() && this.wakeWordOn() && !this.wakeRecognition) {
+        this.startWakeListener();
+      }
+    });
+
+    // Yield the mic when another feature (e.g. SOAP dictation) owns speech recognition.
+    effect(() => {
+      const holder = this.speechCoord.activeHolder();
+      if (holder && holder !== 'voice-assistant') {
+        this.stopWakeListener();
+        this.stopActive();
+        return;
+      }
+      if (this.enabled() && this.speechSupported() && this.wakeWordOn()
+          && !this.wakeRecognition && !this.activeRecognition && !this.handingOff) {
         this.startWakeListener();
       }
     });
@@ -636,6 +652,9 @@ export class VoiceAssistantComponent implements OnInit, OnDestroy {
     const SR = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
     if (!SR) return;
     if (this.wakeRecognition) return;
+    const holder = this.speechCoord.activeHolder();
+    if (holder && holder !== 'voice-assistant') return;
+    if (!this.speechCoord.request('voice-assistant')) return;
 
     const rec = new SR();
     rec.continuous       = true;
@@ -711,13 +730,18 @@ export class VoiceAssistantComponent implements OnInit, OnDestroy {
     try {
       rec.start();
       this.wakeRecognition = rec;
-    } catch { /* ignore */ }
+    } catch {
+      this.speechCoord.release('voice-assistant');
+    }
   }
 
   private stopWakeListener(): void {
     if (this.wakeRecognition) {
       try { this.wakeRecognition.stop(); } catch { /* ignore */ }
       this.wakeRecognition = null;
+      if (!this.handingOff && !this.activeRecognition) {
+        this.speechCoord.release('voice-assistant');
+      }
     }
     if (this.restartTimer)   { clearTimeout(this.restartTimer);   this.restartTimer   = null; }
     if (this.wakeFlushTimer) { clearTimeout(this.wakeFlushTimer); this.wakeFlushTimer = null; }
@@ -755,6 +779,7 @@ export class VoiceAssistantComponent implements OnInit, OnDestroy {
     const SR = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
     if (!SR) return;
     if (this.activeRecognition) return;
+    if (!this.speechCoord.request('voice-assistant')) return;
     // Hand off the mic from the wake listener cleanly.
     this.handingOff = true;
     this.stopWakeListener();
@@ -789,6 +814,7 @@ export class VoiceAssistantComponent implements OnInit, OnDestroy {
       this.listening.set(false);
       this.awake.set(false);
       this.activeRecognition = null;
+      this.speechCoord.release('voice-assistant');
       if (e?.error !== 'no-speech') {
         this.status.set('error');
         this.message.set(e?.error === 'not-allowed'
@@ -801,6 +827,7 @@ export class VoiceAssistantComponent implements OnInit, OnDestroy {
       this.listening.set(false);
       this.awake.set(false);
       this.activeRecognition = null;
+      this.speechCoord.release('voice-assistant');
       if (this.wakeWordOn()) this.startWakeListener();
     };
 
@@ -823,6 +850,7 @@ export class VoiceAssistantComponent implements OnInit, OnDestroy {
         this.handingOff = false;
         this.status.set('error');
         this.message.set('Could not start voice input.');
+        this.speechCoord.release('voice-assistant');
         if (this.wakeWordOn()) this.startWakeListener();
       }
     };
@@ -834,6 +862,7 @@ export class VoiceAssistantComponent implements OnInit, OnDestroy {
     if (this.activeRecognition) {
       try { this.activeRecognition.stop(); } catch { /* ignore */ }
       this.activeRecognition = null;
+      this.speechCoord.release('voice-assistant');
     }
     this.listening.set(false);
   }

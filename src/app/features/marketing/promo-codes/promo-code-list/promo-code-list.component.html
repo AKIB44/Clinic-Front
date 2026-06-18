@@ -1,0 +1,91 @@
+<div class="mk-pc">
+  <div class="mk-pc-bar">
+    <span class="mk-pc-spacer"></span>
+    @if (canCreate) {
+      <button mat-flat-button color="primary" (click)="showForm.set(!showForm())">
+        <i-tabler name="plus"></i-tabler> New promo code
+      </button>
+    }
+  </div>
+
+  @if (showForm()) {
+    <div class="mk-pc-form">
+      <mat-form-field appearance="outline" class="mk-pc-code">
+        <mat-label>Code</mat-label>
+        <input matInput name="code" [(ngModel)]="code" maxlength="40" placeholder="SUMMER20" style="text-transform:uppercase">
+      </mat-form-field>
+      <mat-form-field appearance="outline">
+        <mat-label>Type</mat-label>
+        <mat-select name="discountType" [(ngModel)]="discountType">
+          <mat-option value="percent">Percent</mat-option>
+          <mat-option value="flat">Flat ₹</mat-option>
+        </mat-select>
+      </mat-form-field>
+      <mat-form-field appearance="outline">
+        <mat-label>{{ discountType === 'percent' ? 'Percent' : 'Amount (₹)' }}</mat-label>
+        <input matInput type="number" min="0" name="discountValue" [(ngModel)]="discountValue">
+      </mat-form-field>
+      <mat-form-field appearance="outline">
+        <mat-label>Max redemptions</mat-label>
+        <input matInput type="number" min="0" name="maxRedemptions" [(ngModel)]="maxRedemptions">
+      </mat-form-field>
+      <mat-form-field appearance="outline">
+        <mat-label>Valid from</mat-label>
+        <input matInput type="date" name="validFrom" [(ngModel)]="validFrom">
+      </mat-form-field>
+      <mat-form-field appearance="outline">
+        <mat-label>Valid until</mat-label>
+        <input matInput type="date" name="validUntil" [(ngModel)]="validUntil">
+      </mat-form-field>
+      <button mat-flat-button color="primary" (click)="save()">Create</button>
+    </div>
+  }
+
+  @if (loading()) {
+    <div class="mk-state"><mat-spinner diameter="28"></mat-spinner></div>
+  } @else if (codes().length === 0) {
+    <div class="mk-empty">No promo codes yet.</div>
+  } @else {
+    <table class="mk-table">
+      <thead>
+        <tr><th>Code</th><th>Discount</th><th>Redeemed</th><th>Validity</th><th>Status</th><th class="r"></th></tr>
+      </thead>
+      <tbody>
+        @for (p of codes(); track p.id) {
+          <tr>
+            <td class="mk-code">{{ p.code }}</td>
+            <td>{{ format(p) }}</td>
+            <td>{{ p.redeemed_count }}{{ p.max_redemptions ? ' / ' + p.max_redemptions : '' }}</td>
+            <td class="mk-dim">{{ (p.valid_from || '—') }} → {{ (p.valid_until || '—') }}</td>
+            <td>
+              <span class="mk-st" [class.mk-st--on]="p.active" [class.mk-st--off]="!p.active">{{ p.active ? 'Active' : 'Inactive' }}</span>
+            </td>
+            <td class="r mk-actions">
+              <button mat-icon-button matTooltip="Redemptions" (click)="toggleRedemptions(p)"><i-tabler name="receipt-2"></i-tabler></button>
+              @if (canEdit) {
+                <button mat-icon-button [matTooltip]="p.active ? 'Deactivate' : 'Activate'" (click)="toggleActive(p)">
+                  <i-tabler [name]="p.active ? 'toggle-right' : 'toggle-left'"></i-tabler>
+                </button>
+              }
+            </td>
+          </tr>
+          @if (expandedId() === p.id) {
+            <tr class="mk-red-row">
+              <td colspan="6">
+                @if ((redemptions()[p.id] || []).length) {
+                  <div class="mk-red">
+                    @for (r of redemptions()[p.id]; track r.id) {
+                      <span class="mk-red-item">{{ r.patient_name || 'Guest' }} · {{ r.redeemed_at | date:'MMM d, y' }}</span>
+                    }
+                  </div>
+                } @else {
+                  <span class="mk-dim">No redemptions yet.</span>
+                }
+              </td>
+            </tr>
+          }
+        }
+      </tbody>
+    </table>
+  }
+</div>

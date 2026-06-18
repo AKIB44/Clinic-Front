@@ -1,0 +1,39 @@
+<div class="mk-scf">
+  <div class="mk-scf-row">
+    <mat-form-field appearance="outline" class="mk-grow">
+      <mat-label>Clinic / prospect</mat-label>
+      <input matInput name="clinicName" [(ngModel)]="clinicName" maxlength="160">
+    </mat-form-field>
+    <mat-form-field appearance="outline">
+      <mat-label>Contact</mat-label>
+      <input matInput name="contactName" [(ngModel)]="contactName">
+    </mat-form-field>
+    <mat-form-field appearance="outline">
+      <mat-label>Phone</mat-label>
+      <input matInput name="contactPhone" [(ngModel)]="contactPhone">
+    </mat-form-field>
+  </div>
+  <div class="mk-scf-row">
+    <mat-form-field appearance="outline">
+      <mat-label>Date &amp; time</mat-label>
+      <input matInput type="datetime-local" name="scheduledFor" [(ngModel)]="scheduledFor">
+    </mat-form-field>
+    <mat-form-field appearance="outline">
+      <mat-label>Duration (min)</mat-label>
+      <input matInput type="number" min="5" name="durationMinutes" [(ngModel)]="durationMinutes">
+    </mat-form-field>
+    <mat-form-field appearance="outline" class="mk-grow">
+      <mat-label>Assign to</mat-label>
+      <mat-select name="assignedToId" [(ngModel)]="assignedToId">
+        <mat-option value="">Unassigned</mat-option>
+        @for (a of assignees(); track a.id) { <mat-option [value]="a.id">{{ a.first_name }} {{ a.last_name }}</mat-option> }
+      </mat-select>
+    </mat-form-field>
+  </div>
+  <div class="mk-scf-actions">
+    <button mat-stroked-button (click)="cancelled.emit()">Cancel</button>
+    <button mat-flat-button color="primary" [disabled]="saving()" (click)="submit()">
+      <i-tabler name="calendar-plus"></i-tabler> Schedule
+    </button>
+  </div>
+</div>

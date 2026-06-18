@@ -1,0 +1,45 @@
+.mk-db { display: block; }
+
+.mk-state { padding: 40px; text-align: center; color: #64748b; }
+.mk-error { color: #b91c1c; }
+
+.mk-cards { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 22px; }
+@media (max-width: 1100px) { .mk-cards { grid-template-columns: repeat(2, 1fr); } }
+.mk-card {
+  background: #fff; border-radius: 14px; padding: 18px;
+  display: flex; align-items: center; gap: 14px;
+}
+.mk-card-ic {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 46px; height: 46px; min-width: 46px; border-radius: 13px;
+  background: #f1f5f9; color: #64748b;
+  i-tabler { width: 24px; height: 24px; }
+}
+.mk-card-txt { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+/* Per-tile accent on the icon badge */
+.mk-card--mrr    .mk-card-ic { background: #dcfce7; color: #0d7a5f; }
+.mk-card--spend  .mk-card-ic { background: #fee2e2; color: #b91c1c; }
+.mk-card--active .mk-card-ic { background: #ede9fe; color: #6d28d9; }
+.mk-card--posts  .mk-card-ic { background: #dbeafe; color: #2563eb; }
+.mk-card--pipe   .mk-card-ic { background: #fef3c7; color: #b45309; }
+.mk-card--callback .mk-card-ic { background: #fce7f3; color: #db2777; }
+.mk-card--calls  .mk-card-ic { background: #cffafe; color: #0891b2; }
+
+.mk-label { font-size: 11px; text-transform: uppercase; letter-spacing: .04em; color: #64748b; font-weight: 700; }
+.mk-value { font-size: 23px; font-weight: 800; color: #0f172a; letter-spacing: -.02em; }
+.mk-meta  { font-size: 11.5px; color: #94a3b8; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+.mk-actions {
+  display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 20px;
+  i-tabler { width: 18px; height: 18px; vertical-align: middle; }
+}
+
+.mk-panel { background: #fff; border: 1px solid #e2e8f0; border-radius: 12px; padding: 16px 18px; }
+.mk-panel-title { font-size: 14px; font-weight: 700; color: #0f172a; margin: 0 0 10px; }
+.mk-empty { padding: 20px; text-align: center; color: #94a3b8; font-size: 13px; }
+.mk-table {
+  width: 100%; border-collapse: collapse; font-size: 13px;
+  th, td { padding: 9px 10px; text-align: left; border-bottom: 1px solid #f1f5f9; }
+  th { font-size: 10.5px; text-transform: uppercase; color: #64748b; font-weight: 700; }
+  tbody tr:last-child td { border-bottom: none; }
+}

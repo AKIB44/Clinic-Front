@@ -1,0 +1,63 @@
+<div class="mk-ptl">
+  <div class="mk-ptl-bar">
+    <p class="mk-ptl-hint">Upload reusable decks, or generate a per-prospect PDF from a lead's detail page.</p>
+    <span class="mk-ptl-spacer"></span>
+    @if (canEdit) {
+      <button mat-flat-button color="primary" (click)="showUpload.set(!showUpload())">
+        <i-tabler name="upload"></i-tabler> Upload pitch
+      </button>
+    }
+  </div>
+
+  @if (showUpload()) {
+    <div class="mk-ptl-form">
+      <mat-form-field appearance="outline" class="mk-grow">
+        <mat-label>Title</mat-label>
+        <input matInput name="title" [(ngModel)]="title" maxlength="160">
+      </mat-form-field>
+      <mat-form-field appearance="outline" class="mk-ver">
+        <mat-label>Version</mat-label>
+        <input matInput name="version" [(ngModel)]="version">
+      </mat-form-field>
+      <button mat-stroked-button type="button" (click)="fileInput.click()">
+        <i-tabler name="paperclip"></i-tabler> {{ file ? file.name : 'Choose file' }}
+      </button>
+      <input #fileInput type="file" hidden accept="application/pdf,.ppt,.pptx,image/*" (change)="onFile($event)">
+      <button mat-flat-button color="primary" [disabled]="uploading()" (click)="upload()">Save</button>
+    </div>
+  }
+
+  @if (loading()) {
+    <div class="mk-state"><mat-spinner diameter="28"></mat-spinner></div>
+  } @else if (docs().length === 0) {
+    <div class="mk-empty">No pitch documents yet.</div>
+  } @else {
+    <table class="mk-table">
+      <thead>
+        <tr><th>Title</th><th>Version</th><th>Type</th><th>For lead</th><th>Created</th><th class="r"></th></tr>
+      </thead>
+      <tbody>
+        @for (d of docs(); track d.id) {
+          <tr>
+            <td class="mk-name">{{ d.title }}</td>
+            <td>{{ d.version }}</td>
+            <td>
+              @if (d.generated) { <span class="mk-tag mk-tag--gen">Generated</span> }
+              @else { <span class="mk-tag">Uploaded</span> }
+            </td>
+            <td class="mk-dim">{{ d.lead_name || '—' }}</td>
+            <td class="mk-dim">{{ d.created_at | date:'MMM d, y' }}</td>
+            <td class="r mk-actions">
+              @if (d.has_file) {
+                <button mat-icon-button matTooltip="Download" (click)="download(d)"><i-tabler name="download"></i-tabler></button>
+              }
+              @if (canEdit) {
+                <button mat-icon-button matTooltip="Delete" (click)="remove(d)"><i-tabler name="trash"></i-tabler></button>
+              }
+            </td>
+          </tr>
+        }
+      </tbody>
+    </table>
+  }
+</div>

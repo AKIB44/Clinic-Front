@@ -449,6 +449,13 @@
     cursor: not-allowed;
     border-color: #f1f5f9;
   }
+  &.past {
+    background: #f8fafc;
+    color: #94a3b8;
+    cursor: not-allowed;
+    border-color: #f1f5f9;
+    opacity: 0.65;
+  }
 }
 
 .slots-skeleton {

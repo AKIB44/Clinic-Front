@@ -1,0 +1,7 @@
+<div class="cp" [class.cp--hidden]="!store.cameraPreviewVisible()">
+  <video #video class="cp-video" autoplay playsinline muted></video>
+  <canvas #canvas class="cp-canvas"></canvas>
+  <button class="cp-toggle" (click)="toggle()" aria-label="Hide camera preview" type="button">
+    <i-tabler [name]="store.cameraPreviewVisible() ? 'eye-off' : 'eye'"></i-tabler>
+  </button>
+</div>

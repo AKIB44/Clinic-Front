@@ -1,0 +1,30 @@
+<div class="mk-fbform">
+  <div class="mk-fbform-row">
+    <mat-form-field appearance="outline" class="mk-grow">
+      <mat-label>Marketing feedback</mat-label>
+      <textarea matInput name="feedbackText" [(ngModel)]="feedbackText" rows="2"
+                placeholder="What did the prospect say?"></textarea>
+    </mat-form-field>
+    <mat-form-field appearance="outline" class="mk-disp">
+      <mat-label>Disposition</mat-label>
+      <mat-select name="disposition" [(ngModel)]="disposition">
+        @for (d of dispositions; track d[0]) {
+          <mat-option [value]="d[0]">{{ d[1] }}</mat-option>
+        }
+      </mat-select>
+    </mat-form-field>
+  </div>
+
+  @if (showNotes) {
+    <mat-form-field appearance="outline" class="mk-fbform-full">
+      <mat-label>Reason notes</mat-label>
+      <input matInput name="rejectionNotes" [(ngModel)]="rejectionNotes" placeholder="Describe the 'other' reason">
+    </mat-form-field>
+  }
+
+  <div class="mk-fbform-actions">
+    <button mat-flat-button color="primary" [disabled]="saving()" (click)="submit()">
+      <i-tabler name="message-plus"></i-tabler> Log feedback
+    </button>
+  </div>
+</div>

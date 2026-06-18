@@ -12,9 +12,16 @@
       <span class="fv-name">{{ file()!.filename }}</span>
       <span class="fv-size">{{ humanSize(file()!.file_size) }}</span>
     </div>
-    <a class="fv-dl" [href]="file()!.url" target="_blank" rel="noopener" download>
-      <i-tabler name="download" class="icon-16"></i-tabler> Download
-    </a>
+    <div class="fv-actions">
+      @if (file()!.kind === 'model3d' && patientId() && gestureViewerEnabled()) {
+        <button class="fv-gesture" (click)="openGestureViewer()" type="button">
+          <i-tabler name="hand-finger" class="icon-16"></i-tabler> Gesture viewer
+        </button>
+      }
+      <a class="fv-dl" [href]="file()!.url" target="_blank" rel="noopener" download>
+        <i-tabler name="download" class="icon-16"></i-tabler> Download
+      </a>
+    </div>
   </div>
 
   <div class="fv-stage">

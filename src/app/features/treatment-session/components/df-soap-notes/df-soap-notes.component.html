@@ -1,14 +1,14 @@
 <div class="soap-card">
-  <div class="soap-header">
-    <i-tabler name="notes" size="18"></i-tabler>
-    <span>Clinical Notes (SOAP)</span>
-    @if (saving()) {
-      <mat-spinner diameter="14" class="soap-saving"></mat-spinner>
-    }
-    @if (saved()) {
-      <span class="soap-saved-badge"><i-tabler name="check" size="12"></i-tabler> Saved</span>
-    }
-  </div>
+  @if (saving() || saved()) {
+    <div class="soap-status-bar">
+      @if (saving()) {
+        <mat-spinner diameter="14" class="soap-saving"></mat-spinner>
+      }
+      @if (saved()) {
+        <span class="soap-saved-badge"><i-tabler name="check" size="12"></i-tabler> Saved</span>
+      }
+    </div>
+  }
 
   @if (store.isSealed()) {
     <div class="soap-sealed-notice">

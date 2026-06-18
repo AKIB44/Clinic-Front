@@ -1,5 +1,17 @@
 <div class="sc-root">
 
+  @if (autoPausingLeave()) {
+    <div class="sc-auto-pause-overlay" aria-live="polite" aria-busy="true">
+      <div class="sc-auto-pause-card">
+        <mat-spinner diameter="36"></mat-spinner>
+        <div class="sc-auto-pause-title">Auto-pausing session</div>
+        <div class="sc-auto-pause-sub">
+          Your treatment session is still in progress. We're pausing it before you leave so you can resume later.
+        </div>
+      </div>
+    </div>
+  }
+
   <!-- ── Sticky top bar ──────────────────────────────────────────────────── -->
   <div class="sc-topbar">
 
@@ -247,7 +259,7 @@
           <df-attachments-block />
         </df-session-block>
 
-        <df-session-block title="SOAP Notes"
+        <df-session-block title="Clinical Notes (SOAP)"
           icon="notes" accent="#a855f7"
           [status]="soapStatus()"
           [summary]="store.notes().subjective ? store.notes().subjective.slice(0,60) + '…' : null">

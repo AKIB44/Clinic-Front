@@ -131,6 +131,24 @@ export class HeaderComponent implements OnInit {
       ],
     },
     {
+      label: 'Marketing',
+      items: [
+        { title: 'Dashboard',      subtitle: 'Campaigns & ROI',   link: '/marketing/dashboard', icon: 'layout-dashboard', accent: 'accent',  perm: 'marketing.campaign.view' },
+        { title: 'Campaigns',      subtitle: 'Plan & send',       link: '/marketing/campaigns', icon: 'speakerphone',     accent: 'primary', perm: 'marketing.campaign.view' },
+        { title: 'Content Calendar', subtitle: 'Posts & schedule', link: '/marketing/calendar',  icon: 'calendar-event',   accent: 'info',    perm: 'marketing.calendar.view' },
+        { title: 'Audience Segments', subtitle: 'Target patient groups', link: '/marketing/segments', icon: 'users-group', accent: 'primary', perm: 'marketing.segment.view' },
+        { title: 'Promo Codes',    subtitle: 'Discounts & redemptions', link: '/marketing/promo-codes', icon: 'discount', accent: 'success', perm: 'marketing.promocode.view' },
+        { title: 'Lead Pipeline',  subtitle: 'Clinics & feedback', link: '/marketing/pipeline',  icon: 'layout-kanban',    accent: 'warning', perm: 'marketing.pipeline.view' },
+        { title: 'Lead Finder',    subtitle: 'Scrape Google Maps', link: '/marketing/lead-finder', icon: 'map-search',     accent: 'accent',  perm: 'marketing.leadfinder.manage' },
+        { title: 'Pitch Library',  subtitle: 'Decks & proposals',  link: '/marketing/pitch-library', icon: 'presentation', accent: 'info',    perm: 'marketing.pitch.view' },
+        { title: 'Call Queue',     subtitle: 'Caller workflow',    link: '/marketing/caller-queue', icon: 'phone-call',    accent: 'primary', perm: 'marketing.callqueue.view_own' },
+        { title: 'Digital Enquiries', subtitle: 'Website & referral leads', link: '/marketing/enquiries', icon: 'world-www', accent: 'info', perm: 'marketing.enquiry.view' },
+        { title: 'Scheduled Calls', subtitle: 'Calendar-synced meetings', link: '/marketing/scheduled-calls', icon: 'calendar-time', accent: 'warning', perm: 'marketing.scheduled_calls.view' },
+        { title: 'Expenses', subtitle: 'Spend ledger & receipts', link: '/marketing/expenses', icon: 'receipt', accent: 'error', perm: 'marketing.expense.view' },
+        { title: 'Acceptance Ratio', subtitle: 'Accept/reject analytics', link: '/marketing/acceptance-ratio', icon: 'chart-donut', accent: 'success', perm: 'marketing.acceptance.view' },
+      ],
+    },
+    {
       label: 'Administration',
       items: [
         { title: 'Billing',          subtitle: 'Revenue & expense', link: '/billing',                  icon: 'report-money', accent: 'success', perm: 'billing.view' },

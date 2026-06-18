@@ -1,0 +1,62 @@
+:host { display: block; }
+
+.mk-shell {
+  padding: 18px 26px 32px;
+  max-width: 1500px;
+  margin: 0 auto;
+}
+
+/* ── Header: branded, with a soft gradient icon tile ───────────────────────── */
+.mk-shell-head { margin-bottom: 16px; }
+.mk-shell-title {
+  display: flex; align-items: center; gap: 16px;
+  h1 { font-size: 22px; font-weight: 800; margin: 0; color: #0f172a; letter-spacing: -.02em; }
+  p  { font-size: 13px; color: #64748b; margin: 3px 0 0; }
+}
+.mk-shell-icon {
+  width: 46px; height: 46px; padding: 10px; border-radius: 14px;
+  color: #fff; background: linear-gradient(135deg, #7c3aed 0%, #6d28d9 60%, #4f46e5 100%);
+  box-shadow: 0 10px 22px -8px rgba(109,40,217,.55);
+}
+
+/* ── Nav: sticky pill tabs, horizontally scrollable on mobile ──────────────── */
+.mk-shell-nav {
+  position: sticky; top: 0; z-index: 5;
+  display: flex; gap: 6px; flex-wrap: wrap;
+  padding: 8px; margin-bottom: 20px;
+  background: rgba(255,255,255,.85);
+  backdrop-filter: saturate(1.4) blur(8px);
+  border: 1px solid #e9edf3; border-radius: 16px;
+  box-shadow: 0 1px 2px rgba(15,23,42,.04), 0 10px 28px -18px rgba(15,23,42,.2);
+}
+.mk-shell-tab {
+  display: inline-flex; align-items: center; gap: 8px;
+  padding: 9px 15px; font-size: 13px; font-weight: 600; color: #64748b;
+  text-decoration: none; border-radius: 11px;
+  transition: color .18s ease, background .18s ease, transform .12s ease;
+  i-tabler { width: 18px; height: 18px; }
+
+  &:hover { color: #0f172a; background: #f1f5f9; }
+  &:active { transform: scale(.97); }
+  &.is-active {
+    color: #fff;
+    background: linear-gradient(135deg, #7c3aed, #6d28d9);
+    box-shadow: 0 8px 18px -8px rgba(109,40,217,.6);
+  }
+}
+
+.mk-shell-body { min-height: 240px; }
+
+@media (max-width: 700px) {
+  .mk-shell { padding: 12px 14px 24px; }
+  .mk-shell-title h1 { font-size: 19px; }
+  .mk-shell-icon { width: 40px; height: 40px; }
+
+  /* Scrollable single-row tab strip on phones */
+  .mk-shell-nav {
+    flex-wrap: nowrap; overflow-x: auto; -webkit-overflow-scrolling: touch;
+    border-radius: 14px; scrollbar-width: none;
+    &::-webkit-scrollbar { display: none; }
+  }
+  .mk-shell-tab { flex: 0 0 auto; }
+}

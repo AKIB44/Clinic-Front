@@ -1,0 +1,32 @@
+<div class="mk-cof">
+  <div class="mk-cof-row">
+    <mat-form-field appearance="outline" class="mk-cof-outcome">
+      <mat-label>Call outcome</mat-label>
+      <mat-select name="outcome" [(ngModel)]="outcome">
+        @for (o of outcomes; track o[0]) { <mat-option [value]="o[0]">{{ o[1] }}</mat-option> }
+      </mat-select>
+    </mat-form-field>
+    <mat-form-field appearance="outline" class="mk-cof-dur">
+      <mat-label>Duration (sec)</mat-label>
+      <input matInput type="number" min="0" name="duration" [(ngModel)]="durationSecs">
+    </mat-form-field>
+  </div>
+
+  <mat-form-field appearance="outline" class="mk-cof-full">
+    <mat-label>Notes</mat-label>
+    <textarea matInput name="notes" [(ngModel)]="notes" rows="2" placeholder="What happened on the call?"></textarea>
+  </mat-form-field>
+
+  @if (isCallback) {
+    <mat-form-field appearance="outline" class="mk-cof-full">
+      <mat-label>Call back at</mat-label>
+      <input matInput type="datetime-local" name="callbackAt" [(ngModel)]="callbackAt">
+    </mat-form-field>
+  }
+
+  <div class="mk-cof-actions">
+    <button mat-flat-button color="primary" [disabled]="saving()" (click)="submit()">
+      <i-tabler name="phone-check"></i-tabler> Log outcome
+    </button>
+  </div>
+</div>

@@ -1,0 +1,83 @@
+<div class="mk-ll">
+  <div class="mk-ll-bar">
+    <mat-form-field appearance="outline" class="mk-ll-filter" subscriptSizing="dynamic">
+      <mat-label>Stage</mat-label>
+      <mat-select [(value)]="stageFilter" (selectionChange)="applyFilter()">
+        <mat-option value="">All stages</mat-option>
+        @for (s of stages; track s) { <mat-option [value]="s">{{ stageLabels[s] }}</mat-option> }
+      </mat-select>
+    </mat-form-field>
+    <span class="mk-ll-spacer"></span>
+    @if (canEdit) {
+      <button mat-flat-button color="primary" (click)="openCreate()">
+        <i-tabler name="plus"></i-tabler> New lead
+      </button>
+    }
+  </div>
+
+  @if (showCreate()) {
+    <div class="mk-ll-create">
+      <div class="mk-ll-create-row">
+        <mat-form-field appearance="outline" class="mk-grow">
+          <mat-label>Clinic name</mat-label>
+          <input matInput name="clinic_name" [(ngModel)]="draft.clinic_name" maxlength="160">
+        </mat-form-field>
+        <mat-form-field appearance="outline">
+          <mat-label>Contact</mat-label>
+          <input matInput name="contact_name" [(ngModel)]="draft.contact_name">
+        </mat-form-field>
+        <mat-form-field appearance="outline">
+          <mat-label>Phone</mat-label>
+          <input matInput name="contact_phone" [(ngModel)]="draft.contact_phone">
+        </mat-form-field>
+        <mat-form-field appearance="outline">
+          <mat-label>City</mat-label>
+          <input matInput name="city" [(ngModel)]="draft.city">
+        </mat-form-field>
+        <mat-form-field appearance="outline">
+          <mat-label>Source</mat-label>
+          <mat-select name="source" [(ngModel)]="draft.source">
+            @for (s of sources; track s) { <mat-option [value]="s">{{ s | titlecase }}</mat-option> }
+          </mat-select>
+        </mat-form-field>
+      </div>
+      <div class="mk-ll-create-actions">
+        <button mat-stroked-button (click)="showCreate.set(false)">Cancel</button>
+        <button mat-flat-button color="primary" (click)="saveDraft()">Add lead</button>
+      </div>
+    </div>
+  }
+
+  @if (store.loading()) {
+    <div class="mk-state"><mat-spinner diameter="28"></mat-spinner></div>
+  } @else if (store.error()) {
+    <div class="mk-state mk-error">{{ store.error() }}</div>
+  } @else if (store.leads().length === 0) {
+    <div class="mk-empty">No leads yet. Add a clinic lead to start the pipeline.</div>
+  } @else {
+    <table class="mk-table">
+      <thead>
+        <tr><th>Clinic</th><th>Contact</th><th>City</th><th>Stage</th><th>Source</th><th>Disposition</th></tr>
+      </thead>
+      <tbody>
+        @for (l of store.leads(); track l.id) {
+          <tr (click)="open(l)" class="mk-row">
+            <td class="mk-name">
+              {{ l.clinic_name }}
+              @if (l.is_active_subscriber) { <span class="mk-badge">Active</span> }
+            </td>
+            <td>{{ l.contact_name || '—' }}<br><span class="mk-dim">{{ l.contact_phone || '' }}</span></td>
+            <td>{{ l.city || '—' }}</td>
+            <td><span class="mk-stage mk-stage--{{ l.stage }}">{{ stageLabels[l.stage] }}</span></td>
+            <td><span class="mk-src">{{ l.source | titlecase }}</span></td>
+            <td>
+              @if (l.final_disposition) {
+                <span class="mk-disp mk-disp--{{ l.final_disposition }}">{{ l.final_disposition | titlecase }}</span>
+              } @else { <span class="mk-dim">—</span> }
+            </td>
+          </tr>
+        }
+      </tbody>
+    </table>
+  }
+</div>

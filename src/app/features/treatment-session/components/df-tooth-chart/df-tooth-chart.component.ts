@@ -56,7 +56,6 @@ export class DfToothChartComponent implements OnInit {
 
   private localData = signal<Record<number, ToothData>>({});
 
-  readonly collapsed    = signal(false);
   readonly saving       = signal(false);
   readonly saved        = signal(false);
   readonly selectedTooth = signal<number | null>(null);

@@ -39,6 +39,10 @@ export class SessionStore {
   readonly status          = signal<SessionStatus>('INITIALISED');
   readonly startedAt       = signal<string | null>(null);
   readonly sealedAt        = signal<string | null>(null);
+  /** Cumulative paused time for this session (ms), from API + local cache. */
+  readonly totalPausedMs   = signal(0);
+  /** ISO timestamp when the current pause began (null while running). */
+  readonly pausedAt        = signal<string | null>(null);
   readonly loading         = signal(false);
   readonly error           = signal<string | null>(null);
 
@@ -215,6 +219,7 @@ export class SessionStore {
     this.status.set(session.status);
     this.startedAt.set(session.started_at);
     this.sealedAt.set(session.sealed_at ?? null);
+    this.syncTimerFromSession(session);
 
     this.patient.set({
       id: session.patient_id,
@@ -270,12 +275,104 @@ export class SessionStore {
     this.status.set(status);
   }
 
+  /** Align timer with server hydration; merge persisted client cache when API omits fields. */
+  syncTimerFromSession(session: ClinicalSession): void {
+    const cached = this.readTimerCache(session.id);
+    let totalMs = 0;
+
+    if (typeof session.total_paused_ms === 'number') {
+      totalMs = Math.max(0, session.total_paused_ms);
+    }
+    if (cached) {
+      totalMs = Math.max(totalMs, cached.totalPausedMs);
+    }
+    this.totalPausedMs.set(totalMs);
+
+    const paused = session.status === 'PAUSED' || !!session.paused_at;
+    if (paused) {
+      const anchor = session.paused_at ?? cached?.pausedAtIso ?? session.updated_at ?? new Date().toISOString();
+      this.pausedAt.set(anchor);
+      this.writeTimerCache(session.id, totalMs, anchor);
+      return;
+    }
+
+    // Resume may happen off-canvas (e.g. schedule "Resume Treatment") without calling resume here.
+    if (cached?.pausedAtIso) {
+      const pauseStartMs = new Date(cached.pausedAtIso).getTime();
+      const resumeEndMs  = session.updated_at
+        ? new Date(session.updated_at).getTime()
+        : Date.now();
+      if (resumeEndMs > pauseStartMs) {
+        totalMs += resumeEndMs - pauseStartMs;
+      }
+    }
+
+    this.totalPausedMs.set(totalMs);
+    this.pausedAt.set(null);
+    this.writeTimerCache(session.id, totalMs, null);
+  }
+
+  /** Freeze timer immediately when pause is initiated (before API returns). */
+  beginPauseClock(): void {
+    const anchor = new Date().toISOString();
+    this.pausedAt.set(anchor);
+    const sessionId = this.sessionId();
+    if (sessionId) {
+      this.writeTimerCache(sessionId, this.totalPausedMs(), anchor);
+    }
+  }
+
+  /** Undo optimistic pause freeze when the pause API fails. */
+  revertPauseClock(): void {
+    this.pausedAt.set(null);
+    const sessionId = this.sessionId();
+    if (sessionId) {
+      this.writeTimerCache(sessionId, this.totalPausedMs(), null);
+    }
+  }
+
+  /** Apply server pause response and persist cumulative paused time. */
+  applyPausedState(session: ClinicalSession): void {
+    this.status.set(session.status === 'PAUSED' || session.paused_at ? 'PAUSED' : session.status);
+
+    let totalMs = this.totalPausedMs();
+    if (typeof session.total_paused_ms === 'number') {
+      totalMs = Math.max(totalMs, Math.max(0, session.total_paused_ms));
+    }
+    this.totalPausedMs.set(totalMs);
+
+    const anchor = session.paused_at ?? session.updated_at ?? this.pausedAt() ?? new Date().toISOString();
+    this.pausedAt.set(anchor);
+    this.writeTimerCache(session.id, totalMs, anchor);
+  }
+
+  /** Apply server resume response and fold the open pause interval into total paused time. */
+  applyResumedState(session: ClinicalSession): void {
+    this.status.set(session.status);
+
+    let totalMs = this.totalPausedMs();
+    if (typeof session.total_paused_ms === 'number') {
+      totalMs = Math.max(totalMs, Math.max(0, session.total_paused_ms));
+    } else {
+      const pauseStart = this.pausedAt();
+      if (pauseStart) {
+        totalMs += Date.now() - new Date(pauseStart).getTime();
+      }
+    }
+
+    this.totalPausedMs.set(Math.max(0, totalMs));
+    this.pausedAt.set(null);
+    this.writeTimerCache(session.id, totalMs, null);
+  }
+
   reset(): void {
     this.sessionId.set(null);
     this.appointmentId.set(null);
     this.status.set('INITIALISED');
     this.startedAt.set(null);
     this.sealedAt.set(null);
+    this.totalPausedMs.set(0);
+    this.pausedAt.set(null);
     this.patient.set(null);
     this.examination.set(emptyExamination());
     this.diagnoses.set([]);
@@ -304,6 +401,36 @@ export class SessionStore {
   }
 
   // ── Private ───────────────────────────────────────────────────────────────
+
+  private timerCacheKey(sessionId: string): string {
+    return `df:session-timer:${sessionId}`;
+  }
+
+  private readTimerCache(sessionId: string): { totalPausedMs: number; pausedAtIso: string | null } | null {
+    try {
+      const raw = sessionStorage.getItem(this.timerCacheKey(sessionId));
+      if (!raw) return null;
+      const parsed = JSON.parse(raw) as { totalPausedMs?: number; pausedAtIso?: string | null };
+      if (typeof parsed.totalPausedMs !== 'number') return null;
+      return {
+        totalPausedMs: Math.max(0, parsed.totalPausedMs),
+        pausedAtIso: parsed.pausedAtIso ?? null,
+      };
+    } catch {
+      return null;
+    }
+  }
+
+  private writeTimerCache(sessionId: string, totalPausedMs: number, pausedAtIso: string | null): void {
+    try {
+      sessionStorage.setItem(
+        this.timerCacheKey(sessionId),
+        JSON.stringify({ totalPausedMs: Math.max(0, totalPausedMs), pausedAtIso }),
+      );
+    } catch {
+      // sessionStorage may be unavailable in private mode / quota exceeded
+    }
+  }
 
   private validateSeal(): { ok: boolean; failures: ValidationFailure[] } {
     const failures: ValidationFailure[] = [];

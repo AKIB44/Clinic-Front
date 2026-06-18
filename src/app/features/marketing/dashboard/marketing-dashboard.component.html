@@ -1,0 +1,92 @@
+<div class="mk-db">
+  @if (store.loading()) {
+    <div class="mk-state"><mat-spinner diameter="28"></mat-spinner></div>
+  } @else if (store.error()) {
+    <div class="mk-state mk-error">{{ store.error() }}</div>
+  } @else if (store.data()) {
+   @if (store.data()!; as d) {
+    <div class="mk-cards">
+      <div class="mk-card mk-card--mrr">
+        <span class="mk-card-ic"><i-tabler name="trending-up"></i-tabler></span>
+        <span class="mk-card-txt">
+          <span class="mk-label">MRR</span>
+          <span class="mk-value">{{ inr(d.mrr) }}</span>
+          <span class="mk-meta">Marketing-attributable</span>
+        </span>
+      </div>
+      <div class="mk-card mk-card--spend">
+        <span class="mk-card-ic"><i-tabler name="receipt"></i-tabler></span>
+        <span class="mk-card-txt">
+          <span class="mk-label">Spend (MTD)</span>
+          <span class="mk-value">{{ inr(d.marketing_spend_mtd_paise) }}</span>
+          <span class="mk-meta">Logged expenses</span>
+        </span>
+      </div>
+      <div class="mk-card mk-card--active">
+        <span class="mk-card-ic"><i-tabler name="speakerphone"></i-tabler></span>
+        <span class="mk-card-txt">
+          <span class="mk-label">Active campaigns</span>
+          <span class="mk-value">{{ d.active_campaign_count }}</span>
+          <span class="mk-meta">Budget {{ inr(d.active_budget_paise) }}</span>
+        </span>
+      </div>
+      <div class="mk-card mk-card--posts">
+        <span class="mk-card-ic"><i-tabler name="calendar-event"></i-tabler></span>
+        <span class="mk-card-txt">
+          <span class="mk-label">Scheduled posts</span>
+          <span class="mk-value">{{ d.scheduled_posts }}</span>
+          <span class="mk-meta">Content calendar</span>
+        </span>
+      </div>
+      <div class="mk-card mk-card--pipe">
+        <span class="mk-card-ic"><i-tabler name="layout-kanban"></i-tabler></span>
+        <span class="mk-card-txt">
+          <span class="mk-label">Pipeline leads</span>
+          <span class="mk-value">{{ d.pipeline_count }}</span>
+          <span class="mk-meta">Open opportunities</span>
+        </span>
+      </div>
+      <div class="mk-card mk-card--callback">
+        <span class="mk-card-ic"><i-tabler name="phone-call"></i-tabler></span>
+        <span class="mk-card-txt">
+          <span class="mk-label">Pending callbacks</span>
+          <span class="mk-value">{{ d.pending_callbacks }}</span>
+          <span class="mk-meta">Caller queue</span>
+        </span>
+      </div>
+      <div class="mk-card mk-card--calls">
+        <span class="mk-card-ic"><i-tabler name="calendar-time"></i-tabler></span>
+        <span class="mk-card-txt">
+          <span class="mk-label">Calls today</span>
+          <span class="mk-value">{{ d.scheduled_calls_today }}</span>
+          <span class="mk-meta">Scheduled meetings</span>
+        </span>
+      </div>
+    </div>
+
+    <div class="mk-actions">
+      <a mat-flat-button color="primary" routerLink="../campaigns/new">
+        <i-tabler name="plus"></i-tabler> New campaign
+      </a>
+      <a mat-stroked-button routerLink="../campaigns">View campaigns</a>
+      <a mat-stroked-button routerLink="../calendar">Content calendar</a>
+    </div>
+
+    <section class="mk-panel">
+      <h2 class="mk-panel-title">Campaign conversions</h2>
+      @if (d.campaign_conversions.length === 0) {
+        <div class="mk-empty">No conversions tracked yet. Attribution lands in Phase 3.</div>
+      } @else {
+        <table class="mk-table">
+          <thead><tr><th>Campaign</th><th>Clicks</th><th>Bookings</th></tr></thead>
+          <tbody>
+            @for (c of d.campaign_conversions; track c.campaign_id) {
+              <tr><td>{{ c.name }}</td><td>{{ c.clicks }}</td><td>{{ c.bookings }}</td></tr>
+            }
+          </tbody>
+        </table>
+      }
+    </section>
+   }
+  }
+</div>

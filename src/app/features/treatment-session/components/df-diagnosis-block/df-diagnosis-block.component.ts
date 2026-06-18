@@ -121,7 +121,7 @@ export class DfDiagnosisBlockComponent {
       next: () => {
         this.deleting.set(null);
         this.store.removeDiagnosis(id);
-        this.toast.success('Diagnosis removed.');
+        this.toast.warn('Diagnosis removed.');
       },
       error: () => {
         this.deleting.set(null);

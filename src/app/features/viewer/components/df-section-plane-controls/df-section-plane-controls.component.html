@@ -1,0 +1,13 @@
+<div class="sp">
+  <div class="sp-head">
+    <span><i-tabler name="slice"></i-tabler> Section plane</span>
+    <button class="sp-close" (click)="close()" aria-label="Close" type="button"><i-tabler name="x"></i-tabler></button>
+  </div>
+  <div class="sp-axes">
+    @for (a of axes; track a) {
+      <button class="sp-axis" [class.is-active]="axis() === a" (click)="setAxis(a)" type="button">{{ a | uppercase }}</button>
+    }
+  </div>
+  <input class="sp-slider" type="range" min="0" max="100" [(ngModel)]="pos" (input)="onPos()"
+         aria-label="Section position">
+</div>

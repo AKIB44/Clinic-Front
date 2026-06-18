@@ -1,9 +1,7 @@
 .soap-card         { background: #fff; border-radius: 12px; box-shadow: 0 1px 4px rgba(0,0,0,.08); overflow: hidden; }
-.soap-header       { display: flex; align-items: center; gap: 8px; padding: 14px 18px;
-                     background: #f8fafd; border-bottom: 1px solid #e5eaf0;
-                     font-size: 14px; font-weight: 600; color: #1e3a5f; }
-.soap-saving       { margin-left: auto; }
-.soap-saved-badge  { margin-left: auto; font-size: 11px; color: #2e7d32; font-weight: 500;
+.soap-status-bar   { display: flex; justify-content: flex-end; align-items: center; gap: 8px;
+                     padding: 8px 18px 0; min-height: 24px; }
+.soap-saved-badge  { font-size: 11px; color: #2e7d32; font-weight: 500;
                      display: flex; align-items: center; gap: 3px; }
 .soap-sealed-notice { padding: 8px 18px; background: #fff8e1; color: #b45309;
                       font-size: 12px; display: flex; align-items: center; gap: 6px; }

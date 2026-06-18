@@ -1,0 +1,9 @@
+.mk-fbform { display: block; }
+.mk-fbform-row { display: flex; gap: 12px; flex-wrap: wrap; }
+.mk-grow { flex: 1; min-width: 220px; }
+.mk-disp { width: 220px; }
+.mk-fbform-full { width: 100%; }
+.mk-fbform-actions {
+  display: flex; justify-content: flex-end;
+  i-tabler { width: 18px; height: 18px; vertical-align: middle; }
+}

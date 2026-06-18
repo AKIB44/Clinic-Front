@@ -38,9 +38,11 @@
       <button mat-icon-button class="date-nav-btn" (click)="nextDay()" matTooltip="Next day">
         <i-tabler name="chevron-right" size="16"></i-tabler>
       </button>
-      <button mat-icon-button class="date-nav-today" (click)="goToday()" matTooltip="Go to today">
-        <i-tabler name="calendar-today" size="15"></i-tabler>
-      </button>
+      @if (!isSelectedDateToday) {
+        <button mat-icon-button class="date-nav-today" (click)="goToday()" matTooltip="Go to today">
+          <i-tabler name="calendar-today" size="15"></i-tabler>
+        </button>
+      }
     </div>
 
     <!-- Hidden date picker -->
@@ -126,6 +128,18 @@
         </div>
       </button>
 
+      <button type="button" class="stat-card stat-cancelled"
+              [class.stat-card-active]="statFilter === 'cancelled'"
+              (click)="setStatFilter('cancelled')">
+        <div class="stat-icon-wrap">
+          <i-tabler name="calendar-off" size="16"></i-tabler>
+        </div>
+        <div class="stat-body">
+          <div class="stat-count">{{ cancelledCount }}</div>
+          <div class="stat-label">Cancelled</div>
+        </div>
+      </button>
+
       <!-- Progress bar across all stats -->
       @if (totalCount > 0) {
         <div class="stat-progress-bar">
@@ -178,7 +192,7 @@
                 </span>
               </div>
               <!-- Mini progress: done / total for this column -->
-              @if (colTotal(col.serviceId) > 0) {
+              @if (colTotal(col.serviceId) > 0 && statFilter !== 'cancelled') {
                 <div class="col-mini-bar">
                   <div class="col-mini-fill"
                        [style.width.%]="colDonePct(col.serviceId)"
@@ -243,8 +257,9 @@
                         {{ statusLabel[appt.status] || appt.status }}
                       </span>
                       @if (appt.chair_id && chairs.length > 1 && selectedChairId === 'all') {
-                        <span class="card-chair" [matTooltip]="getChairName(appt.chair_id)">
+                        <span class="card-chair-pill" [matTooltip]="getChairName(appt.chair_id)">
                           <i-tabler name="armchair" size="11"></i-tabler>
+                          {{ getChairShortLabel(appt.chair_id) }}
                         </span>
                       }
                     </div>

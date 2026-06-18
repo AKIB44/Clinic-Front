@@ -1,0 +1,10 @@
+.mk-scf {
+  background: #fff; border: 1px solid #e2e8f0; border-radius: 12px;
+  padding: 16px 18px; margin-bottom: 16px;
+}
+.mk-scf-row { display: flex; gap: 12px; flex-wrap: wrap; }
+.mk-grow { flex: 1; min-width: 200px; }
+.mk-scf-actions {
+  display: flex; justify-content: flex-end; gap: 10px;
+  i-tabler { width: 18px; height: 18px; vertical-align: middle; }
+}

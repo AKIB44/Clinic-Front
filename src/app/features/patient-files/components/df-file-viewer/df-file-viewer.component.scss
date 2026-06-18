@@ -14,10 +14,20 @@
 .fv-kind { display: inline-flex; align-items: center; gap: 5px; padding: 3px 9px; border-radius: 8px; font-size: 12px; font-weight: 700; }
 .fv-name { font-weight: 600; color: #0f172a; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .fv-size { font-size: 12px; color: #94a3b8; }
+.fv-actions { display: inline-flex; align-items: center; gap: 8px; }
 .fv-dl {
   display: inline-flex; align-items: center; gap: 5px; font-size: 13px; font-weight: 600;
   color: #0d7a5f; text-decoration: none; border: 1px solid #0d7a5f44; border-radius: 8px; padding: 5px 10px;
   &:hover { background: #0d7a5f10; }
+}
+.fv-gesture {
+  display: inline-flex; align-items: center; gap: 5px; font-size: 13px; font-weight: 700;
+  color: #fff; cursor: pointer; border: none; border-radius: 8px; padding: 6px 12px;
+  background: linear-gradient(135deg, #7c3aed, #6d28d9);
+  box-shadow: 0 6px 16px -8px rgba(109,40,217,.7);
+  transition: transform .12s ease, box-shadow .2s ease;
+  &:hover { transform: translateY(-1px); box-shadow: 0 8px 20px -8px rgba(109,40,217,.8); }
+  &:active { transform: scale(.97); }
 }
 
 .fv-stage { flex: 1; display: flex; min-height: 420px; }

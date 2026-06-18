@@ -1,19 +1,5 @@
 <div class="tp-card">
-
-  <!-- Header -->
-  <div class="tp-header" (click)="collapsed.set(!collapsed())">
-    <div class="tp-title">
-      <i-tabler name="clipboard-heart" size="18"></i-tabler>
-      <span>Treatment Plan</span>
-      <span class="tp-badge">{{ totalItems() }}</span>
-    </div>
-    <div class="tp-header-right">
-      <i-tabler [name]="collapsed() ? 'chevron-down' : 'chevron-up'" size="18"></i-tabler>
-    </div>
-  </div>
-
-  @if (!collapsed()) {
-    <div class="tp-body">
+  <div class="tp-body">
 
       <!-- No plan yet -->
       @if (store.plans().length === 0) {
@@ -206,5 +192,4 @@
       }
 
     </div>
-  }
 </div>

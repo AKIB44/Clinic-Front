@@ -1,0 +1,90 @@
+<div class="mk-lf">
+  @if (store.status(); as st) {
+    <div class="mk-lf-prov" [class.mk-lf-prov--mock]="st.active_provider === 'mock'">
+      <i-tabler [name]="st.active_provider === 'mock' ? 'alert-triangle' : 'plug-connected'"></i-tabler>
+      @switch (st.active_provider) {
+        @case ('scrape') { Discovery via Google Maps scraper{{ st.places_enabled ? ' + Places API enrichment' : '' }}. }
+        @case ('places') { Discovery via Google Places API. }
+        @case ('mock')   { <b>Demo mode</b> — no scraper or Places API key configured; results are sample data. Set GOOGLE_PLACES_API_KEY or install Playwright for live results. }
+      }
+    </div>
+  }
+
+  <div class="mk-lf-search">
+    <mat-form-field appearance="outline" class="mk-grow">
+      <mat-label>What to find</mat-label>
+      <input matInput name="query" [(ngModel)]="query" placeholder="e.g. dental clinic" (keyup.enter)="search()">
+    </mat-form-field>
+    <mat-form-field appearance="outline">
+      <mat-label>City</mat-label>
+      <input matInput name="city" [(ngModel)]="city" placeholder="e.g. Pune" (keyup.enter)="search()">
+    </mat-form-field>
+    <mat-form-field appearance="outline" class="mk-lf-limit">
+      <mat-label>Max</mat-label>
+      <input matInput type="number" min="1" max="40" name="limit" [(ngModel)]="limit">
+    </mat-form-field>
+    <button mat-flat-button color="primary" [disabled]="store.loading()" (click)="search()">
+      <i-tabler name="map-search"></i-tabler> Find leads
+    </button>
+  </div>
+
+  @if (store.error()) { <div class="mk-state mk-error">{{ store.error() }}</div> }
+
+  @if (store.usage(); as u) {
+    <div class="mk-lf-usage">
+      <i-tabler name="gauge"></i-tabler>
+      <span>Today: {{ u.searches_used }}/{{ u.limits.daily_search_cap }} searches · {{ u.api_calls_used }}/{{ u.limits.daily_call_cap }} API calls</span>
+      @if (store.fromCache()) { <span class="mk-lf-cached">served from cache · 0 calls</span> }
+    </div>
+  }
+
+  <div class="mk-lf-actions">
+    <span class="mk-lf-count">{{ store.results().length }} results · {{ store.importable().length }} ready</span>
+    <span class="mk-lf-spacer"></span>
+    @if (store.importable().length > 0) {
+      <button mat-button (click)="store.selectAllImportable()">Select all ready</button>
+      <button mat-flat-button color="primary" [disabled]="store.selectedCount() === 0" (click)="importSelected()">
+        <i-tabler name="download"></i-tabler> Import {{ store.selectedCount() || '' }} to pipeline
+      </button>
+    }
+  </div>
+
+  @if (store.loading()) {
+    <div class="mk-state"><mat-spinner diameter="28"></mat-spinner></div>
+  } @else if (store.results().length === 0) {
+    <div class="mk-empty">No results yet. Run a search to discover clinic leads.</div>
+  } @else {
+    <table class="mk-table">
+      <thead>
+        <tr><th class="c"></th><th>Clinic</th><th>Phone</th><th>City / address</th><th>Rating</th><th>Status</th><th class="r"></th></tr>
+      </thead>
+      <tbody>
+        @for (r of store.results(); track r.id) {
+          <tr [class.mk-row--dim]="r.status !== 'passed'">
+            <td class="c">
+              @if (r.status === 'passed') {
+                <mat-checkbox [checked]="store.selected().has(r.id)" (change)="store.toggle(r.id)"></mat-checkbox>
+              }
+            </td>
+            <td class="mk-name">
+              {{ r.name }}
+              @if (r.website) { <a [href]="r.website" target="_blank" rel="noopener" class="mk-web"><i-tabler name="world"></i-tabler></a> }
+              @if (r.enriched) { <span class="mk-enr" matTooltip="Enriched via Places API">enriched</span> }
+            </td>
+            <td>{{ r.phone || r.phone_raw || '—' }}</td>
+            <td class="mk-dim">{{ r.search_city || r.address || '—' }}</td>
+            <td>{{ r.rating ?? '—' }}</td>
+            <td>
+              <span class="mk-st mk-st--{{ r.status }}" [matTooltip]="r.reject_reason || ''">{{ statusLabels[r.status] }}</span>
+            </td>
+            <td class="r">
+              @if (r.status !== 'imported') {
+                <button mat-icon-button matTooltip="Discard" (click)="discard(r)"><i-tabler name="x"></i-tabler></button>
+              }
+            </td>
+          </tr>
+        }
+      </tbody>
+    </table>
+  }
+</div>

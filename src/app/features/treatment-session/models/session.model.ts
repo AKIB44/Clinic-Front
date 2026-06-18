@@ -37,6 +37,8 @@ export interface ClinicalSession {
   patient_ack_at: string | null;
   created_at: string;
   updated_at: string;
+  paused_at?: string | null;
+  total_paused_ms?: number;
   // joined fields from the hydration query
   patient_name?: string;
   patient_phone?: string;

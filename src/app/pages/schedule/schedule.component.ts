@@ -66,7 +66,7 @@ export interface ServiceColumn {
 }
 
 /** Summary pills: narrow which rows appear in service columns (counts stay full-day). */
-export type ScheduleStatFilter = 'all' | 'active' | 'done' | 'pending';
+export type ScheduleStatFilter = 'all' | 'active' | 'done' | 'pending' | 'cancelled';
 
 export const STATUS_LABEL: Record<string, string> = {
   booked:       'Booked',
@@ -269,11 +269,16 @@ export class RescheduleDialog {
 
       <!-- ── Header ── -->
       <div class="dialog-header">
-        <div class="dialog-header-left">
+        <div class="dialog-header-top">
           <h2 class="dialog-title">{{ data.patient_name }}</h2>
-          <div class="dialog-subtitle">{{ data.service_name }}</div>
+          <div class="dialog-header-right">
+            <span class="status-badge s-{{ data.status }}">{{ statusLabel[data.status] || data.status }}</span>
+            <button mat-icon-button mat-dialog-close class="dialog-close-btn" aria-label="Close">
+              <i-tabler name="x" size="18"></i-tabler>
+            </button>
+          </div>
         </div>
-        <span class="status-badge s-{{ data.status }}">{{ statusLabel[data.status] || data.status }}</span>
+        <div class="dialog-subtitle">{{ data.service_name }}</div>
       </div>
 
       <!-- ── Detail view ── -->
@@ -405,7 +410,6 @@ export class RescheduleDialog {
               {{ data.status === 'in_treatment' ? 'Resume Treatment' : 'Start Treatment' }}
             </button>
           }
-          <button mat-stroked-button mat-dialog-close>Close</button>
         </mat-dialog-actions>
       }
 
@@ -510,11 +514,29 @@ export class RescheduleDialog {
   `,
   styles: [`
     .appt-dialog        { min-width: 360px; max-width: 480px; }
-    .dialog-header      { display: flex; justify-content: space-between; align-items: flex-start;
-                          padding: 20px 24px 0; gap: 12px; }
-    .dialog-header-left { flex: 1; }
-    .dialog-title       { margin: 0; font-size: 18px; font-weight: 600; line-height: 1.3; }
-    .dialog-subtitle    { color: #666; font-size: 13px; margin-top: 2px; }
+    .dialog-header      { padding: 16px 12px 0 24px; }
+    .dialog-header-top  {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+    }
+    .dialog-header-right {
+      display: flex;
+      align-items: center;
+      gap: 2px;
+      flex-shrink: 0;
+    }
+    .dialog-close-btn   {
+      margin: 0;
+      width: 32px;
+      height: 32px;
+      padding: 0;
+      color: #64748b;
+      flex-shrink: 0;
+    }
+    .dialog-title       { margin: 0; font-size: 18px; font-weight: 600; line-height: 1.3; flex: 1; min-width: 0; }
+    .dialog-subtitle    { color: #666; font-size: 13px; margin-top: 4px; }
     .dialog-body        { padding: 16px 24px !important; }
     .info-grid          { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 16px; }
     .info-item          { display: flex; gap: 10px; align-items: flex-start; color: #555; }
@@ -533,7 +555,8 @@ export class RescheduleDialog {
     mat-dialog-actions > button + button { margin-left: 0 !important; }
     mat-dialog-actions i-tabler { margin-right: 6px; }
     .dialog-error       { color: #c62828; font-size: 13px; margin-top: 8px; }
-    .status-badge       { font-size: 11px; font-weight: 600; padding: 4px 10px; border-radius: 20px;
+    .status-badge       { display: inline-flex; align-items: center; font-size: 11px; font-weight: 600;
+                          padding: 4px 10px; border-radius: 20px; height: 24px; line-height: 1;
                           text-transform: uppercase; letter-spacing: .4px; white-space: nowrap; flex-shrink: 0; }
     .s-booked           { background: #e3f2fd; color: #1565c0; }
     .s-confirmed        { background: #e8f5e9; color: #2e7d32; }
@@ -828,7 +851,7 @@ export class ScheduleComponent implements OnInit, OnDestroy {
 
   selectedChairId: string = 'all';
 
-  /** Filter driven by summary-strip pills (Total / Active / Done / Pending). */
+  /** Filter driven by summary-strip pills (Total / Active / Done / Pending / Cancelled). */
   statFilter: ScheduleStatFilter = 'all';
 
   /** True once the user explicitly clicks any filter pill.
@@ -933,6 +956,7 @@ export class ScheduleComponent implements OnInit, OnDestroy {
   get dateLabel(): string {
     return isToday(this.selectedDate) ? 'Today' : format(this.selectedDate, 'EEE, d MMM yyyy');
   }
+  get isSelectedDateToday(): boolean { return isToday(this.selectedDate); }
 
   prevDay() {
     this.statFilter = 'all';
@@ -1049,13 +1073,18 @@ export class ScheduleComponent implements OnInit, OnDestroy {
 
   // ── Derived data ──────────────────────────────────────────────────────────
 
+  get chairFiltered(): Appointment[] {
+    return this.selectedChairId === 'all'
+      ? this.appointments
+      : this.appointments.filter(a => a.chair_id === this.selectedChairId);
+  }
+
   get filtered(): Appointment[] {
-    const byChair =
-      this.selectedChairId === 'all'
-        ? this.appointments
-        : this.appointments.filter(a => a.chair_id === this.selectedChairId);
-    // Cancelled bookings stay in history/API but are hidden from the day board.
-    return byChair.filter(a => a.status !== 'cancelled');
+    return this.chairFiltered.filter(a => a.status !== 'cancelled');
+  }
+
+  get cancelledFiltered(): Appointment[] {
+    return this.chairFiltered.filter(a => a.status === 'cancelled');
   }
 
   /**
@@ -1069,6 +1098,8 @@ export class ScheduleComponent implements OnInit, OnDestroy {
   /** Kanban columns after pill filter. */
   get displayedForBoard(): Appointment[] {
     switch (this.statFilter) {
+      case 'cancelled':
+        return this.cancelledFiltered;
       case 'done':
         return this.filtered.filter(a => a.status === 'done');
       case 'active':
@@ -1085,8 +1116,9 @@ export class ScheduleComponent implements OnInit, OnDestroy {
    *  relevant cards. Without a pill the default shows only services with
    *  upcoming / in-progress work (booked | confirmed | in_progress). */
   get sortedColumns(): ServiceColumn[] {
+    const source = this.statFilter === 'cancelled' ? this.cancelledFiltered : this.filtered;
     const counts = new Map<string, number>();
-    for (const a of this.filtered) {
+    for (const a of source) {
       counts.set(a.service_id, (counts.get(a.service_id) ?? 0) + 1);
     }
 
@@ -1099,6 +1131,9 @@ export class ScheduleComponent implements OnInit, OnDestroy {
       );
     } else {
       switch (this.statFilter) {
+        case 'cancelled':
+          relevantIds = new Set(this.cancelledFiltered.map(a => a.service_id));
+          break;
         case 'active':
           relevantIds = new Set(
             this.filtered
@@ -1139,6 +1174,7 @@ export class ScheduleComponent implements OnInit, OnDestroy {
   get activeCount():  number { return this.filtered.filter(a => a.status === 'in_progress' || a.status === 'confirmed').length; }
   get doneCount():    number { return this.filtered.filter(a => a.status === 'done').length; }
   get pendingCount(): number { return this.filtered.filter(a => a.status === 'booked').length; }
+  get cancelledCount(): number { return this.cancelledFiltered.length; }
 
   // ── Card helpers ──────────────────────────────────────────────────────────
 
@@ -1189,6 +1225,20 @@ export class ScheduleComponent implements OnInit, OnDestroy {
 
   getChairName(chairId: string): string {
     return this.chairs.find(c => c.id === chairId)?.name ?? '';
+  }
+
+  /** Compact chair label for narrow appointment cards (e.g. "Chair 1" → "1"). */
+  getChairShortLabel(chairId: string): string {
+    const name = this.getChairName(chairId).trim();
+    if (!name) return '—';
+
+    const chairNo = name.match(/chair\s*#?\s*(\d+)/i)?.[1];
+    if (chairNo) return chairNo;
+
+    const trailingNo = name.match(/(\d+)\s*$/);
+    if (trailingNo) return trailingNo[1];
+
+    return name.length <= 10 ? name : name.slice(0, 10);
   }
 
   colTotal(serviceId: string): number {

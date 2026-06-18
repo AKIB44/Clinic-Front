@@ -1,0 +1,21 @@
+.sp {
+  width: 220px; padding: 12px 14px; border-radius: 14px;
+  background: rgba(20,23,29,.86); backdrop-filter: blur(10px);
+  border: 1px solid rgba(255,255,255,.1); color: #e5e7eb;
+  box-shadow: 0 12px 30px -14px rgba(0,0,0,.7);
+}
+.sp-head {
+  display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px;
+  span { display: inline-flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: .03em; color: #cbd5e1; }
+  i-tabler { width: 16px; height: 16px; color: #38bdf8; }
+}
+.sp-close { background: none; border: none; color: #64748b; cursor: pointer; display: inline-flex; &:hover { color: #f87171; } i-tabler { width: 15px; height: 15px; } }
+.sp-axes { display: flex; gap: 6px; margin-bottom: 12px; }
+.sp-axis {
+  flex: 1; padding: 7px 0; border-radius: 9px; cursor: pointer;
+  border: 1px solid #2a2f3a; background: #1b1f27; color: #cbd5e1; font-size: 12.5px; font-weight: 700;
+  transition: background .15s ease, border-color .15s ease;
+  &:hover { border-color: #3a4150; }
+  &.is-active { background: #075985; border-color: #38bdf8; color: #fff; }
+}
+.sp-slider { width: 100%; accent-color: #38bdf8; }

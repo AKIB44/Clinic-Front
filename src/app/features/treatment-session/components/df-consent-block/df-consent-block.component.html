@@ -1,12 +1,5 @@
 <div class="consent-card">
 
-  <!-- Header -->
-  <div class="consent-header">
-    <i-tabler name="writing-sign" size="18"></i-tabler>
-    <span>Informed Consent</span>
-    <span class="consent-count">{{ store.consents().length }} on file</span>
-  </div>
-
   <!-- Existing consents list -->
   @if (store.consents().length > 0) {
     <div class="consent-list">
@@ -77,10 +70,10 @@
       }
 
       <!-- Minor flag -->
-      <label class="cf-check">
+      <div class="cf-check">
         <input type="checkbox" [(ngModel)]="isMinor">
         <span>Patient is a minor (guardian consent)</span>
-      </label>
+      </div>
 
       @if (isMinor) {
         <div class="cf-row">

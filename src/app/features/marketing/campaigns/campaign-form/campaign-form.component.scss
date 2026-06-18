@@ -1,0 +1,18 @@
+.mk-cf {
+  max-width: 720px; background: #fff; border: 1px solid #e2e8f0;
+  border-radius: 12px; padding: 22px 24px;
+}
+.mk-cf-title { font-size: 16px; font-weight: 700; color: #0f172a; margin: 0 0 18px; }
+
+.mk-state { padding: 40px; text-align: center; color: #64748b; }
+
+.mk-cf-form { display: flex; flex-direction: column; }
+.mk-cf-full { width: 100%; }
+.mk-cf-row {
+  display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px;
+}
+@media (max-width: 700px) { .mk-cf-row { grid-template-columns: 1fr; } }
+
+.mk-cf-actions {
+  display: flex; justify-content: flex-end; gap: 10px; margin-top: 8px;
+}

@@ -59,7 +59,7 @@ export class DfAbandonModalComponent {
         this.store.status.set(session.status);
         this.store.sealedAt.set(null);
         this.dialogRef.close({ abandoned: true });
-        this.toast.success('Session abandoned.');
+        this.toast.warn('Session abandoned.');
         this.router.navigate(['/schedule']);
       },
       error: (err) => {

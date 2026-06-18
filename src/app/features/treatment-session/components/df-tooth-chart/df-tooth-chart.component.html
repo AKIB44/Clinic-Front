@@ -1,20 +1,12 @@
 <div class="chart-card">
-  <!-- Header -->
-  <div class="chart-header" (click)="collapsed.set(!collapsed())">
-    <div class="chart-title">
-      <i-tabler name="tooth" size="18"></i-tabler>
-      <span>Tooth Chart</span>
-      <span class="chart-badge">{{ annotatedCount() }}</span>
-    </div>
-    <div class="chart-header-right">
+  @if (saving() || saved()) {
+    <div class="chart-status-bar">
       @if (saving()) { <mat-spinner diameter="16"></mat-spinner> }
       @if (saved()) { <span class="saved-hint"><i-tabler name="check" size="14"></i-tabler> Saved</span> }
-      <i-tabler [name]="collapsed() ? 'chevron-down' : 'chevron-up'" size="18"></i-tabler>
     </div>
-  </div>
+  }
 
-  @if (!collapsed()) {
-    <div class="chart-body">
+  <div class="chart-body">
 
       <!-- Legend -->
       <div class="legend">
@@ -224,5 +216,4 @@
       }
 
     </div>
-  }
 </div>

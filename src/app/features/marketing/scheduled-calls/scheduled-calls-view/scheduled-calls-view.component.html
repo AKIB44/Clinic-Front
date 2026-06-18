@@ -1,0 +1,78 @@
+<div class="mk-sc">
+  <div class="mk-sc-bar">
+    @if (store.status(); as st) {
+      <span class="mk-sync" [class.mk-sync--on]="st.connected">
+        <i-tabler [name]="st.connected ? 'circle-check' : 'plug-connected-x'"></i-tabler>
+        {{ st.connected ? 'Google Calendar connected' : 'Calendar sync not connected' }}
+      </span>
+    }
+    <mat-form-field appearance="outline" class="mk-sc-filter" subscriptSizing="dynamic">
+      <mat-label>Status</mat-label>
+      <mat-select [(value)]="statusFilter" (selectionChange)="reload()">
+        <mat-option value="">All</mat-option>
+        @for (s of statuses; track s) { <mat-option [value]="s">{{ s | titlecase }}</mat-option> }
+      </mat-select>
+    </mat-form-field>
+    <span class="mk-sc-spacer"></span>
+    @if (canCreate) {
+      <button mat-stroked-button (click)="showSlots.set(!showSlots())">
+        <i-tabler name="clock-hour-4"></i-tabler> Slots
+      </button>
+      <button mat-flat-button color="primary" (click)="showForm.set(!showForm())">
+        <i-tabler name="calendar-plus"></i-tabler> New meeting
+      </button>
+    }
+  </div>
+
+  @if (showSlots()) { <mkt-slot-picker></mkt-slot-picker> }
+  @if (showForm()) {
+    <mkt-scheduled-call-form (created)="onCreated($event)" (cancelled)="showForm.set(false)"></mkt-scheduled-call-form>
+  }
+
+  @if (store.loading()) {
+    <div class="mk-state"><mat-spinner diameter="28"></mat-spinner></div>
+  } @else if (store.error()) {
+    <div class="mk-state mk-error">{{ store.error() }}</div>
+  } @else if (store.calls().length === 0) {
+    <div class="mk-empty">No scheduled calls. Create one or share your booking link.</div>
+  } @else {
+    @for (group of store.byDay(); track group.day) {
+      <div class="mk-day">
+        <h3 class="mk-day-title">{{ group.day | date:'EEEE, MMM d' }}</h3>
+        <div class="mk-day-list">
+          @for (c of group.calls; track c.id) {
+            <div class="mk-call mk-call--{{ c.status }}">
+              <div class="mk-call-time">
+                <span class="mk-call-hr">{{ c.scheduled_for | date:'h:mm a' }}</span>
+                <span class="mk-call-dur">{{ c.duration_minutes }}m</span>
+              </div>
+              <div class="mk-call-info">
+                <span class="mk-call-clinic">{{ c.clinic_name || 'Prospect' }}</span>
+                <span class="mk-call-meta">
+                  {{ c.contact_name || 'No contact' }}
+                  @if (c.contact_phone) { · {{ c.contact_phone }} }
+                  · {{ assigneeName(c) }}
+                </span>
+                @if (c.google_meet_link) {
+                  <a class="mk-call-meet" [href]="c.google_meet_link" target="_blank" rel="noopener">
+                    <i-tabler name="video"></i-tabler> Google Meet
+                  </a>
+                }
+              </div>
+              <div class="mk-call-side">
+                <span class="mk-st mk-st--{{ c.status }}">{{ c.status | titlecase }}</span>
+                <span class="mk-sync-pill mk-sync-pill--{{ c.sync_status }}">{{ c.sync_status }}</span>
+                @if (canCreate && c.status === 'upcoming') {
+                  <div class="mk-call-actions">
+                    <button mat-button (click)="setStatus(c, 'completed')">Done</button>
+                    <button mat-button color="warn" (click)="setStatus(c, 'no_show')">No-show</button>
+                  </div>
+                }
+              </div>
+            </div>
+          }
+        </div>
+      </div>
+    }
+  }
+</div>

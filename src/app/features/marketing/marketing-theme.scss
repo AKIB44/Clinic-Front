@@ -1,0 +1,159 @@
+/* ════════════════════════════════════════════════════════════════════════════
+   Marketing module — shared design layer (modern · responsive · interactive).
+   Global stylesheet scoped under `.mk-shell` (the marketing shell wraps every
+   marketing route), so it upgrades all screens at once without per-component CSS.
+   Uses `!important` only where it must override a component's own flat rule —
+   consistent with the rest of styles.scss. New properties (shadows, transitions,
+   transforms, animations) apply without it.
+   ════════════════════════════════════════════════════════════════════════════ */
+
+.mk-shell {
+  --mk-accent:      #6d28d9;
+  --mk-accent-soft: #ede9fe;
+  --mk-ink:         #0f172a;
+  --mk-muted:       #64748b;
+  --mk-line:        #e9edf3;
+  --mk-surface:     #ffffff;
+  --mk-radius:      16px;
+  --mk-radius-sm:   12px;
+  --mk-shadow:      0 1px 2px rgba(15,23,42,.04), 0 8px 24px -12px rgba(15,23,42,.12);
+  --mk-shadow-hover:0 2px 4px rgba(15,23,42,.06), 0 18px 36px -16px rgba(15,23,42,.22);
+  --mk-ease:        cubic-bezier(.4,0,.2,1);
+
+  font-family: 'Plus Jakarta Sans', 'Inter', Roboto, sans-serif;
+  color: var(--mk-ink);
+}
+
+/* ── Route content: subtle fade/slide-in on navigation ─────────────────────── */
+@keyframes mkFadeUp { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+@keyframes mkShimmer { 100% { background-position: -200% 0; } }
+
+.mk-shell-body > :not(router-outlet) { animation: mkFadeUp .3s var(--mk-ease) both; }
+
+/* ── Cards / tiles ─────────────────────────────────────────────────────────── */
+.mk-shell .mk-card,
+.mk-shell .mk-seg {
+  border-radius: var(--mk-radius-sm) !important;
+  border: 1px solid var(--mk-line) !important;
+  box-shadow: var(--mk-shadow);
+  transition: transform .2s var(--mk-ease), box-shadow .2s var(--mk-ease), border-color .2s var(--mk-ease);
+}
+.mk-shell .mk-card:hover,
+.mk-shell .mk-seg:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--mk-shadow-hover);
+  border-color: #dce3ec !important;
+}
+/* Dashboard-style stat tiles: bolder number, accent wash */
+.mk-shell .mk-card .mk-value { letter-spacing: -.02em; }
+
+/* ── Panels & inline form/create surfaces ──────────────────────────────────── */
+.mk-shell .mk-panel,
+.mk-shell .mk-cl-create, .mk-shell .mk-ll-create, .mk-shell .mk-pb-create,
+.mk-shell .mk-cal-create, .mk-shell .mk-pc-form, .mk-shell .mk-ptl-form,
+.mk-shell .mk-ef, .mk-shell .mk-sb, .mk-shell .mk-scf, .mk-shell .mk-sp,
+.mk-shell .mk-key, .mk-shell .mk-fbform, .mk-shell .mk-cfform, .mk-shell .mk-cof {
+  border-radius: var(--mk-radius) !important;
+  border: 1px solid var(--mk-line) !important;
+  box-shadow: var(--mk-shadow);
+}
+.mk-shell .mk-panel { transition: box-shadow .2s var(--mk-ease); }
+.mk-shell .mk-panel-title { letter-spacing: -.01em; }
+
+/* ── Tables: modern, sticky header, row hover, responsive scroll ───────────── */
+.mk-shell .mk-table {
+  border-radius: var(--mk-radius) !important;
+  border-color: var(--mk-line) !important;
+  box-shadow: var(--mk-shadow);
+  overflow: hidden;
+}
+.mk-shell .mk-table thead th {
+  background: #f6f8fb !important;
+  border-bottom: 1px solid var(--mk-line) !important;
+}
+.mk-shell .mk-table tbody tr { transition: background .15s var(--mk-ease); }
+.mk-shell .mk-table tbody tr:hover { background: #f7f5ff !important; }
+.mk-shell .mk-table tbody td { border-color: #f1f5f9 !important; }
+
+/* ── Pills / status chips: consistent, soft ────────────────────────────────── */
+.mk-shell .mk-st, .mk-shell .mk-chip, .mk-shell .mk-stage, .mk-shell .mk-cat,
+.mk-shell .mk-src, .mk-shell .mk-disp, .mk-shell .mk-sent, .mk-shell .mk-status,
+.mk-shell .mk-tag, .mk-shell .mk-badge {
+  border-radius: 999px !important;
+  font-weight: 700;
+  letter-spacing: .01em;
+  line-height: 1.7;
+}
+
+/* ── Buttons: rounder, confident ───────────────────────────────────────────── */
+.mk-shell .mat-mdc-raised-button,
+.mk-shell .mat-mdc-unelevated-button,
+.mk-shell .mat-mdc-outlined-button,
+.mk-shell .mat-mdc-button {
+  border-radius: 10px !important;
+  font-weight: 600;
+  letter-spacing: 0;
+  transition: transform .12s var(--mk-ease), box-shadow .2s var(--mk-ease);
+}
+.mk-shell .mat-mdc-unelevated-button:not([disabled]):hover { box-shadow: 0 6px 16px -6px rgba(109,40,217,.5); transform: translateY(-1px); }
+
+/* ── Empty & loading states ────────────────────────────────────────────────── */
+.mk-shell .mk-empty {
+  border-radius: var(--mk-radius) !important;
+  border: 1px dashed #d8dee8 !important;
+  background: #fbfcfe !important;
+  color: #94a3b8;
+}
+.mk-shell .mk-state { color: var(--mk-muted); }
+
+/* ── Kanban board ──────────────────────────────────────────────────────────── */
+.mk-shell .mk-col { border-radius: var(--mk-radius) !important; background: #f6f8fb !important; }
+.mk-shell .mk-board .mk-card {
+  border-radius: 10px !important;
+  transition: transform .15s var(--mk-ease), box-shadow .15s var(--mk-ease);
+}
+.mk-shell .mk-board .mk-card:hover { transform: translateY(-1px); box-shadow: 0 10px 20px -10px rgba(15,23,42,.25); }
+
+/* ── Tighter Material form-field density in marketing surfaces ─────────────── */
+.mk-shell .mat-mdc-form-field { --mat-form-field-container-height: 46px; }
+.mk-shell .mat-mdc-form-field-subscript-wrapper { font-size: 11px; }
+
+/* ════════════════════════════════════════════════════════════════════════════
+   Responsive
+   ════════════════════════════════════════════════════════════════════════════ */
+@media (max-width: 1024px) {
+  .mk-shell .mk-cards,
+  .mk-shell .mk-ar-cards,
+  .mk-shell .mk-es-cards,
+  .mk-shell .mk-sl-grid,
+  .mk-shell .mk-ar-charts { grid-template-columns: repeat(2, 1fr) !important; }
+}
+
+@media (max-width: 700px) {
+  .mk-shell { padding: 12px 14px 24px !important; }
+
+  /* Stat/grid layouts collapse to a single column */
+  .mk-shell .mk-cards,
+  .mk-shell .mk-ar-cards,
+  .mk-shell .mk-es-cards,
+  .mk-shell .mk-sl-grid,
+  .mk-shell .mk-ar-charts { grid-template-columns: 1fr !important; }
+
+  /* Bars / toolbars wrap instead of overflowing */
+  .mk-shell .mk-cl-bar, .mk-shell .mk-ll-bar, .mk-shell .mk-en-bar,
+  .mk-shell .mk-el-bar, .mk-shell .mk-pc-bar, .mk-shell .mk-sc-bar,
+  .mk-shell .mk-cd-bar, .mk-shell .mk-lf-search, .mk-shell .mk-sb-filters,
+  .mk-shell .mk-sp-row, .mk-shell .mk-ld-controls { flex-wrap: wrap; gap: 10px; }
+  .mk-shell .mk-cl-filter, .mk-shell .mk-ll-filter, .mk-shell .mk-en-filter,
+  .mk-shell .mk-el-filter { width: 100% !important; }
+
+  /* Tables scroll horizontally on small screens */
+  .mk-shell .mk-table { display: block; overflow-x: auto; -webkit-overflow-scrolling: touch; white-space: nowrap; }
+
+  /* Kanban: let columns flow and scroll */
+  .mk-shell .mk-board { grid-auto-flow: column; grid-auto-columns: 78%; }
+
+  /* Forms stack full-width */
+  .mk-shell .mk-cf-row, .mk-shell .mk-scf-row, .mk-shell .mk-ef-row { grid-template-columns: 1fr !important; }
+  .mk-shell .mk-grow { min-width: 0 !important; }
+}

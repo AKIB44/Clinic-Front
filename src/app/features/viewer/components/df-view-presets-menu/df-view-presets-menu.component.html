@@ -1,0 +1,11 @@
+<div class="vpm">
+  <span class="vpm-title">Dental views</span>
+  <div class="vpm-grid">
+    @for (v of views; track v; let i = $index) {
+      <button type="button" class="vpm-item" [class.is-active]="store.currentView() === v" (click)="select.emit(v)">
+        <span class="vpm-key">{{ i + 1 }}</span>
+        {{ labels[v] }}
+      </button>
+    }
+  </div>
+</div>

@@ -1,0 +1,42 @@
+<div class="mk-sp">
+  <h3 class="mk-sp-title">Generate bookable slots</h3>
+  <p class="mk-sp-help">Pre-create open slots that prospects can book via your scheduling link.</p>
+
+  <div class="mk-sp-row">
+    <mat-form-field appearance="outline">
+      <mat-label>From</mat-label>
+      <input matInput type="date" name="from" [(ngModel)]="from">
+    </mat-form-field>
+    <mat-form-field appearance="outline">
+      <mat-label>To</mat-label>
+      <input matInput type="date" name="to" [(ngModel)]="to">
+    </mat-form-field>
+    <mat-form-field appearance="outline" class="mk-sp-num">
+      <mat-label>Slot (min)</mat-label>
+      <input matInput type="number" min="10" name="duration" [(ngModel)]="duration">
+    </mat-form-field>
+    <mat-form-field appearance="outline" class="mk-sp-num">
+      <mat-label>Start hr</mat-label>
+      <input matInput type="number" min="0" max="23" name="startHour" [(ngModel)]="startHour">
+    </mat-form-field>
+    <mat-form-field appearance="outline" class="mk-sp-num">
+      <mat-label>End hr</mat-label>
+      <input matInput type="number" min="1" max="24" name="endHour" [(ngModel)]="endHour">
+    </mat-form-field>
+    <button mat-flat-button color="primary" [disabled]="busy()" (click)="generate()">
+      <i-tabler name="calendar-plus"></i-tabler> Generate
+    </button>
+  </div>
+
+  <div class="mk-sp-avail">
+    <span class="mk-sp-count">{{ slots().length }} open slot{{ slots().length === 1 ? '' : 's' }}</span>
+    @if (slots().length > 0) {
+      <div class="mk-sp-chips">
+        @for (s of slots().slice(0, 24); track s.id) {
+          <span class="mk-sp-chip">{{ s.slot_start | date:'MMM d, h:mm a' }}</span>
+        }
+        @if (slots().length > 24) { <span class="mk-sp-more">+{{ slots().length - 24 }} more</span> }
+      </div>
+    }
+  </div>
+</div>

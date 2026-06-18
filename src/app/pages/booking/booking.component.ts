@@ -209,6 +209,12 @@ export class BookingComponent implements OnInit, OnDestroy {
     ].filter(g => g.slots.length > 0);
   });
 
+  readonly hasSelectableSlots = computed(() => {
+    const date = this.selectedDate();
+    if (!date) return false;
+    return this.slots().some(s => this.isSlotSelectable(s, date));
+  });
+
   // ── Patient ───────────────────────────────────────────────────────────────
   patientForm!: FormGroup;
   readonly welcomeBack  = signal('');
@@ -310,11 +316,14 @@ export class BookingComponent implements OnInit, OnDestroy {
     { num: 4, label: 'Confirm' },
   ];
 
+  readonly ageMin = 1;
+  readonly ageMax = 150;
+
   ngOnInit() {
     this.patientForm = this.fb.group({
-      name:             ['', [Validators.required, Validators.minLength(2)]],
+      name:             ['', [Validators.required, Validators.minLength(2), Validators.pattern(/^[A-Za-z\s]+$/)]],
       phone:            ['', [Validators.required, Validators.pattern(/^[6-9]\d{9}$/)]],
-      age:              [null, [Validators.required, Validators.min(0), Validators.max(150)]],
+      age:              [null, [Validators.required, Validators.min(this.ageMin), Validators.max(this.ageMax)]],
       gender:           ['', Validators.required],
       address:          ['', Validators.required],
       email:            ['', Validators.email],
@@ -370,7 +379,9 @@ export class BookingComponent implements OnInit, OnDestroy {
     if (exact) {
       const patch: Record<string, unknown> = {
         email:            exact.email ?? '',
-        age:              exact.age ?? null,
+        age:              exact.age != null
+          ? Math.min(this.ageMax, Math.max(this.ageMin, exact.age))
+          : null,
         gender:           exact.gender ?? '',
         address:          exact.address ?? '',
         clinical_history: exact.clinical_history ?? '',
@@ -457,20 +468,61 @@ export class BookingComponent implements OnInit, OnDestroy {
     this.slotsLoading.set(true);
     this.slotsError.set('');
     this.apptService.getSlots(date, svc.id, this.selectedChairId()!).subscribe({
-      next:  r => { this.slots.set(r.slots ?? []); this.slotsLoading.set(false); this.cdr.markForCheck(); },
+      next: r => {
+        this.slots.set(r.slots ?? []);
+        const selected = this.selectedSlot();
+        if (selected && !this.isSlotSelectable({ time: selected, taken: false }, date)) {
+          this.selectedSlot.set(null);
+          this.slotConflict.set(this.slotUnavailableMessage({ time: selected, taken: false }, date));
+        }
+        this.slotsLoading.set(false);
+        this.cdr.markForCheck();
+      },
       error: () => { this.slotsError.set('Failed to load slots. Please try again.'); this.slotsLoading.set(false); this.cdr.markForCheck(); },
     });
   }
 
+  isSlotPast(slot: Slot, dateIso = this.selectedDate()): boolean {
+    if (!dateIso || !slot.time) return false;
+    return this.isSlotInPast(dateIso, slot.time);
+  }
+
+  isSlotSelectable(slot: Slot, dateIso = this.selectedDate()): boolean {
+    if (!dateIso || slot.taken) return false;
+    return !this.isSlotInPast(dateIso, slot.time);
+  }
+
   onSlotSelect(slot: Slot) {
-    if (slot.taken) return;
+    const date = this.selectedDate();
+    if (!date || !this.isSlotSelectable(slot, date)) return;
     this.selectedSlot.set(slot.time);
     this.slotConflict.set('');
   }
 
   proceedToDetails() {
-    if (!this.selectedSlot()) return;
+    const slot = this.selectedSlot();
+    const date = this.selectedDate();
+    if (!slot || !date) return;
+    if (!this.isSlotSelectable({ time: slot, taken: false }, date)) {
+      this.selectedSlot.set(null);
+      this.slotConflict.set(this.slotUnavailableMessage({ time: slot, taken: false }, date));
+      return;
+    }
     this.step.set(3);
+  }
+
+  private isSlotInPast(dateIso: string, time: string): boolean {
+    const slotStart = new Date(`${dateIso}T${time}:00+05:30`);
+    if (Number.isNaN(slotStart.getTime())) return true;
+    return slotStart.getTime() <= Date.now();
+  }
+
+  private slotUnavailableMessage(slot: Slot, dateIso: string): string {
+    if (slot.taken) return 'This slot was just taken. Please choose another time.';
+    if (this.isSlotInPast(dateIso, slot.time)) {
+      return 'This time has passed. Please choose a future slot.';
+    }
+    return 'This slot is no longer available. Please choose another time.';
   }
 
   /** Kept for backward template compat — live lookup is debounced via valueChanges. */
@@ -528,6 +580,53 @@ export class BookingComponent implements OnInit, OnDestroy {
     this.patientForm.patchValue({ gender: current === value ? '' : value });
   }
 
+  onNameInput(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    const sanitized = input.value.replace(/[^A-Za-z\s]/g, '');
+    if (sanitized !== input.value) {
+      input.value = sanitized;
+      this.patientForm.get('name')!.setValue(sanitized, { emitEvent: false });
+      this.cdr.markForCheck();
+    }
+  }
+
+  onNameBlur(): void {
+    const ctrl = this.patientForm.get('name')!;
+    const trimmed = (ctrl.value ?? '').trim().replace(/\s+/g, ' ');
+    if (trimmed !== ctrl.value) {
+      ctrl.setValue(trimmed);
+      this.cdr.markForCheck();
+    }
+  }
+
+  onAgeInput(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    const raw = input.value.trim();
+    if (raw === '') return;
+
+    const num = Number(raw);
+    if (!Number.isFinite(num) || num <= this.ageMax) return;
+
+    this.patientForm.get('age')!.setValue(this.ageMax);
+    input.value = String(this.ageMax);
+    this.cdr.markForCheck();
+  }
+
+  onAgeBlur(): void {
+    const ctrl = this.patientForm.get('age')!;
+    const val = ctrl.value;
+    if (val === null || val === '' || val === undefined) return;
+
+    const num = Number(val);
+    if (!Number.isFinite(num)) return;
+
+    const clamped = Math.min(this.ageMax, Math.max(this.ageMin, num));
+    if (clamped !== num) {
+      ctrl.setValue(clamped);
+      this.cdr.markForCheck();
+    }
+  }
+
   selectPill(field: keyof IntakeModel, value: string) {
     (this.intake as unknown as Record<string, unknown>)[field] =
       this.intake[field] === value ? '' : value;
@@ -552,10 +651,13 @@ export class BookingComponent implements OnInit, OnDestroy {
     this.apptService.getSlots(this.selectedDate()!, svc.id, this.selectedChairId()!).subscribe({
       next: r => {
         this.slots.set(r.slots ?? []);
-        const fresh = r.slots?.find(s => s.time === this.selectedSlot());
-        if (!fresh || fresh.taken) {
+        const date = this.selectedDate()!;
+        const selectedTime = this.selectedSlot()!;
+        const fresh = r.slots?.find(s => s.time === selectedTime);
+        const slot = fresh ?? { time: selectedTime, taken: false };
+        if (!this.isSlotSelectable(slot, date)) {
           this.selectedSlot.set(null);
-          this.slotConflict.set('This slot was just taken. Please choose another time.');
+          this.slotConflict.set(this.slotUnavailableMessage(slot, date));
           this.submitting.set(false);
           this.step.set(2);
           return;

@@ -1,0 +1,15 @@
+.vpm { padding: 10px 12px; min-width: 240px; }
+.vpm-title { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .04em; color: #94a3b8; }
+.vpm-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; margin-top: 8px; }
+.vpm-item {
+  display: flex; align-items: center; gap: 8px;
+  padding: 8px 10px; border-radius: 9px; border: 1px solid #2a2f3a; background: #1b1f27;
+  color: #e5e7eb; font-size: 12.5px; font-weight: 600; text-align: left; cursor: pointer;
+  transition: background .15s ease, border-color .15s ease;
+  &:hover { background: #232834; border-color: #3a4150; }
+  &.is-active { background: #4c1d95; border-color: #7c3aed; color: #fff; }
+}
+.vpm-key {
+  display: inline-grid; place-items: center; width: 18px; height: 18px; border-radius: 5px;
+  background: rgba(255,255,255,.08); font-size: 10px; color: #c4b5fd;
+}

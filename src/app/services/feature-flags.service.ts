@@ -13,6 +13,7 @@ export interface FeatureFlag {
 }
 
 export const FRIDAY_FLAG = 'voice_assistant.friday';
+export const GESTURE_VIEWER_FLAG = 'gesture_viewer.enabled';
 
 @Injectable({ providedIn: 'root' })
 export class FeatureFlagsService {

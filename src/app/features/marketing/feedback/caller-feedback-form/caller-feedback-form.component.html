@@ -1,0 +1,30 @@
+<div class="mk-cfform">
+  <div class="mk-cfform-row">
+    <mat-form-field appearance="outline" class="mk-grow">
+      <mat-label>Caller feedback</mat-label>
+      <textarea matInput name="feedbackText" [(ngModel)]="feedbackText" rows="2"
+                placeholder="Post-call notes"></textarea>
+    </mat-form-field>
+    <mat-form-field appearance="outline" class="mk-sent">
+      <mat-label>Sentiment</mat-label>
+      <mat-select name="sentiment" [(ngModel)]="sentiment">
+        @for (s of sentiments; track s) { <mat-option [value]="s">{{ s | titlecase }}</mat-option> }
+      </mat-select>
+    </mat-form-field>
+    <mat-form-field appearance="outline" class="mk-obj">
+      <mat-label>Key objection</mat-label>
+      <mat-select name="keyObjection" [(ngModel)]="keyObjection">
+        <mat-option value="">None</mat-option>
+        @for (o of objections; track o[0]) { <mat-option [value]="o[0]">{{ o[1] }}</mat-option> }
+      </mat-select>
+    </mat-form-field>
+  </div>
+
+  <div class="mk-cfform-actions">
+    <mat-checkbox name="followUp" [(ngModel)]="followUpNeeded">Follow-up needed</mat-checkbox>
+    <span class="mk-spacer"></span>
+    <button mat-flat-button color="primary" [disabled]="saving()" (click)="submit()">
+      <i-tabler name="phone-plus"></i-tabler> Log caller feedback
+    </button>
+  </div>
+</div>

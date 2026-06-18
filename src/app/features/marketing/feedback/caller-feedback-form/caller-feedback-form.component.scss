@@ -1,0 +1,10 @@
+.mk-cfform { display: block; }
+.mk-cfform-row { display: flex; gap: 12px; flex-wrap: wrap; }
+.mk-grow { flex: 1; min-width: 220px; }
+.mk-sent { width: 150px; }
+.mk-obj  { width: 200px; }
+.mk-cfform-actions {
+  display: flex; align-items: center; gap: 12px;
+  i-tabler { width: 18px; height: 18px; vertical-align: middle; }
+}
+.mk-spacer { flex: 1; }

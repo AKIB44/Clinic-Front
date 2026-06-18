@@ -1,0 +1,23 @@
+.mk-sl { display: block; }
+.mk-sl-bar { display: flex; align-items: center; gap: 12px; margin-bottom: 14px; }
+.mk-sl-hint { font-size: 12.5px; color: #94a3b8; margin: 0; }
+.mk-sl-spacer { flex: 1; }
+
+.mk-state { padding: 40px; text-align: center; color: #64748b; }
+.mk-error { color: #b91c1c; }
+.mk-empty {
+  padding: 40px; text-align: center; color: #94a3b8; font-size: 13px;
+  background: #fff; border: 1px solid #e2e8f0; border-radius: 12px;
+}
+
+.mk-sl-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; }
+@media (max-width: 900px) { .mk-sl-grid { grid-template-columns: 1fr; } }
+.mk-seg {
+  background: #fff; border: 1px solid #e2e8f0; border-radius: 12px; padding: 14px 16px;
+  border-top: 3px solid #6d28d9;
+}
+.mk-seg-top { display: flex; align-items: center; justify-content: space-between; }
+.mk-seg-name { font-weight: 700; font-size: 14px; color: #0f172a; }
+.mk-seg-del { width: 30px; height: 30px; line-height: 30px; }
+.mk-seg-count { font-size: 22px; font-weight: 700; color: #0f172a; margin: 4px 0; span { font-size: 12px; font-weight: 600; color: #94a3b8; } }
+.mk-seg-desc { font-size: 12px; color: #64748b; }

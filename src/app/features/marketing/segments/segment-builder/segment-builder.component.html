@@ -1,0 +1,58 @@
+<div class="mk-sb">
+  <div class="mk-sb-row">
+    <mat-form-field appearance="outline" class="mk-grow">
+      <mat-label>Segment name</mat-label>
+      <input matInput name="name" [(ngModel)]="name" maxlength="120" placeholder="e.g. Lapsed Pune patients">
+    </mat-form-field>
+  </div>
+
+  <div class="mk-sb-filters">
+    <mat-form-field appearance="outline">
+      <mat-label>City / area</mat-label>
+      <input matInput name="city" [(ngModel)]="city" placeholder="matches address">
+    </mat-form-field>
+    <mat-form-field appearance="outline">
+      <mat-label>Gender</mat-label>
+      <mat-select name="gender" [(ngModel)]="gender">
+        <mat-option value="">Any</mat-option>
+        <mat-option value="male">Male</mat-option>
+        <mat-option value="female">Female</mat-option>
+        <mat-option value="other">Other</mat-option>
+      </mat-select>
+    </mat-form-field>
+    <mat-form-field appearance="outline">
+      <mat-label>Min visits</mat-label>
+      <input matInput type="number" min="0" name="minVisits" [(ngModel)]="minVisits">
+    </mat-form-field>
+    <mat-form-field appearance="outline">
+      <mat-label>Last visit before</mat-label>
+      <input matInput type="date" name="lastVisitBefore" [(ngModel)]="lastVisitBefore">
+    </mat-form-field>
+    <mat-form-field appearance="outline">
+      <mat-label>Last visit after</mat-label>
+      <input matInput type="date" name="lastVisitAfter" [(ngModel)]="lastVisitAfter">
+    </mat-form-field>
+    <mat-checkbox name="hasEmail" [(ngModel)]="hasEmail" class="mk-sb-chk">Has email</mat-checkbox>
+  </div>
+
+  <div class="mk-sb-actions">
+    <button mat-stroked-button [disabled]="previewing()" (click)="runPreview()">
+      <i-tabler name="eye"></i-tabler> Preview
+    </button>
+    @if (preview(); as p) {
+      <span class="mk-sb-count">{{ p.count }} patient{{ p.count === 1 ? '' : 's' }} match</span>
+    }
+    <span class="mk-sb-spacer"></span>
+    <button mat-button (click)="cancelled.emit()">Cancel</button>
+    <button mat-flat-button color="primary" [disabled]="saving()" (click)="save()">Save segment</button>
+  </div>
+
+  @if (preview()?.sample?.length) {
+    <div class="mk-sb-sample">
+      <span class="mk-sb-sample-label">Sample</span>
+      @for (s of preview()!.sample; track s.id) {
+        <span class="mk-sb-chip">{{ s.name }} · {{ s.phone }}</span>
+      }
+    </div>
+  }
+</div>

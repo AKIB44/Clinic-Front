@@ -1,0 +1,84 @@
+<div class="mk-cal">
+  <div class="mk-cal-bar">
+    <p class="mk-cal-hint">Drag entries between columns to change their status.</p>
+    <span class="mk-cal-spacer"></span>
+    @if (canCreate) {
+      <button mat-flat-button color="primary" (click)="openCreate()">
+        <i-tabler name="plus"></i-tabler> Add entry
+      </button>
+    }
+  </div>
+
+  @if (showCreate()) {
+    <div class="mk-cal-create">
+      <div class="mk-cal-create-row">
+        <mat-form-field appearance="outline" class="mk-grow">
+          <mat-label>Title</mat-label>
+          <input matInput name="title" [(ngModel)]="draft.title" maxlength="160" placeholder="Post title">
+        </mat-form-field>
+        <mat-form-field appearance="outline">
+          <mat-label>Channel</mat-label>
+          <mat-select name="channel" [(ngModel)]="draft.channel">
+            @for (c of channels; track c) { <mat-option [value]="c">{{ c | titlecase }}</mat-option> }
+          </mat-select>
+        </mat-form-field>
+        <mat-form-field appearance="outline">
+          <mat-label>Scheduled for</mat-label>
+          <input matInput type="datetime-local" name="scheduled" [(ngModel)]="draft.scheduled_for">
+        </mat-form-field>
+      </div>
+      <mat-form-field appearance="outline" class="mk-cal-full">
+        <mat-label>Caption</mat-label>
+        <textarea matInput name="caption" [(ngModel)]="draft.caption" rows="2" placeholder="Optional caption"></textarea>
+      </mat-form-field>
+      <div class="mk-cal-create-actions">
+        <button mat-stroked-button (click)="showCreate.set(false)">Cancel</button>
+        <button mat-flat-button color="primary" (click)="saveDraft()">Add</button>
+      </div>
+    </div>
+  }
+
+  @if (store.loading()) {
+    <div class="mk-state"><mat-spinner diameter="28"></mat-spinner></div>
+  } @else if (store.error()) {
+    <div class="mk-state mk-error">{{ store.error() }}</div>
+  } @else {
+    <div class="mk-board" cdkDropListGroup>
+      @for (col of columns; track col; let i = $index) {
+        <div class="mk-board-col">
+          <div class="mk-board-head">
+            <span class="mk-board-title">{{ columnLabels[col] }}</span>
+            <span class="mk-board-count">{{ entriesFor(col).length }}</span>
+          </div>
+          <div
+            class="mk-board-list"
+            [id]="dropListIds[i]"
+            cdkDropList
+            [cdkDropListData]="entriesFor(col)"
+            [cdkDropListConnectedTo]="dropListIds"
+            (cdkDropListDropped)="drop($event, col)">
+            @for (e of entriesFor(col); track e.id) {
+              <div class="mk-card" [cdkDragDisabled]="!canEdit" cdkDrag>
+                <div class="mk-card-top">
+                  <span class="mk-chip mk-chip--{{ e.channel }}">{{ e.channel | titlecase }}</span>
+                  @if (canDelete) {
+                    <button mat-icon-button class="mk-card-del" matTooltip="Remove" (click)="remove(e)">
+                      <i-tabler name="x"></i-tabler>
+                    </button>
+                  }
+                </div>
+                <div class="mk-card-title">{{ e.title }}</div>
+                @if (e.scheduled_for) {
+                  <div class="mk-card-date">{{ e.scheduled_for | date:'MMM d, h:mm a' }}</div>
+                }
+              </div>
+            }
+            @if (entriesFor(col).length === 0) {
+              <div class="mk-board-empty">No entries</div>
+            }
+          </div>
+        </div>
+      }
+    </div>
+  }
+</div>

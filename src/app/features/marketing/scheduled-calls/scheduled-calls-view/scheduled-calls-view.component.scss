@@ -1,0 +1,59 @@
+.mk-sc { display: block; }
+
+.mk-sc-bar { display: flex; align-items: center; gap: 12px; margin-bottom: 16px; flex-wrap: wrap; }
+.mk-sc-filter { width: 160px; }
+.mk-sc-spacer { flex: 1; }
+.mk-sync {
+  display: inline-flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 600;
+  color: #92400e; background: #fef3c7; border-radius: 10px; padding: 4px 10px;
+  i-tabler { width: 16px; height: 16px; }
+  &--on { color: #15803d; background: #dcfce7; }
+}
+
+.mk-state { padding: 40px; text-align: center; color: #64748b; }
+.mk-error { color: #b91c1c; }
+.mk-empty {
+  padding: 40px; text-align: center; color: #94a3b8; font-size: 13px;
+  background: #fff; border: 1px solid #e2e8f0; border-radius: 12px;
+}
+
+.mk-day { margin-bottom: 18px; }
+.mk-day-title { font-size: 12.5px; font-weight: 700; color: #475569; margin: 0 0 8px; text-transform: uppercase; letter-spacing: .03em; }
+.mk-day-list { display: flex; flex-direction: column; gap: 8px; }
+
+.mk-call {
+  display: flex; align-items: center; gap: 14px;
+  background: #fff; border: 1px solid #e2e8f0; border-radius: 12px; padding: 12px 16px;
+  border-left: 3px solid #94a3b8;
+  &--upcoming    { border-left-color: #2563eb; }
+  &--completed   { border-left-color: #15803d; }
+  &--no_show     { border-left-color: #b91c1c; }
+  &--rescheduled { border-left-color: #f59e0b; }
+}
+.mk-call-time { display: flex; flex-direction: column; align-items: center; min-width: 76px; }
+.mk-call-hr { font-size: 14px; font-weight: 700; color: #0f172a; }
+.mk-call-dur { font-size: 11px; color: #94a3b8; }
+.mk-call-info { display: flex; flex-direction: column; gap: 2px; flex: 1; }
+.mk-call-clinic { font-weight: 600; font-size: 13.5px; color: #0f172a; }
+.mk-call-meta { font-size: 12px; color: #64748b; }
+.mk-call-meet {
+  display: inline-flex; align-items: center; gap: 5px; font-size: 12px; font-weight: 600;
+  color: #1d4ed8; text-decoration: none; margin-top: 2px;
+  i-tabler { width: 15px; height: 15px; }
+}
+.mk-call-side { display: flex; align-items: center; gap: 8px; }
+.mk-call-actions { display: flex; gap: 4px; }
+
+.mk-st {
+  font-size: 11px; font-weight: 700; border-radius: 8px; padding: 2px 9px;
+  &--upcoming    { background: #dbeafe; color: #1d4ed8; }
+  &--completed   { background: #dcfce7; color: #15803d; }
+  &--no_show     { background: #fee2e2; color: #991b1b; }
+  &--rescheduled { background: #fef3c7; color: #92400e; }
+}
+.mk-sync-pill {
+  font-size: 10px; font-weight: 700; border-radius: 8px; padding: 2px 8px; text-transform: uppercase;
+  &--pending { background: #fef3c7; color: #92400e; }
+  &--synced  { background: #dcfce7; color: #15803d; }
+  &--error   { background: #fee2e2; color: #991b1b; }
+}

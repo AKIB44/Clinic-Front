@@ -160,7 +160,7 @@ export class DfServicesBlockComponent implements OnInit {
           this.updating.set(null);
           this.store.updateService({ ...service, service_name: svc.service_name });
           if (plan_item) this.store.updatePlanItem(plan_item);
-          this.toast.success(`${svc.service_name ?? 'Service'} abandoned.`);
+          this.toast.warn(`${svc.service_name ?? 'Service'} abandoned.`);
         },
         error: () => {
           this.updating.set(null);

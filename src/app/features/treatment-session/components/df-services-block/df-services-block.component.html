@@ -1,12 +1,6 @@
 <div class="svc-card">
-
-  <!-- Header -->
-  <div class="svc-header">
-    <i-tabler name="stethoscope" size="18"></i-tabler>
-    <span>Services Performed</span>
-    <span class="svc-total">
-      Total: ₹{{ store.totalCharges() | number:'1.2-2' }}
-    </span>
+  <div class="svc-total-bar">
+    Total charges: <strong>₹{{ store.totalCharges() | number:'1.2-2' }}</strong>
   </div>
 
   <!-- Plan items quick-add (accepted items from treatment plan) -->

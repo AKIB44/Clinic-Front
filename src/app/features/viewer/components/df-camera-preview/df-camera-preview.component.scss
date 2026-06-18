@@ -1,0 +1,26 @@
+.cp {
+  position: relative; width: 160px; height: 120px;
+  border-radius: 12px; overflow: hidden;
+  background: #000; border: 1px solid rgba(255,255,255,.14);
+  box-shadow: 0 10px 28px -12px rgba(0,0,0,.7);
+}
+.cp-video {
+  width: 100%; height: 100%; object-fit: cover; transform: scaleX(-1);  /* selfie mirror */
+  display: block;
+}
+.cp-canvas { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; }
+
+.cp-toggle {
+  position: absolute; top: 5px; right: 5px; z-index: 2;
+  display: inline-grid; place-items: center; width: 26px; height: 26px;
+  border: none; border-radius: 8px; cursor: pointer;
+  background: rgba(15,17,21,.7); color: #cbd5e1;
+  i-tabler { width: 15px; height: 15px; }
+  &:hover { color: #fff; }
+}
+
+.cp--hidden {
+  width: 36px; height: 36px; background: rgba(15,17,21,.7);
+  .cp-video, .cp-canvas { display: none; }
+  .cp-toggle { inset: 0; width: 100%; height: 100%; border-radius: 12px; }
+}

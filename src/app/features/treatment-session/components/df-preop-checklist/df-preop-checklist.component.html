@@ -1,16 +1,5 @@
 <div class="preop-card">
 
-  <!-- Header -->
-  <div class="preop-header">
-    <i-tabler name="checklist" size="18"></i-tabler>
-    <span>Pre-operative Checklist</span>
-    @if (preop(); as p) {
-      <span class="preop-status-chip" [class.complete]="p.is_complete">
-        {{ p.is_complete ? 'Complete' : 'Draft' }}
-      </span>
-    }
-  </div>
-
   <!-- Summary row when form closed -->
   @if (!showForm && preop(); as p) {
     <div class="preop-summary">
@@ -102,19 +91,19 @@
       <div class="pf-section-title" style="margin-top:8px">
         <i-tabler name="alert-circle" size="14"></i-tabler> Allergies & Clearance
       </div>
-      <label class="pf-check">
+      <div class="pf-check">
         <input type="checkbox" [(ngModel)]="allergiesConfirmed">
         <span>Allergies confirmed with patient</span>
-      </label>
+      </div>
 
       <!-- Antibiotic prophylaxis -->
       <div class="pf-section-title" style="margin-top:8px">
         <i-tabler name="pill" size="14"></i-tabler> Antibiotic Prophylaxis
       </div>
-      <label class="pf-check">
+      <div class="pf-check">
         <input type="checkbox" [(ngModel)]="antibioticGiven">
         <span>Antibiotic prophylaxis given</span>
-      </label>
+      </div>
       @if (antibioticGiven) {
         <div class="pf-row">
           <div class="pf-field">
@@ -161,10 +150,10 @@
       <div class="pf-section-title" style="margin-top:8px">
         <i-tabler name="map-pin" size="14"></i-tabler> Surgical Site
       </div>
-      <label class="pf-check">
+      <div class="pf-check">
         <input type="checkbox" [(ngModel)]="surgicalSiteMarked">
         <span>Surgical site verified and marked</span>
-      </label>
+      </div>
 
       <!-- Notes -->
       <div class="pf-field" style="margin-top:8px">
@@ -173,10 +162,10 @@
       </div>
 
       <!-- Complete toggle -->
-      <label class="pf-check pf-complete-check">
+      <div class="pf-check pf-complete-check">
         <input type="checkbox" [(ngModel)]="isComplete">
         <span>Mark checklist as complete</span>
-      </label>
+      </div>
 
       @if (saveError()) {
         <div class="pf-error">{{ saveError() }}</div>

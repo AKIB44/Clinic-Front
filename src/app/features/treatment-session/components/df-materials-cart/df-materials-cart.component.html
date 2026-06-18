@@ -129,13 +129,13 @@
             </div>
 
             @if (selectedItem()!.is_implant) {
-              <label class="cart-scan-check">
+              <div class="cart-scan-check">
                 <input type="checkbox" [(ngModel)]="newScanned">
                 <span>Barcode / QR scanned</span>
                 @if (!newScanned) {
                   <span class="cart-scan-warn">(required for implants)</span>
                 }
-              </label>
+              </div>
             }
           }
 

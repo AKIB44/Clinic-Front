@@ -1,0 +1,28 @@
+<div class="al">
+  <div class="al-head"><span><i-tabler name="message-2"></i-tabler> Annotations</span></div>
+
+  @if (pending) {
+    <div class="al-new">
+      <input class="al-input" [(ngModel)]="text" placeholder="Label text…" maxlength="80"
+             (keyup.enter)="confirm()" (keyup.escape)="dismiss()" autofocus aria-label="Annotation text">
+      <button class="al-ok" (click)="confirm()" type="button"><i-tabler name="check"></i-tabler></button>
+      <button class="al-no" (click)="dismiss()" type="button"><i-tabler name="x"></i-tabler></button>
+    </div>
+  } @else if (store.annotateMode()) {
+    <p class="al-hint">Tap a point on the model to place a label.</p>
+  }
+
+  @if (store.annotations().length === 0) {
+    <p class="al-empty">No annotations yet.</p>
+  } @else {
+    <ul class="al-list">
+      @for (a of store.annotations(); track a.id) {
+        <li class="al-item">
+          <i-tabler name="map-pin" class="al-pin"></i-tabler>
+          <span class="al-text">{{ a.text }}</span>
+          <button class="al-del" (click)="remove(a.id)" aria-label="Delete annotation" type="button"><i-tabler name="x"></i-tabler></button>
+        </li>
+      }
+    </ul>
+  }
+</div>

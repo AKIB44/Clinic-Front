@@ -1,0 +1,51 @@
+<div class="mk-ed">
+  <button mat-button class="mk-ed-back" (click)="back()">
+    <i-tabler name="arrow-left"></i-tabler> Enquiries
+  </button>
+
+  @if (loading()) {
+    <div class="mk-state"><mat-spinner diameter="28"></mat-spinner></div>
+  } @else if (enquiry()) {
+   @if (enquiry()!; as e) {
+    <header class="mk-ed-head">
+      <h1 class="mk-ed-title">{{ e.clinic_name || 'Enquiry' }}</h1>
+      <div class="mk-ed-tags">
+        <span class="mk-src mk-src--{{ e.source }}">{{ e.source | titlecase }}</span>
+        @if (e.is_duplicate) { <span class="mk-st mk-st--dup">Duplicate</span> }
+        @else if (e.lead_id) { <span class="mk-st mk-st--lead">Converted</span> }
+        @else { <span class="mk-st mk-st--new">New</span> }
+      </div>
+    </header>
+
+    <section class="mk-panel">
+      <dl class="mk-dl">
+        <dt>Contact</dt><dd>{{ e.contact_name || '—' }}</dd>
+        <dt>Phone</dt><dd>{{ e.contact_phone || '—' }}</dd>
+        <dt>Email</dt><dd>{{ e.contact_email || '—' }}</dd>
+        <dt>Received</dt><dd>{{ e.received_at | date:'medium' }}</dd>
+        <dt>UTM campaign</dt><dd>{{ e.utm_campaign || '—' }}</dd>
+        <dt>UTM source</dt><dd>{{ e.utm_source || '—' }}</dd>
+        <dt>UTM medium</dt><dd>{{ e.utm_medium || '—' }}</dd>
+      </dl>
+      @if (e.message) {
+        <div class="mk-msg"><span class="mk-msg-label">Message</span><p>{{ e.message }}</p></div>
+      }
+    </section>
+
+    <div class="mk-ed-actions">
+      @if (e.lead_id) {
+        <button mat-flat-button color="primary" (click)="openLead()">
+          <i-tabler name="external-link"></i-tabler> Open pipeline lead
+        </button>
+      } @else if (canEdit && !e.is_duplicate) {
+        <button mat-flat-button color="primary" (click)="convert()">Convert to lead</button>
+      }
+      @if (canEdit) {
+        <button mat-stroked-button (click)="markDuplicate()">
+          {{ e.is_duplicate ? 'Unmark duplicate' : 'Mark duplicate' }}
+        </button>
+      }
+    </div>
+   }
+  }
+</div>

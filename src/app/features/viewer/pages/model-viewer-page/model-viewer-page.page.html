@@ -1,0 +1,73 @@
+<div class="mvp">
+  <!-- 3D viewport fills the area -->
+  <div class="mvp-stage">
+    <df-gesture-3d-viewer #viewer (annotationPick)="onAnnotationPick($event)"></df-gesture-3d-viewer>
+
+    <!-- Loading / error overlay -->
+    <df-model-loading-indicator></df-model-loading-indicator>
+
+    <!-- Top-right: gesture status (when on) + FPS -->
+    <div class="mvp-hud-tr">
+      @if (store.cameraActive()) { <df-gesture-status-badge></df-gesture-status-badge> }
+      <df-fps-counter></df-fps-counter>
+    </div>
+
+    <!-- Bottom-left: camera preview PIP (when gesture mode on) -->
+    @if (store.cameraActive()) {
+      <div class="mvp-hud-bl"><df-camera-preview></df-camera-preview></div>
+    }
+
+    <!-- Right rail: GV-3 dental tools -->
+    @if (store.loaded()) {
+      <div class="mvp-tools">
+        @if (store.measureMode() || store.measurements().length) {
+          <df-measurement-overlay></df-measurement-overlay>
+        }
+        @if (store.annotateMode() || store.annotations().length || pendingAnno()) {
+          <df-annotation-layer [pending]="pendingAnno()" (create)="onAnnoCreate($event)" (cancel)="pendingAnno.set(null)"></df-annotation-layer>
+        }
+        @if (store.sectionPlaneActive()) {
+          <df-section-plane-controls (axisChange)="onSectionAxis($event)" (posChange)="onSectionPos($event)"></df-section-plane-controls>
+        }
+        @if (store.compareActive()) {
+          <df-before-after-viewer (loadFile)="onLoadComparison($event)" (clear)="clearComparison()" (optimize)="optimizeModel()"></df-before-after-viewer>
+        }
+      </div>
+    }
+
+    <!-- Screen-reader announcements (PRD §8.3) -->
+    <p class="mvp-sr" aria-live="polite">{{ viewAnnouncement() }}</p>
+
+    <!-- Camera error (GEC-1/2) -->
+    @if (engine.cameraError(); as err) {
+      <div class="mvp-camerr"><i-tabler name="camera-off"></i-tabler> {{ err }}</div>
+    }
+
+    <!-- Empty state / dropzone when no model is loaded -->
+    @if (store.phase() === 'idle') {
+      <div class="mvp-drop" [class.is-drag]="dragOver()">
+        <i-tabler name="cube-3d-sphere" class="mvp-drop-ic"></i-tabler>
+        <h2>Open a 3D dental model</h2>
+        <p>Drag &amp; drop an <b>STL, GLB, PLY</b> or <b>OBJ</b> file here, or pick one.</p>
+        <button mat-flat-button color="primary" (click)="fileInput.click()">
+          <i-tabler name="folder-open"></i-tabler> Choose file
+        </button>
+        <input #fileInput type="file" hidden accept=".stl,.glb,.gltf,.ply,.obj" (change)="onPick($event)">
+        <span class="mvp-drop-hint">Mouse: drag to rotate · scroll to zoom · right-drag to pan · double-click to reset</span>
+      </div>
+    }
+
+    <!-- Model name chip -->
+    @if (store.loaded() && store.modelName(); as name) {
+      <div class="mvp-name">
+        <i-tabler name="cube"></i-tabler> {{ name }}
+        @if (store.modelStats(); as s) { <span class="mvp-name-stats">{{ s.triangles | number }} tris</span> }
+      </div>
+    }
+  </div>
+
+  <!-- Bottom toolbar -->
+  <div class="mvp-toolbar">
+    <df-viewer-toolbar (action)="onAction($event)"></df-viewer-toolbar>
+  </div>
+</div>

@@ -1,5 +1,6 @@
 import {
-  Component, OnInit, OnDestroy, inject, signal, computed, effect, ChangeDetectionStrategy,
+  Component, OnInit, OnDestroy, inject, signal, computed, effect,
+  ChangeDetectionStrategy, ChangeDetectorRef,
 } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { CommonModule } from '@angular/common';
@@ -24,11 +25,12 @@ import { DfPreopChecklistComponent } from '../components/df-preop-checklist/df-p
 import { DfPostopRecordComponent } from '../components/df-postop-record/df-postop-record.component';
 import { DfTpaBlockComponent } from '../components/df-tpa-block/df-tpa-block.component';
 import { DfSessionBlockComponent } from '../components/df-session-block/df-session-block.component';
-import { forkJoin, of, switchMap } from 'rxjs';
-import { catchError } from 'rxjs/operators';
+import { forkJoin, of, switchMap, Observable } from 'rxjs';
+import { catchError, finalize, map } from 'rxjs/operators';
 import { ToastService } from '../../../services/toast.service';
 import { OfflineQueueService } from '../../../core/offline/offline-queue.service';
 import type { BlockStatus } from '../components/df-session-block/df-session-block.component';
+import type { SessionStatus } from '../models/session.model';
 
 export interface ProgressStep {
   key:    string;
@@ -64,6 +66,7 @@ export class SessionCanvasPage implements OnInit, OnDestroy {
   private dialog  = inject(MatDialog);
   private toast   = inject(ToastService);
   private offline = inject(OfflineQueueService);
+  private cdr     = inject(ChangeDetectorRef);
 
   private sessionId = '';
   private _lastSync = 0;
@@ -79,16 +82,25 @@ export class SessionCanvasPage implements OnInit, OnDestroy {
 
   readonly pausing   = signal(false);
   readonly reopening = signal(false);
+  readonly autoPausingLeave = signal(false);
 
   // ── Elapsed time ──────────────────────────────────────────────────────────
-  private _tick      = signal(Date.now());
+  private _tick               = signal(Date.now());
   private _timer?: ReturnType<typeof setInterval>;
 
   readonly elapsedLabel = computed(() => {
     const start = this.store.startedAt();
     if (!start) return '—';
-    const ms   = this._tick() - new Date(start).getTime();
-    const secs = Math.max(0, Math.floor(ms / 1000));
+
+    const now        = this._tick();
+    const startMs    = new Date(start).getTime();
+    let pausedMs     = this.store.totalPausedMs();
+    const pauseStart = this.store.pausedAt();
+    if (pauseStart) {
+      pausedMs += now - new Date(pauseStart).getTime();
+    }
+
+    const secs = Math.max(0, Math.floor((now - startMs - pausedMs) / 1000));
     const h    = Math.floor(secs / 3600);
     const m    = Math.floor((secs % 3600) / 60);
     const s    = secs % 60;
@@ -261,6 +273,14 @@ export class SessionCanvasPage implements OnInit, OnDestroy {
     this.store.reset();
   }
 
+  /** Route guard entry — auto-pause before navigating away from the canvas. */
+  canDeactivate(): boolean | Observable<boolean> {
+    if (!this.shouldAutoPauseOnLeave()) {
+      return true;
+    }
+    return this.autoPauseOnLeave$();
+  }
+
   goBack(): void {
     this.router.navigate(['/schedule']);
   }
@@ -281,17 +301,21 @@ export class SessionCanvasPage implements OnInit, OnDestroy {
 
   pauseSession(): void {
     const sessionId = this.store.sessionId();
-    if (!sessionId || this.pausing()) return;
+    if (!sessionId || this.pausing() || this.autoPausingLeave()) return;
     this.pausing.set(true);
+    this.store.beginPauseClock();
     this.api.pauseSession(sessionId).subscribe({
       next: ({ session }) => {
         this.pausing.set(false);
-        this.store.status.set(session.status);
+        this.store.applyPausedState(session);
         this.toast.success('Session paused.');
+        this.cdr.markForCheck();
       },
       error: (err) => {
         this.pausing.set(false);
+        this.store.revertPauseClock();
         this.toast.error(err?.error?.error ?? 'Could not pause session.');
+        this.cdr.markForCheck();
       },
     });
   }
@@ -303,12 +327,14 @@ export class SessionCanvasPage implements OnInit, OnDestroy {
     this.api.resumeSession(sessionId).subscribe({
       next: ({ session }) => {
         this.pausing.set(false);
-        this.store.status.set(session.status);
+        this.store.applyResumedState(session);
         this.toast.success('Session resumed.');
+        this.cdr.markForCheck();
       },
       error: (err) => {
         this.pausing.set(false);
         this.toast.error(err?.error?.error ?? 'Could not resume session.');
+        this.cdr.markForCheck();
       },
     });
   }
@@ -329,5 +355,41 @@ export class SessionCanvasPage implements OnInit, OnDestroy {
         this.toast.error(err?.error?.error ?? 'Could not reopen session.');
       },
     });
+  }
+
+  private shouldAutoPauseOnLeave(): boolean {
+    if (!this.store.sessionId() || this.store.loading() || this.store.error()) return false;
+    if (this.store.isSealed()) return false;
+    return !this.isTerminalStatus(this.store.status());
+  }
+
+  private isTerminalStatus(status: SessionStatus): boolean {
+    return status === 'PAUSED' || status === 'COMPLETED' || status === 'ABANDONED';
+  }
+
+  private autoPauseOnLeave$(): Observable<boolean> {
+    const sessionId = this.store.sessionId();
+    if (!sessionId) return of(true);
+
+    this.autoPausingLeave.set(true);
+    this.store.beginPauseClock();
+    this.cdr.markForCheck();
+
+    return this.api.pauseSession(sessionId).pipe(
+      map(({ session }) => {
+        this.store.applyPausedState(session);
+        this.toast.info('Session auto-paused. You can resume it from the schedule.');
+        return true;
+      }),
+      catchError((err) => {
+        this.store.revertPauseClock();
+        this.toast.error(err?.error?.error ?? 'Could not auto-pause session. Please pause manually before leaving.');
+        return of(false);
+      }),
+      finalize(() => {
+        this.autoPausingLeave.set(false);
+        this.cdr.markForCheck();
+      }),
+    );
   }
 }

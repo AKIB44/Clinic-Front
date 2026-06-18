@@ -1,0 +1,14 @@
+.mk-cof { display: block; }
+.mk-cof-row { display: flex; gap: 12px; flex-wrap: wrap; }
+.mk-cof-outcome { flex: 1; min-width: 240px; }
+.mk-cof-dur { width: 150px; }
+.mk-cof-full { width: 100%; }
+.mk-cof-hint {
+  display: flex; align-items: center; gap: 6px; font-size: 12px; color: #92400e;
+  margin: 0 0 10px;
+  i-tabler { width: 16px; height: 16px; }
+}
+.mk-cof-actions {
+  display: flex; justify-content: flex-end;
+  i-tabler { width: 18px; height: 18px; vertical-align: middle; }
+}

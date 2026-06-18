@@ -30,5 +30,8 @@
                       padding: 6px 8px; outline: none; resize: vertical; width: 100%;
                       box-sizing: border-box; }
 .etm-field textarea:focus { border-color: #6366f1; box-shadow: 0 0 0 2px rgba(99,102,241,.1); }
-.etm-check         { display: flex; align-items: center; gap: 6px; font-size: 12px;
-                     color: #475569; cursor: pointer; margin-bottom: 10px; }
+.etm-check         { display: inline-flex; align-items: center; gap: 8px; width: fit-content;
+                     max-width: 100%; font-size: 12px; color: #475569; margin-bottom: 10px; }
+.etm-check input[type="checkbox"] { cursor: pointer; margin: 0; flex-shrink: 0;
+                                    width: 1rem; height: 1rem; accent-color: #6366f1; }
+.etm-check > span { cursor: default; line-height: 1.35; user-select: none; }

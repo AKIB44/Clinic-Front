@@ -1,0 +1,40 @@
+<div class="mk-cb" [class.mk-cb--overdue]="overdue">
+  <div class="mk-cb-main">
+    <div class="mk-cb-info">
+      <a [routerLink]="['/marketing/pipeline', callback.lead_id]" class="mk-cb-clinic">
+        {{ callback.clinic_name || 'Lead' }}
+      </a>
+      <span class="mk-cb-meta">
+        {{ callback.contact_name || 'No contact' }}
+        @if (callback.contact_phone) { · {{ callback.contact_phone }} }
+      </span>
+      @if (callback.notes) { <span class="mk-cb-notes">{{ callback.notes }}</span> }
+    </div>
+    <div class="mk-cb-when">
+      <i-tabler name="clock"></i-tabler>
+      <span>{{ callback.scheduled_for | date:'MMM d, h:mm a' }}</span>
+      @if (overdue) { <span class="mk-cb-badge">Overdue</span> }
+    </div>
+  </div>
+
+  @if (rescheduling()) {
+    <div class="mk-cb-resched">
+      <mat-form-field appearance="outline" subscriptSizing="dynamic" class="mk-cb-dt">
+        <mat-label>New time</mat-label>
+        <input matInput type="datetime-local" [(ngModel)]="newTime">
+      </mat-form-field>
+      <button mat-flat-button color="primary" [disabled]="busy()" (click)="saveReschedule()">Save</button>
+      <button mat-button [disabled]="busy()" (click)="rescheduling.set(false)">Cancel</button>
+    </div>
+  } @else {
+    <div class="mk-cb-actions">
+      <button mat-stroked-button [disabled]="busy()" (click)="markCalled()">
+        <i-tabler name="phone-check"></i-tabler> Mark called
+      </button>
+      <button mat-button [disabled]="busy()" (click)="startReschedule()">
+        <i-tabler name="calendar-clock"></i-tabler> Reschedule
+      </button>
+      <button mat-button color="warn" [disabled]="busy()" (click)="cancel()">Cancel</button>
+    </div>
+  }
+</div>

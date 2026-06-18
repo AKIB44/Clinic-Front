@@ -53,7 +53,6 @@ export class DfTreatmentPlanComponent implements OnInit {
   private toast   = inject(ToastService);
   private svcSvc  = inject(ClinicServicesService);
 
-  readonly collapsed   = signal(false);
   readonly creating    = signal(false);
   readonly updating    = signal<string | null>(null);
   readonly addingTo    = signal<string | null>(null);
@@ -195,7 +194,7 @@ export class DfTreatmentPlanComponent implements OnInit {
         this.updating.set(null);
         this.store.updatePlanItem(updated);
         this.cancelDecline();
-        this.toast.success('Plan item declined.');
+        this.toast.warn('Plan item declined.');
       },
       error: () => {
         this.updating.set(null);

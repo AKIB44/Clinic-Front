@@ -1,0 +1,83 @@
+<div class="mk-cf">
+  <h2 class="mk-cf-title">{{ isEdit ? 'Edit campaign' : 'New campaign' }}</h2>
+
+  @if (loading()) {
+    <div class="mk-state"><mat-spinner diameter="28"></mat-spinner></div>
+  } @else {
+    <form class="mk-cf-form" (ngSubmit)="save()">
+      <mat-form-field appearance="outline" class="mk-cf-full">
+        <mat-label>Campaign name</mat-label>
+        <input matInput name="name" [(ngModel)]="form.name" required maxlength="160" placeholder="e.g. Summer whitening offer">
+      </mat-form-field>
+
+      <div class="mk-cf-row">
+        <mat-form-field appearance="outline">
+          <mat-label>Goal</mat-label>
+          <mat-select name="goal" [(ngModel)]="form.goal">
+            @for (g of goals; track g) { <mat-option [value]="g">{{ g | titlecase }}</mat-option> }
+          </mat-select>
+        </mat-form-field>
+
+        <mat-form-field appearance="outline">
+          <mat-label>Channel</mat-label>
+          <mat-select name="channel" [(ngModel)]="form.channel">
+            @for (c of channels; track c) { <mat-option [value]="c">{{ c | titlecase }}</mat-option> }
+          </mat-select>
+        </mat-form-field>
+
+        <mat-form-field appearance="outline">
+          <mat-label>Status</mat-label>
+          <mat-select name="status" [(ngModel)]="form.status">
+            @for (s of statuses; track s) { <mat-option [value]="s">{{ s | titlecase }}</mat-option> }
+          </mat-select>
+        </mat-form-field>
+      </div>
+
+      <div class="mk-cf-row">
+        <mat-form-field appearance="outline">
+          <mat-label>Budget (₹)</mat-label>
+          <input matInput type="number" min="0" name="budget" [(ngModel)]="form.budget_rupees" placeholder="0">
+        </mat-form-field>
+
+        <mat-form-field appearance="outline">
+          <mat-label>Start date</mat-label>
+          <input matInput type="date" name="start_date" [(ngModel)]="form.start_date">
+        </mat-form-field>
+
+        <mat-form-field appearance="outline">
+          <mat-label>End date</mat-label>
+          <input matInput type="date" name="end_date" [(ngModel)]="form.end_date">
+        </mat-form-field>
+      </div>
+
+      <div class="mk-cf-row">
+        <mat-form-field appearance="outline">
+          <mat-label>Audience segment</mat-label>
+          <mat-select name="segment_id" [(ngModel)]="form.segment_id">
+            <mat-option [value]="null">All patients</mat-option>
+            @for (s of segments(); track s.id) {
+              <mat-option [value]="s.id">{{ s.name }} ({{ s.guest_count }})</mat-option>
+            }
+          </mat-select>
+        </mat-form-field>
+
+        <mat-form-field appearance="outline">
+          <mat-label>Promo code</mat-label>
+          <mat-select name="promo_code_id" [(ngModel)]="form.promo_code_id">
+            <mat-option [value]="null">None</mat-option>
+            @for (p of promoCodes(); track p.id) {
+              <mat-option [value]="p.id">{{ p.code }}</mat-option>
+            }
+          </mat-select>
+        </mat-form-field>
+      </div>
+
+      <div class="mk-cf-actions">
+        <button mat-stroked-button type="button" (click)="cancel()">Cancel</button>
+        <button mat-flat-button color="primary" type="submit" [disabled]="saving()">
+          {{ saving() ? 'Saving…' : (isEdit ? 'Save changes' : 'Create campaign') }}
+        </button>
+      </div>
+    </form>
+  }
+</div>

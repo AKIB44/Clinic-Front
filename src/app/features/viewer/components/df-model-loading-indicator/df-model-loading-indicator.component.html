@@ -1,0 +1,11 @@
+@if (visible()) {
+  <div class="mli" [class.mli--error]="store.phase() === 'error'">
+    <div class="mli-card">
+      <i-tabler [name]="store.phase() === 'error' ? 'cube-off' : 'cube'" class="mli-icon"></i-tabler>
+      <div class="mli-label">{{ label() }}</div>
+      @if (store.phase() !== 'error') {
+        <div class="mli-bar"><span [style.width.%]="pct()"></span></div>
+      }
+    </div>
+  </div>
+}

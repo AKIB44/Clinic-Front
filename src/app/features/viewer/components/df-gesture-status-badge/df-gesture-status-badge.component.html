@@ -1,0 +1,9 @@
+<div class="gsb gsb--{{ colour() }}" [class.gsb--paused]="store.gesturePaused()">
+  <i-tabler [name]="store.gesturePaused() ? 'hand-stop' : 'hand-finger'"></i-tabler>
+  <div class="gsb-txt">
+    <span class="gsb-label">{{ store.gesturePaused() ? 'Gestures paused' : label() }}</span>
+    @if (!store.gesturePaused() && store.gestureDetected()) {
+      <span class="gsb-conf">{{ pct() }}%</span>
+    }
+  </div>
+</div>

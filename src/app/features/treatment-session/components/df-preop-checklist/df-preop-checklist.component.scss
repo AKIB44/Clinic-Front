@@ -46,8 +46,11 @@
 .pf-field select:focus,
 .pf-field textarea:focus { border-color: #0ea5e9; box-shadow: 0 0 0 2px rgba(14,165,233,.1); }
 
-.pf-check      { display: flex; align-items: center; gap: 6px; font-size: 12px;
-                 color: #475569; cursor: pointer; }
+.pf-check      { display: inline-flex; align-items: center; gap: 8px; width: fit-content;
+                 max-width: 100%; font-size: 12px; color: #475569; }
+.pf-check input[type="checkbox"] { cursor: pointer; margin: 0; flex-shrink: 0;
+                                    width: 1rem; height: 1rem; accent-color: #0ea5e9; }
+.pf-check > span { cursor: default; line-height: 1.35; user-select: none; }
 .pf-complete-check { font-weight: 600; color: #0f172a; }
 
 // Vital warnings

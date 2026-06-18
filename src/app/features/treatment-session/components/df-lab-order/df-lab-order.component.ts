@@ -99,7 +99,11 @@ export class DfLabOrderComponent {
       .subscribe({
         next: ({ lab_order }) => {
           this.store.updateLabOrder(lab_order);
-          this.toast.success(`Lab order → ${LAB_STATUS_LABELS[newStatus]}.`);
+          if (newStatus === 'cancelled') {
+            this.toast.warn('Lab order cancelled.');
+          } else {
+            this.toast.success(`Lab order → ${LAB_STATUS_LABELS[newStatus]}.`);
+          }
         },
         error: () => this.toast.error('Could not update lab order status.'),
       });

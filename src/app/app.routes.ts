@@ -4,6 +4,9 @@ import { BlankComponent } from './layouts/blank/blank.component';
 import { FullComponent } from './layouts/full/full.component';
 import { ScheduleComponent } from './pages/schedule/schedule.component';
 import { permissionGuard, anyPermissionGuard } from './core/rbac/permission.guard';
+import { sessionAutoPauseGuard } from './features/treatment-session/guards/session-auto-pause.guard';
+import { featureFlagGuard } from './core/feature-flag.guard';
+import { GESTURE_VIEWER_FLAG } from './services/feature-flags.service';
 
 export const routes: Routes = [
   // Admin — all routes behind authGuard
@@ -51,6 +54,22 @@ export const routes: Routes = [
         loadComponent: () =>
           import('./features/patient-files/pages/patient-files/patient-files.page').then(
             (m) => m.PatientFilesPage
+          ),
+      },
+      {
+        path: 'viewer',
+        canActivate: [permissionGuard('patient.view'), featureFlagGuard(GESTURE_VIEWER_FLAG)],
+        loadComponent: () =>
+          import('./features/viewer/pages/model-viewer-page/model-viewer-page.page').then(
+            (m) => m.ModelViewerPage
+          ),
+      },
+      {
+        path: 'viewer/:patientId/:fileId',
+        canActivate: [permissionGuard('patient.view'), featureFlagGuard(GESTURE_VIEWER_FLAG)],
+        loadComponent: () =>
+          import('./features/viewer/pages/model-viewer-page/model-viewer-page.page').then(
+            (m) => m.ModelViewerPage
           ),
       },
       {
@@ -104,8 +123,15 @@ export const routes: Routes = [
           ),
       },
       {
+        path: 'marketing',
+        canActivate: [permissionGuard('marketing.campaign.view')],
+        loadChildren: () =>
+          import('./features/marketing/marketing.routes').then((m) => m.MarketingRoutes),
+      },
+      {
         path: 'treatment/:sessionId',
         canActivate: [permissionGuard('appointment.view')],
+        canDeactivate: [sessionAutoPauseGuard],
         loadComponent: () =>
           import('./features/treatment-session/pages/session-canvas.page').then(
             (m) => m.SessionCanvasPage

@@ -1,13 +1,5 @@
 <div class="tpa-card">
 
-  <div class="tpa-header">
-    <i-tabler name="shield-check" size="18"></i-tabler>
-    <span>TPA / Insurance</span>
-    @if (store.tpa().length > 0) {
-      <span class="tpa-count">{{ store.tpa().length }} record{{ store.tpa().length > 1 ? 's' : '' }}</span>
-    }
-  </div>
-
   @if (store.tpa().length > 0) {
     <div class="tpa-list">
       @for (t of store.tpa(); track t.id) {

@@ -88,7 +88,7 @@ export class DfAttachmentsBlockComponent {
       next: () => {
         this.deleting.set(null);
         this.store.removeAttachment(id);
-        this.toast.success('Attachment removed.');
+        this.toast.warn('Attachment removed.');
       },
       error: () => {
         this.deleting.set(null);

@@ -1,0 +1,34 @@
+<div class="ba">
+  <div class="ba-head"><span><i-tabler name="versions"></i-tabler> Before / After</span></div>
+
+  @if (store.isLargeModel()) {
+    <div class="ba-warn">
+      <i-tabler name="alert-triangle"></i-tabler>
+      <span>Large model — interaction may stutter.</span>
+      <button class="ba-opt" (click)="optimize.emit()" type="button">Optimise</button>
+    </div>
+  }
+
+  @if (!store.comparisonName()) {
+    <p class="ba-hint">Overlay an “after” scan on top of this one.</p>
+    <button class="ba-load" (click)="fileB.click()" type="button">
+      <i-tabler name="folder-open"></i-tabler> Load “after” model
+    </button>
+    <input #fileB type="file" hidden accept=".stl,.glb,.gltf,.ply,.obj" (change)="onPick($event)">
+  } @else {
+    <div class="ba-name"><span class="ba-dot"></span>{{ store.comparisonName() }}</div>
+    <label class="ba-row">
+      <span>Opacity</span>
+      <input type="range" min="0" max="100" [(ngModel)]="opacity" (input)="onOpacity()" aria-label="After-model opacity">
+    </label>
+    <div class="ba-actions">
+      <button class="ba-btn" (click)="toggleVisible()" type="button">
+        <i-tabler [name]="store.comparisonVisible() ? 'eye' : 'eye-off'"></i-tabler>
+        {{ store.comparisonVisible() ? 'Hide' : 'Show' }}
+      </button>
+      <button class="ba-btn ba-btn--danger" (click)="clear.emit()" type="button">
+        <i-tabler name="trash"></i-tabler> Remove
+      </button>
+    </div>
+  }
+</div>

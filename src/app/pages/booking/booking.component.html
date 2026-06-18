@@ -192,6 +192,8 @@
                   </div>
                 } @else if (slots().length === 0) {
                   <p class="no-slots">No slots available for this date. Please try another day.</p>
+                } @else if (!hasSelectableSlots()) {
+                  <p class="no-slots">No future slots remain for this date. Please choose another day.</p>
                 } @else {
                   @for (group of slotGroups(); track group.label) {
                     <div class="slot-group">
@@ -204,7 +206,8 @@
                           <button class="slot-chip"
                                   [class.selected]="selectedSlot() === slot.time"
                                   [class.taken]="slot.taken"
-                                  [disabled]="slot.taken"
+                                  [class.past]="isSlotPast(slot)"
+                                  [disabled]="!isSlotSelectable(slot)"
                                   (click)="onSlotSelect(slot)" type="button">
                             {{ slot.time }}
                           </button>
@@ -251,9 +254,16 @@
                   <mat-form-field appearance="outline" class="w-100">
                     <mat-label>Full Name</mat-label>
                     <mat-icon matPrefix>person</mat-icon>
-                    <input matInput type="text" formControlName="name" placeholder="e.g. Ravi Sharma">
-                    @if (patientForm.get('name')?.touched && patientForm.get('name')?.invalid) {
+                    <input matInput type="text" formControlName="name" placeholder="e.g. Ravi Sharma"
+                           (input)="onNameInput($event)" (blur)="onNameBlur()">
+                    @if (patientForm.get('name')?.touched && patientForm.get('name')?.hasError('required')) {
                       <mat-error>Name is required</mat-error>
+                    }
+                    @if (patientForm.get('name')?.touched && patientForm.get('name')?.hasError('minlength')) {
+                      <mat-error>Name must be at least 2 characters</mat-error>
+                    }
+                    @if (patientForm.get('name')?.touched && patientForm.get('name')?.hasError('pattern')) {
+                      <mat-error>Name can contain letters only</mat-error>
                     }
                   </mat-form-field>
                 </div>
@@ -264,13 +274,15 @@
                     <mat-form-field appearance="outline" class="w-100">
                       <mat-label>Age</mat-label>
                       <mat-icon matPrefix>cake</mat-icon>
-                      <input matInput type="number" inputmode="numeric" min="0" max="150"
-                             formControlName="age" placeholder="e.g. 35">
+                      <input matInput type="number" inputmode="numeric"
+                             [min]="ageMin" [max]="ageMax"
+                             formControlName="age" placeholder="e.g. 35"
+                             (input)="onAgeInput($event)" (blur)="onAgeBlur()">
                       @if (patientForm.get('age')?.touched && patientForm.get('age')?.hasError('required')) {
                         <mat-error>Age is required</mat-error>
                       }
                       @if (patientForm.get('age')?.touched && (patientForm.get('age')?.hasError('min') || patientForm.get('age')?.hasError('max'))) {
-                        <mat-error>Age must be 0–150</mat-error>
+                        <mat-error>Age must be {{ ageMin }}–{{ ageMax }}</mat-error>
                       }
                     </mat-form-field>
                   </div>

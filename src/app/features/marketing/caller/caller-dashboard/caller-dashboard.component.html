@@ -1,0 +1,73 @@
+<div class="mk-cd">
+  <div class="mk-cd-bar">
+    <h2 class="mk-cd-title">Today's call queue</h2>
+    <span class="mk-cd-spacer"></span>
+    @if (canViewAll) {
+      <mat-button-toggle-group [value]="store.viewAll() ? 'all' : 'mine'" hideSingleSelectionIndicator>
+        <mat-button-toggle value="mine" (click)="toggleScope(false)">My queue</mat-button-toggle>
+        <mat-button-toggle value="all" (click)="toggleScope(true)">All callers</mat-button-toggle>
+      </mat-button-toggle-group>
+    }
+  </div>
+
+  @if (canScheduleCallback && store.pendingCallbacks().length > 0) {
+    <section class="mk-pcb">
+      <h3 class="mk-pcb-title">
+        Pending callbacks
+        @if (store.overdueCallbacks().length > 0) {
+          <span class="mk-pcb-overdue">{{ store.overdueCallbacks().length }} overdue</span>
+        }
+      </h3>
+      <div class="mk-pcb-list">
+        @for (cb of store.pendingCallbacks(); track cb.id) {
+          <mkt-callback-scheduler [callback]="cb" [overdue]="isOverdue(cb)" (changed)="onCallbackChanged()"></mkt-callback-scheduler>
+        }
+      </div>
+    </section>
+  }
+
+  @if (store.loading()) {
+    <div class="mk-state"><mat-spinner diameter="28"></mat-spinner></div>
+  } @else if (store.error()) {
+    <div class="mk-state mk-error">{{ store.error() }}</div>
+  } @else if (store.queue().length === 0) {
+    <div class="mk-empty">No leads in the queue. Leads routed to you will appear here.</div>
+  } @else {
+    <div class="mk-q">
+      @for (l of store.queue(); track l.id) {
+        <div class="mk-q-card">
+          <div class="mk-q-head" (click)="toggle(l)">
+            <div class="mk-q-info">
+              <span class="mk-q-clinic">{{ l.clinic_name }}</span>
+              <span class="mk-q-meta">
+                {{ l.contact_name || 'No contact' }}
+                @if (l.contact_phone) { · {{ l.contact_phone }} }
+                @if (l.city) { · {{ l.city }} }
+              </span>
+            </div>
+            <div class="mk-q-status">
+              @if (l.next_callback_at) {
+                <span class="mk-q-cb"><i-tabler name="clock"></i-tabler>{{ l.next_callback_at | date:'MMM d, h:mm a' }}</span>
+              }
+              <span class="mk-q-attempts">{{ l.call_attempt_count }} attempt{{ l.call_attempt_count === 1 ? '' : 's' }}</span>
+              @if (l.last_call_outcome) {
+                <span class="mk-q-last">{{ outcomeLabels[l.last_call_outcome] }}</span>
+              } @else {
+                <span class="mk-q-new">New</span>
+              }
+              <a [routerLink]="['/marketing/pipeline', l.id]" class="mk-q-open" (click)="$event.stopPropagation()">
+                <i-tabler name="external-link"></i-tabler>
+              </a>
+            </div>
+          </div>
+
+          @if (expandedId() === l.id && canLogOutcome) {
+            <div class="mk-q-body">
+              <mkt-call-outcome-form [leadId]="l.id" (saved)="onLogged()"></mkt-call-outcome-form>
+            </div>
+          }
+        </div>
+      }
+    </div>
+  }
+</div>

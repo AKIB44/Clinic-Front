@@ -1,12 +1,9 @@
 <div class="inv-card">
-
-  <div class="inv-header">
-    <i-tabler name="microscope" size="18"></i-tabler>
-    <span>Investigations</span>
-    <span class="inv-count">{{ store.investigations().length }}</span>
+  <div class="inv-toolbar">
     @if (!store.isSealed()) {
-      <button mat-icon-button class="inv-add-btn" (click)="openForm()" title="Order investigation">
-        <i-tabler name="plus" size="18"></i-tabler>
+      <button mat-stroked-button class="inv-add-btn" (click)="openForm()">
+        <i-tabler name="plus" size="16"></i-tabler>
+        Order investigation
       </button>
     }
   </div>

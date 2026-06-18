@@ -201,7 +201,7 @@ export class DfInvestigationsBlockComponent {
       .subscribe({
         next: () => {
           this.store.cancelInvestigation(id);
-          this.toast.success('Investigation cancelled.');
+          this.toast.warn('Investigation cancelled.');
         },
         error: () => this.toast.error('Could not cancel investigation.'),
       });

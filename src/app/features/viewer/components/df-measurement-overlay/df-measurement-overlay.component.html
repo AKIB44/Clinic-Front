@@ -1,0 +1,26 @@
+<div class="mo">
+  <div class="mo-head">
+    <span><i-tabler name="ruler-2"></i-tabler> Measurements</span>
+    @if (store.measurements().length) {
+      <button class="mo-clear" (click)="clear()" type="button">Clear</button>
+    }
+  </div>
+  @if (store.measureMode()) {
+    <p class="mo-hint">Tap two points on the model to measure.</p>
+  }
+  @if (store.measurements().length === 0) {
+    <p class="mo-empty">No measurements yet.</p>
+  } @else {
+    <ul class="mo-list">
+      @for (m of store.measurements(); track m.id; let i = $index) {
+        <li class="mo-item">
+          <span class="mo-idx">{{ i + 1 }}</span>
+          <span class="mo-dist">{{ fmt(m.distanceMm) }}</span>
+          <button class="mo-del" (click)="remove(m.id)" aria-label="Delete measurement" type="button">
+            <i-tabler name="x"></i-tabler>
+          </button>
+        </li>
+      }
+    </ul>
+  }
+</div>
