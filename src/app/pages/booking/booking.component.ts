@@ -18,6 +18,7 @@ import { ClinicServicesService } from '../../services/clinic-services.service';
 import { ChairsService } from '../../services/chairs.service';
 import { AuthService } from '../../auth/auth.service';
 import { ClinicService, Chair } from '../../models/clinic.model';
+import { formatSlotTime12h } from '../../utils/appointment-time';
 
 // ── Types ────────────────────────────────────────────────────────────────────
 
@@ -525,6 +526,10 @@ export class BookingComponent implements OnInit, OnDestroy {
     return 'This slot is no longer available. Please choose another time.';
   }
 
+  slotLabel(time: string | null | undefined): string {
+    return time ? formatSlotTime12h(time) : '';
+  }
+
   /** Kept for backward template compat — live lookup is debounced via valueChanges. */
   onPhoneBlur() { /* no-op */ }
 
@@ -680,7 +685,7 @@ export class BookingComponent implements OnInit, OnDestroy {
 
     this.apptService.book(payload).subscribe({
       next: () => {
-        this.confirmedTime    = `${this.formattedDate()} at ${this.selectedSlot()}`;
+        this.confirmedTime    = `${this.formattedDate()} at ${this.slotLabel(this.selectedSlot())}`;
         this.confirmedService = this.serviceLabel();
         this.submitted.set(true);
         this.submitting.set(false);

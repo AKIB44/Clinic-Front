@@ -38,6 +38,42 @@ body { margin: 0; font-family: Roboto, "Helvetica Neue", sans-serif; }
   padding: 0 !important;
 }
 
+/* Reschedule dialog — responsive shell */
+.cdk-overlay-pane.reschedule-dialog-panel {
+  width: min(920px, 96vw) !important;
+  max-width: 96vw !important;
+  max-height: 94dvh !important;
+}
+
+.reschedule-dialog-panel .mat-mdc-dialog-container {
+  padding: 0 !important;
+  max-height: 94dvh;
+}
+
+.reschedule-dialog-panel .mat-mdc-dialog-container .mdc-dialog__surface {
+  border-radius: 16px !important;
+  overflow: hidden;
+  padding: 0 !important;
+  max-height: 94dvh;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 24px 48px rgba(15, 23, 42, 0.18), 0 8px 16px rgba(0, 116, 186, 0.08) !important;
+}
+
+@media (max-width: 599px) and (orientation: portrait) {
+  .cdk-overlay-pane.reschedule-dialog-panel {
+    width: 100vw !important;
+    max-width: 100vw !important;
+    max-height: 100dvh !important;
+  }
+
+  .reschedule-dialog-panel .mat-mdc-dialog-container,
+  .reschedule-dialog-panel .mat-mdc-dialog-container .mdc-dialog__surface {
+    max-height: 100dvh;
+    border-radius: 0 !important;
+  }
+}
+
 .snack-success .mdc-snackbar__surface { background: #2e7d32 !important; }
 .snack-success .mat-mdc-snack-bar-label { color: #fff !important; }
 .snack-success .mat-mdc-button { color: #a5d6a7 !important; }

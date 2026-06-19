@@ -91,10 +91,13 @@
 
             <div class="pc-visit">
               @if (p.last_visit) {
-                <div class="pc-last-service">{{ p.last_service }}</div>
-                <div class="pc-last-date">
-                  <i-tabler name="clock" size="12"></i-tabler>
-                  {{ formatDate(p.last_visit) }}
+                <div class="pc-visit-row">
+                  <span class="pc-visit-label">Visit</span>
+                  <span class="pc-visit-service">{{ p.last_service || '—' }}</span>
+                  <span class="pc-visit-sep">·</span>
+                  <span class="pc-visit-date">{{ formatVisitDate(p.last_visit) }}</span>
+                  <span class="pc-visit-sep">·</span>
+                  <span class="pc-visit-time">{{ formatVisitTime(p.last_visit) }}</span>
                 </div>
               } @else {
                 <div class="pc-no-visit">No visits yet</div>

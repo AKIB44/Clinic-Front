@@ -11,16 +11,18 @@ import { interval, Subject, fromEvent, forkJoin, merge, of } from 'rxjs';
 import { map, switchMap, takeUntil, filter, debounceTime } from 'rxjs/operators';
 import { ScheduleEventsService } from '../../services/schedule-events.service';
 import { format, addDays, subDays, isToday, parseISO } from 'date-fns';
-import { AppointmentsService, Appointment, AppointmentStatus, Slot } from '../../services/appointments.service';
+import { AppointmentsService, Appointment, AppointmentStatus } from '../../services/appointments.service';
 import { PatientsService, Patient } from '../../services/patients.service';
 import { ClinicServicesService } from '../../services/clinic-services.service';
 import { ChairsService } from '../../services/chairs.service';
 import { AuthService } from '../../auth/auth.service';
 import { Chair } from '../../models/clinic.model';
 import { HasPermissionDirective } from '../../core/rbac/has-permission.directive';
+import { formatAppointmentDateTime12h, formatAppointmentTime12h, formatSlotTime12h } from '../../utils/appointment-time';
 import { SessionApiService } from '../../features/treatment-session/services/session-api.service';
 import { ReleaseNotesService } from '../../services/release-notes.service';
 import { ReleaseNotesDialogComponent } from '../../components/release-notes-dialog/release-notes-dialog.component';
+import { RescheduleDialogComponent } from './reschedule-dialog/reschedule-dialog.component';
 
 // ── Icon / color helpers ──────────────────────────────────────────────────────
 
@@ -118,145 +120,6 @@ const STATUS_ACTIONS: Record<AppointmentStatus, Array<{ label: string; next: App
   no_show:     [],
   cancelled:   [],
 };
-
-// ── Reschedule Dialog ─────────────────────────────────────────────────────────
-
-@Component({
-  selector: 'reschedule-dialog',
-  standalone: true,
-  imports: [CommonModule, FormsModule, MaterialModule, TablerIconsModule],
-  template: `
-    <div class="rs-dialog">
-      <div class="rs-header">
-        <i-tabler name="calendar-event" size="20"></i-tabler>
-        <div>
-          <h2 class="rs-title">Reschedule Appointment</h2>
-          <div class="rs-subtitle">{{ data.patient_name }} · {{ data.service_name }}</div>
-        </div>
-      </div>
-
-      <mat-dialog-content class="rs-body">
-        <div class="rs-section-label">New Date</div>
-        <mat-form-field appearance="outline" class="rs-date-field">
-          <mat-label>Pick a date</mat-label>
-          <input matInput [matDatepicker]="dp" [(ngModel)]="selectedDate"
-                 [min]="minDate" (dateChange)="onDateChange($event.value)">
-          <mat-datepicker-toggle matSuffix [for]="dp"></mat-datepicker-toggle>
-          <mat-datepicker #dp></mat-datepicker>
-        </mat-form-field>
-
-        @if (slotsLoading) {
-          <div class="rs-slots-loading">
-            <mat-spinner diameter="24"></mat-spinner>
-            <span>Loading available slots…</span>
-          </div>
-        }
-
-        @if (!slotsLoading && slotsError) {
-          <div class="rs-error">{{ slotsError }}</div>
-        }
-
-        @if (!slotsLoading && !slotsError && slots.length > 0) {
-          <div class="rs-section-label">Available Slots</div>
-          <div class="rs-slot-grid">
-            @for (s of slots; track s.time) {
-              <button type="button" class="rs-slot"
-                      [class.rs-slot-sel]="selectedSlot === s.time"
-                      [class.rs-slot-taken]="s.taken"
-                      [disabled]="s.taken"
-                      (click)="selectedSlot = s.time">
-                {{ s.time }}
-              </button>
-            }
-          </div>
-        }
-
-        @if (!slotsLoading && !slotsError && selectedDate && slots.length === 0) {
-          <div class="rs-no-slots">No slots available for this date. Try another day.</div>
-        }
-
-        @if (error) {
-          <div class="rs-error">{{ error }}</div>
-        }
-      </mat-dialog-content>
-
-      <mat-dialog-actions align="end">
-        <button mat-stroked-button mat-dialog-close [disabled]="updating">Cancel</button>
-        <button mat-flat-button color="primary"
-                [disabled]="!selectedDate || !selectedSlot || updating"
-                (click)="confirm()">
-          @if (updating) { <mat-spinner diameter="16" style="display:inline-block;margin-right:6px"></mat-spinner> }
-          Confirm Reschedule
-        </button>
-      </mat-dialog-actions>
-    </div>
-  `,
-  styles: [`
-    .rs-dialog   { min-width: 360px; max-width: 460px; }
-    .rs-header   { display: flex; align-items: flex-start; gap: 12px; padding: 20px 24px 0; color: #0074ba; }
-    .rs-title    { margin: 0; font-size: 17px; font-weight: 700; color: #0f172a; }
-    .rs-subtitle { font-size: 12px; color: #64748b; margin-top: 2px; }
-    .rs-body     { padding: 16px 24px !important; }
-    .rs-section-label { font-size: 11px; font-weight: 700; color: #94a3b8; text-transform: uppercase;
-                        letter-spacing: .5px; margin-bottom: 8px; }
-    .rs-date-field { width: 100%; margin-bottom: 16px; }
-    .rs-slots-loading { display: flex; align-items: center; gap: 10px; color: #64748b; font-size: 13px;
-                        padding: 12px 0; }
-    .rs-slot-grid { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 8px; }
-    .rs-slot { padding: 5px 12px; border-radius: 6px; border: 1.5px solid #cbd5e1; background: #fff;
-               font-size: 13px; font-weight: 500; color: #334155; cursor: pointer;
-               transition: border-color .15s, background .15s; }
-    .rs-slot:hover:not(:disabled) { border-color: #0074ba; color: #0074ba; }
-    .rs-slot-sel  { border-color: #0074ba !important; background: #0074ba !important; color: #fff !important; }
-    .rs-slot-taken { opacity: .4; cursor: not-allowed; }
-    .rs-no-slots { font-size: 13px; color: #94a3b8; padding: 8px 0; }
-    .rs-error    { color: #c62828; font-size: 13px; margin-top: 8px; }
-  `]
-})
-export class RescheduleDialog {
-  dialogRef       = inject(MatDialogRef<RescheduleDialog>);
-  data            = inject<Appointment>(MAT_DIALOG_DATA);
-  private apptSvc = inject(AppointmentsService);
-
-  minDate      = new Date();
-  selectedDate: Date | null = null;
-  selectedSlot: string | null = null;
-  slots:        Slot[] = [];
-  slotsLoading = false;
-  slotsError   = '';
-  updating     = false;
-  error        = '';
-
-  onDateChange(date: Date | null) {
-    if (!date) return;
-    this.selectedDate = date;
-    this.selectedSlot = null;
-    this.slots        = [];
-    this.slotsError   = '';
-    this.slotsLoading = true;
-    const dateStr = format(date, 'yyyy-MM-dd');
-    this.apptSvc.getSlots(dateStr, this.data.service_id, this.data.chair_id).subscribe({
-      next:  r => { this.slots = r.slots ?? []; this.slotsLoading = false; },
-      error: () => { this.slotsError = 'Could not load slots. Try again.'; this.slotsLoading = false; },
-    });
-  }
-
-  confirm() {
-    if (!this.selectedDate || !this.selectedSlot) return;
-    this.updating = true;
-    this.error    = '';
-    const dateStr = format(this.selectedDate, 'yyyy-MM-dd');
-    this.apptSvc.reschedule(this.data.id, { scheduled_at: `${dateStr}T${this.selectedSlot}:00+05:30` }).subscribe({
-      next: (res) => {
-        const appt = appointmentFromPatchResponse(res);
-        this.dialogRef.close(
-          appt ? { reload: true as const, appointment: appt } : { reload: true as const },
-        );
-      },
-      error: () => { this.error = 'Reschedule failed. Please try again.'; this.updating = false; },
-    });
-  }
-}
 
 // ── Detail Dialog ─────────────────────────────────────────────────────────────
 
@@ -612,8 +475,7 @@ export class AppointmentDetailDialog {
   get canStartTreatment() { return this.data.status === 'in_progress' || this.data.status === 'in_treatment'; }
 
   get scheduled(): string {
-    try { return format(parseISO(this.data.scheduled_at.replace('Z', '')), 'EEE, d MMM yyyy · h:mm a'); }
-    catch { return this.data.scheduled_at; }
+    return formatAppointmentDateTime12h(this.data.scheduled_at);
   }
 
   doAction(next: AppointmentStatus) {
@@ -650,11 +512,13 @@ export class AppointmentDetailDialog {
 
   openReschedule() {
     this.pendingKey = 'reschedule';
-    this.dialog.open(RescheduleDialog, {
-      data:      this.data,
-      width:     '460px',
-      maxWidth:  '95vw',
-      autoFocus: false,
+    this.dialog.open(RescheduleDialogComponent, {
+      data:       this.data,
+      width:      'min(920px, 96vw)',
+      maxWidth:   '96vw',
+      maxHeight:  '94dvh',
+      autoFocus:  false,
+      panelClass: 'reschedule-dialog-panel',
     }).afterClosed().subscribe(r => {
       this.pendingKey = null;
       if (r && typeof r === 'object' && 'reload' in r && (r as { reload: boolean }).reload) {
@@ -816,7 +680,6 @@ function buildGreeting(firstName: string): GreetingParts {
     FormsModule,
     MaterialModule,
     TablerIconsModule,
-    RescheduleDialog,
     AppointmentDetailDialog,
   ],
   templateUrl: './schedule.component.html',
@@ -1179,7 +1042,7 @@ export class ScheduleComponent implements OnInit, OnDestroy {
   // ── Card helpers ──────────────────────────────────────────────────────────
 
   formatTime(iso: string): string {
-    try { return format(parseISO(iso.replace('Z', '')), 'h:mm a'); } catch { return iso; }
+    return formatAppointmentTime12h(iso);
   }
 
   openDetail(appt: Appointment) {

@@ -39,8 +39,8 @@ import { FileCacheService } from '../../services/file-cache.service';
     </div>
   `,
   styles: [`
-    .dv-wrap { display: flex; flex-direction: column; gap: 10px; height: 100%; }
-    .dv-stage { position: relative; flex: 1; min-height: 380px; background: #000; border-radius: 10px; display: flex; align-items: center; justify-content: center; overflow: hidden; }
+    .dv-wrap { display: flex; flex-direction: column; gap: 10px; width: 100%; height: 100%; min-height: 0; overflow: hidden; }
+    .dv-stage { position: relative; flex: 1 1 auto; min-height: 0; height: 100%; background: #000; border-radius: 10px; display: flex; align-items: center; justify-content: center; overflow: hidden; }
     .dv-canvas { max-width: 100%; max-height: 100%; image-rendering: pixelated; }
     .dv-overlay { position: absolute; inset: 0; display: flex; flex-direction: column; gap: 12px; align-items: center; justify-content: center; color: #cbd5e1; font-size: 13.5px; padding: 16px; text-align: center; }
     .dv-loading-label { font-weight: 600; }
@@ -49,7 +49,7 @@ import { FileCacheService } from '../../services/file-cache.service';
     .dv-loader span:nth-child(2){ animation-delay:.15s } .dv-loader span:nth-child(3){ animation-delay:.3s }
     @keyframes dv-bounce { 0%,80%,100%{ transform:scale(.5); opacity:.4 } 40%{ transform:scale(1); opacity:1 } }
     .dv-err { color: #fca5a5; }
-    .dv-controls { display: flex; flex-wrap: wrap; gap: 16px; padding: 4px 2px; }
+    .dv-controls { display: flex; flex-wrap: wrap; gap: 16px; padding: 4px 2px; flex-shrink: 0; }
     .dv-ctl { display: flex; flex-direction: column; gap: 4px; font-size: 11px; color: #64748b; font-weight: 600; min-width: 160px; }
     .dv-ctl span { color: #0f172a; font-weight: 700; }
     .dv-ctl input { accent-color: #0d7a5f; }

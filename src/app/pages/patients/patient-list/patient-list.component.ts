@@ -81,8 +81,12 @@ export class PatientListComponent implements OnInit, OnDestroy {
     this.router.navigate(['/patients', patient.id]);
   }
 
-  formatDate(iso: string): string {
-    try { return format(parseISO(iso), 'd MMM yyyy'); } catch { return iso; }
+  formatVisitDate(iso: string): string {
+    try { return format(parseISO(iso.replace('Z', '')), 'd MMM yyyy'); } catch { return iso; }
+  }
+
+  formatVisitTime(iso: string): string {
+    try { return format(parseISO(iso.replace('Z', '')), 'h:mm a'); } catch { return ''; }
   }
 
   initials(name: string): string {

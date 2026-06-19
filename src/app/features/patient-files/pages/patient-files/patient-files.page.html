@@ -33,26 +33,31 @@
         </div>
       }
 
-      @if (loading()) {
-        <div class="pf-state"><mat-spinner diameter="22"></mat-spinner></div>
-      } @else if (files().length === 0) {
-        <div class="pf-state pf-muted">No files yet.</div>
-      } @else {
-        <div class="pf-list">
-          @for (f of files(); track f.id) {
-            <button class="pf-item" [class.active]="selected()?.id === f.id" (click)="select(f)">
-              <span class="pf-icon" [style.background]="meta(f).accent + '1f'" [style.color]="meta(f).accent">
-                <i-tabler [name]="meta(f).icon" class="icon-18"></i-tabler>
-              </span>
-              <span class="pf-meta">
-                <span class="pf-name">{{ f.filename }}</span>
-                <span class="pf-sub">{{ meta(f).label }} · {{ humanSize(f.file_size) }}</span>
-              </span>
-              <span class="pf-del" (click)="remove(f, $event)" title="Delete"><i-tabler name="trash" class="icon-16"></i-tabler></span>
-            </button>
-          }
-        </div>
-      }
+      <div class="pf-files-scroll" [class.pf-files-scroll--has-files]="files().length > 0">
+        @if (loading()) {
+          <div class="pf-state"><mat-spinner diameter="22"></mat-spinner></div>
+        } @else if (files().length === 0) {
+          <div class="pf-state pf-muted">No files yet.</div>
+        } @else {
+          <div class="pf-list-head">
+            <span>{{ files().length }} file{{ files().length !== 1 ? 's' : '' }}</span>
+          </div>
+          <div class="pf-list">
+            @for (f of files(); track f.id) {
+              <button type="button" class="pf-item" [class.active]="selected()?.id === f.id" (click)="select(f)">
+                <span class="pf-icon" [style.background]="meta(f).accent + '1f'" [style.color]="meta(f).accent">
+                  <i-tabler [name]="meta(f).icon" class="icon-18"></i-tabler>
+                </span>
+                <span class="pf-meta">
+                  <span class="pf-name">{{ f.filename }}</span>
+                  <span class="pf-sub">{{ meta(f).label }} · {{ humanSize(f.file_size) }}</span>
+                </span>
+                <span class="pf-del" (click)="remove(f, $event)" title="Delete"><i-tabler name="trash" class="icon-16"></i-tabler></span>
+              </button>
+            }
+          </div>
+        }
+      </div>
     </div>
 
     <!-- Right: viewer -->

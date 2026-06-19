@@ -75,7 +75,7 @@ const RANK: Record<Phase, number> = {
     </div>
   `,
   styles: [`
-    .v3-wrap { position: relative; width: 100%; height: 100%; min-height: 460px; background: radial-gradient(circle at 50% 36%, #1e293b, #0b1222 72%); border-radius: 10px; overflow: hidden; }
+    .v3-wrap { position: relative; width: 100%; height: 100%; min-height: 0; background: radial-gradient(circle at 50% 36%, #1e293b, #0b1222 72%); border-radius: 10px; overflow: hidden; }
     .v3-host { width: 100%; height: 100%; }
     .v3-overlay { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 16px; color: #e2e8f0; }
 

@@ -209,7 +209,7 @@
                                   [class.past]="isSlotPast(slot)"
                                   [disabled]="!isSlotSelectable(slot)"
                                   (click)="onSlotSelect(slot)" type="button">
-                            {{ slot.time }}
+                            {{ slotLabel(slot.time) }}
                           </button>
                         }
                       </div>
@@ -236,7 +236,7 @@
           <div @stepSlide>
             <div class="step-header">
               <h3>Patient Details</h3>
-              <p>{{ formattedDate() }} · {{ selectedSlot() }}</p>
+              <p>{{ formattedDate() }} · {{ slotLabel(selectedSlot()) }}</p>
             </div>
 
             <div class="step-body">
@@ -247,7 +247,7 @@
                 </div>
               }
 
-              <form [formGroup]="patientForm" (ngSubmit)="proceedToConfirm()">
+              <form class="patient-details-form" [formGroup]="patientForm" (ngSubmit)="proceedToConfirm()">
 
                 <!-- Row 1: Name (full) -->
                 <div class="field-block">
@@ -660,7 +660,7 @@
                     <i-tabler name="clock" class="review-cell-icon"></i-tabler>
                     <div>
                       <div class="review-cell-lbl">Time</div>
-                      <div class="review-cell-val">{{ selectedSlot() }}</div>
+                      <div class="review-cell-val">{{ slotLabel(selectedSlot()) }}</div>
                     </div>
                   </div>
                   @if (selectedChair()) {
@@ -767,7 +767,7 @@
                     <div class="step-row-sub">{{ selectedService()!.name }}</div>
                   }
                   @if (s.num === 2 && selectedDate()) {
-                    <div class="step-row-sub">{{ formattedDate() }}{{ selectedSlot() ? ' · ' + selectedSlot() : '' }}</div>
+                    <div class="step-row-sub">{{ formattedDate() }}{{ selectedSlot() ? ' · ' + slotLabel(selectedSlot()) : '' }}</div>
                   }
                   @if (s.num === 3 && patientData) {
                     <div class="step-row-sub">{{ patientData.name }}</div>
@@ -807,7 +807,7 @@
                 </div>
                 <div>
                   <div class="summary-lbl">Time</div>
-                  <div class="summary-val">{{ selectedSlot() }}</div>
+                  <div class="summary-val">{{ slotLabel(selectedSlot()) }}</div>
                 </div>
               </div>
             }

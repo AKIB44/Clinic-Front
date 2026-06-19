@@ -417,12 +417,17 @@
   margin-bottom: 8px;
 }
 .slot-chips {
-  display: flex;
-  flex-wrap: wrap;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
   gap: 8px;
 }
 .slot-chip {
-  padding: 7px 15px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  min-width: 0;
+  padding: 7px 10px;
   border-radius: 8px;
   border: 1.5px solid #e2e8f0;
   background: #fff;
@@ -459,13 +464,13 @@
 }
 
 .slots-skeleton {
-  display: flex;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
   gap: 8px;
-  flex-wrap: wrap;
   margin-bottom: 12px;
 }
 .slot-skeleton {
-  width: 80px;
+  width: 100%;
   height: 38px;
   border-radius: 8px;
   background: linear-gradient(90deg, #f1f5f9 25%, #e8edf5 50%, #f1f5f9 75%);
@@ -763,6 +768,22 @@
   gap: 10px;
 }
 
+// ── Patient Details — required field markers ──────────────────────────────────
+.patient-details-form {
+  ::ng-deep mat-form-field {
+    --mat-form-field-required-marker-color: #f44336;
+    --mat-mdc-form-field-required-marker-color: #f44336;
+
+    .mat-mdc-form-field-required-marker {
+      color: #f44336 !important;
+    }
+
+    .mdc-floating-label--required:not(.mdc-floating-label--hide-required-marker)::after {
+      color: #f44336 !important;
+    }
+  }
+}
+
 // ── Full-width standalone field wrapper ───────────────────────────────────────
 .field-block {
   margin-bottom: 0;
@@ -951,7 +972,9 @@
 
 // ── Review history block ──────────────────────────────────────────────────────
 .review-history {
-  padding: 12px 0 4px;
+  padding: 12px 20px 16px;
+  min-width: 0;
+  overflow-wrap: anywhere;
 }
 .review-history-label {
   font-size: 0.75rem;
@@ -965,7 +988,11 @@
   font-size: 0.85rem;
   color: #334155;
   margin: 0;
+  line-height: 1.5;
+  max-width: 100%;
   white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  word-break: break-word;
 }
 
 // ── Chair strip ───────────────────────────────────────────────────────────────

@@ -18,6 +18,7 @@ import { SpecialtyApiService } from '../../../features/specialty/shared/services
 import { DfSpecialtyCaseSummaryComponent } from '../../../features/specialty/shared/components/df-specialty-case-summary/df-specialty-case-summary.component';
 import { SpecialtyCase } from '../../../features/specialty/shared/models/specialty.model';
 import { format, parseISO } from 'date-fns';
+import { formatAppointmentDateTime12h } from '../../../utils/appointment-time';
 
 type PatientTab = 'overview' | 'appointments' | 'sessions' | 'plans' | 'prescriptions' | 'billing' | 'specialty';
 
@@ -157,7 +158,7 @@ export class PatientRecordComponent implements OnInit {
   }
 
   formatDateTime(iso: string): string {
-    try { return format(parseISO(iso.replace('Z', '')), 'EEE, d MMM yyyy · h:mm a'); } catch { return iso; }
+    return formatAppointmentDateTime12h(iso);
   }
 
   formatDate(iso: string): string {
