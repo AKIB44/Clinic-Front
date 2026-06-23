@@ -249,6 +249,9 @@
 }
 
 .chair-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
   padding: 4px 12px;
   border: none;
   border-radius: 8px;

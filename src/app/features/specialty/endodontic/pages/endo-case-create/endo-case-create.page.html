@@ -6,7 +6,7 @@
     <mat-step label="Select Patient" [completed]="step1Valid">
       <div class="step-content">
         <p class="step-hint">Search for the patient this case belongs to.</p>
-        <df-patient-search (patientSelected)="onPatientSelected($event)" />
+        <df-patient-search [lockedPatient]="prefilledPatient()" (patientSelected)="onPatientSelected($event)" />
 
         @if (selectedPatient(); as p) {
           <mat-card class="patient-confirm-card">
@@ -28,14 +28,64 @@
 
     <mat-step label="Case Details">
       <form [formGroup]="detailsForm" class="step-content">
-        <p class="step-hint">Additional details can be added after the case is created.</p>
+        <div class="half-row">
+          <mat-form-field appearance="outline">
+            <mat-label>Tooth (FDI)</mat-label>
+            <input matInput type="number" formControlName="fdi_tooth" min="11" max="85" placeholder="e.g. 36" />
+            <mat-hint>FDI notation, 11–85</mat-hint>
+          </mat-form-field>
+          <mat-form-field appearance="outline">
+            <mat-label>Expected canals</mat-label>
+            <input matInput type="number" formControlName="expected_canal_count" min="1" max="6" />
+          </mat-form-field>
+        </div>
+
+        <mat-form-field appearance="outline" class="full-width">
+          <mat-label>Protocol</mat-label>
+          <mat-select formControlName="protocol">
+            @for (p of protocols; track p.value) {
+              <mat-option [value]="p.value">{{ p.label }}</mat-option>
+            }
+          </mat-select>
+        </mat-form-field>
+
+        <mat-form-field appearance="outline" class="full-width">
+          <mat-label>Pulpal diagnosis</mat-label>
+          <mat-select formControlName="pulp_diagnosis">
+            <mat-option [value]="''">Not specified</mat-option>
+            @for (d of pulpDiagnoses; track d) {
+              <mat-option [value]="d">{{ d }}</mat-option>
+            }
+          </mat-select>
+        </mat-form-field>
+
+        <mat-form-field appearance="outline" class="full-width">
+          <mat-label>Periapical diagnosis</mat-label>
+          <mat-select formControlName="periapical_diagnosis">
+            <mat-option [value]="''">Not specified</mat-option>
+            @for (d of periapicalDiagnoses; track d) {
+              <mat-option [value]="d">{{ d }}</mat-option>
+            }
+          </mat-select>
+        </mat-form-field>
+
+        <div class="check-row">
+          <mat-checkbox formControlName="is_retreatment">Retreatment</mat-checkbox>
+          <mat-checkbox formControlName="is_apicoectomy">Apicoectomy</mat-checkbox>
+        </div>
+
+        <mat-form-field appearance="outline" class="full-width">
+          <mat-label>Presentation notes</mat-label>
+          <textarea matInput formControlName="presentation_notes" rows="3"
+                    placeholder="Symptoms, history, clinical findings…"></textarea>
+        </mat-form-field>
 
         @if (error()) { <p class="create-error">{{ error() }}</p> }
 
         <div class="step-actions">
           <button mat-button matStepperPrevious type="button">Back</button>
           <button mat-raised-button color="primary" type="button"
-                  (click)="submit()" [disabled]="saving() || !step1Valid">
+                  (click)="submit()" [disabled]="saving() || !step1Valid || detailsForm.invalid">
             {{ saving() ? 'Creating…' : 'Create Endodontics Case' }}
           </button>
         </div>

@@ -1,5 +1,5 @@
 import {
-  Component, ChangeDetectionStrategy, output, signal, inject, OnDestroy,
+  Component, ChangeDetectionStrategy, output, input, effect, signal, inject, OnDestroy,
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule, FormControl } from '@angular/forms';
@@ -34,12 +34,25 @@ export class DfPatientSearchComponent implements OnDestroy {
   /** Emits the full Patient object when user selects one from the dropdown. */
   readonly patientSelected = output<Patient>();
 
+  /** When set (e.g. a referral from a patient), the patient is pre-selected and
+   *  the search is replaced by a locked, read-only chip. */
+  readonly lockedPatient = input<Patient | null>(null);
+
   readonly searchCtrl = new FormControl('');
   readonly results = signal<Patient[]>([]);
   readonly loading = signal(false);
   readonly selectedPatient = signal<Patient | null>(null);
 
   constructor() {
+    // Apply a locked patient once it arrives: select it + emit it upward.
+    effect(() => {
+      const lp = this.lockedPatient();
+      if (lp && this.selectedPatient()?.id !== lp.id) {
+        this.selectedPatient.set(lp);
+        this.patientSelected.emit(lp);
+      }
+    });
+
     this.searchCtrl.valueChanges.pipe(
       debounceTime(300),
       distinctUntilChanged(),

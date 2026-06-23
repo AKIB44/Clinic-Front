@@ -40,6 +40,10 @@
     </div>
 
     <div class="sc-topbar-right">
+      @if (store.patient(); as pt) {
+        <df-refer-specialty [patientId]="pt.id" [patientName]="pt.name"></df-refer-specialty>
+      }
+
       @if (!store.isSealed() && store.sessionId()) {
         @if (store.status() === 'PAUSED') {
           <button mat-stroked-button (click)="resumeSession()" [disabled]="pausing()" class="sc-action-btn">

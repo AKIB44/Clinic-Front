@@ -1,5 +1,6 @@
 import { Routes } from '@angular/router';
 import { permissionGuard } from '../../core/rbac/permission.guard';
+import { biometricGuard } from '../../auth/biometric-gate/biometric.guard';
 
 export const MasterRoutes: Routes = [
   {
@@ -40,7 +41,7 @@ export const MasterRoutes: Routes = [
   {
     path: 'activity-log',
     loadComponent: () => import('./activity-log/activity-log.component').then(m => m.ActivityLogComponent),
-    canActivate: [permissionGuard('audit.view')],
+    canActivate: [permissionGuard('audit.view'), biometricGuard],
   },
   {
     path: 'inventory',

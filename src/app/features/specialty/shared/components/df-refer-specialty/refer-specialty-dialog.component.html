@@ -1,0 +1,24 @@
+<div class="rsd">
+  <div class="rsd-head">
+    <div>
+      <h2 class="rsd-title">Refer to a specialty</h2>
+      @if (data.patientName) { <p class="rsd-sub">Start a specialty case for <b>{{ data.patientName }}</b></p> }
+    </div>
+    <button class="rsd-x" (click)="close()" aria-label="Close" type="button"><i-tabler name="x"></i-tabler></button>
+  </div>
+
+  <div class="rsd-grid">
+    @for (o of options; track o.seg) {
+      <button class="rsd-card" type="button" (click)="pick(o.seg)" [attr.aria-label]="'Refer to ' + o.label">
+        <span class="rsd-ic" [style.background]="o.accent + '1a'" [style.color]="o.accent">
+          <i-tabler [name]="o.icon"></i-tabler>
+        </span>
+        <span class="rsd-txt">
+          <span class="rsd-label">{{ o.label }}</span>
+          <span class="rsd-desc">{{ o.desc }}</span>
+        </span>
+        <i-tabler name="chevron-right" class="rsd-chev"></i-tabler>
+      </button>
+    }
+  </div>
+</div>

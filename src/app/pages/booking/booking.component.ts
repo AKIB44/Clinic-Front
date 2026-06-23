@@ -54,6 +54,24 @@ interface IntakeModel {
   anxiety_previous: string;
 }
 
+/** Persisted across page reload (sessionStorage). Files are not stored. */
+interface BookingDraft {
+  step: number;
+  serviceId: string | null;
+  selectedDate: string | null;
+  selectedSlot: string | null;
+  selectedChairId: string | null;
+  serviceSearch: string;
+  patientForm: Record<string, unknown>;
+  intake: IntakeModel;
+  intakeExpanded: boolean;
+  welcomeBack: string;
+  patientSaved: boolean;
+  patientData: BookingComponent['patientData'];
+}
+
+const BOOKING_DRAFT_PREFIX = 'df_booking_draft_';
+
 // ── Service visual map ───────────────────────────────────────────────────────
 
 const SERVICE_VISUALS: { pattern: RegExp; icon: string; gradient: string; emoji: string }[] = [
@@ -289,6 +307,7 @@ export class BookingComponent implements OnInit, OnDestroy {
   readonly submitted    = signal(false);
   confirmedTime    = '';
   confirmedService = '';
+  confirmedDateIso = '';
   redirectCountdown = 5;
   private redirectTimer: ReturnType<typeof setInterval> | null = null;
 
@@ -301,6 +320,7 @@ export class BookingComponent implements OnInit, OnDestroy {
 
   readonly lookupBusy = signal(false);
   private readonly destroy$ = new Subject<void>();
+  private draftSaveTimer: ReturnType<typeof setTimeout> | null = null;
 
   // ── Computed labels ───────────────────────────────────────────────────────
   readonly serviceLabel = computed(() => this.selectedService()?.name ?? '');
@@ -333,7 +353,9 @@ export class BookingComponent implements OnInit, OnDestroy {
 
     this.loadServicesAndChairs();
 
-    // Live lookup as the phone is typed — no need to blur the field.
+    this.patientForm.valueChanges
+      .pipe(debounceTime(400), takeUntil(this.destroy$))
+      .subscribe(() => this.scheduleSaveDraft());
     this.patientForm.get('phone')!.valueChanges
       .pipe(
         debounceTime(350),
@@ -366,8 +388,99 @@ export class BookingComponent implements OnInit, OnDestroy {
 
   ngOnDestroy() {
     if (this.redirectTimer) clearInterval(this.redirectTimer);
+    if (this.draftSaveTimer) clearTimeout(this.draftSaveTimer);
     this.destroy$.next();
     this.destroy$.complete();
+  }
+
+  private draftKey(): string {
+    return `${BOOKING_DRAFT_PREFIX}${this.auth.getActiveClinicId() ?? 'default'}`;
+  }
+
+  private scheduleSaveDraft(): void {
+    if (this.submitted()) return;
+    if (this.draftSaveTimer) clearTimeout(this.draftSaveTimer);
+    this.draftSaveTimer = setTimeout(() => {
+      this.saveDraft();
+      this.draftSaveTimer = null;
+    }, 280);
+  }
+
+  private saveDraft(): void {
+    if (this.submitted() || !this.patientForm) return;
+    const draft: BookingDraft = {
+      step: this.step(),
+      serviceId: this.selectedService()?.id ?? null,
+      selectedDate: this.selectedDate(),
+      selectedSlot: this.selectedSlot(),
+      selectedChairId: this.selectedChairId(),
+      serviceSearch: this.serviceSearch(),
+      patientForm: this.patientForm.getRawValue(),
+      intake: { ...this.intake, known_allergies: [...this.intake.known_allergies] },
+      intakeExpanded: this.intakeExpanded(),
+      welcomeBack: this.welcomeBack(),
+      patientSaved: this.patientSaved(),
+      patientData: this.patientData,
+    };
+    try {
+      sessionStorage.setItem(this.draftKey(), JSON.stringify(draft));
+    } catch { /* quota — ignore */ }
+  }
+
+  private restoreDraft(): void {
+    if (!this.patientForm) return;
+    const raw = sessionStorage.getItem(this.draftKey());
+    if (!raw) return;
+
+    try {
+      const d = JSON.parse(raw) as BookingDraft;
+      if (d.serviceId) {
+        const svc = this.services().find(s => s.id === d.serviceId);
+        if (!svc) { this.clearDraft(); return; }
+        this.selectedService.set(svc);
+      } else if (d.step > 1) {
+        this.clearDraft();
+        return;
+      }
+
+      if (d.selectedChairId) {
+        const chairOk = this.chairs().some(c => c.id === d.selectedChairId);
+        if (chairOk) this.selectedChairId.set(d.selectedChairId);
+      }
+
+      if (d.selectedDate) this.selectedDate.set(d.selectedDate);
+      if (d.selectedSlot) this.selectedSlot.set(d.selectedSlot);
+      if (d.serviceSearch) this.serviceSearch.set(d.serviceSearch);
+
+      if (d.intake) {
+        this.intake = { ...emptyIntake(), ...d.intake };
+        if (!Array.isArray(this.intake.known_allergies)) this.intake.known_allergies = [];
+      }
+      if (d.intakeExpanded) this.intakeExpanded.set(d.intakeExpanded);
+      if (d.welcomeBack) this.welcomeBack.set(d.welcomeBack);
+      if (d.patientData) this.patientData = d.patientData;
+      if (d.patientSaved) this.patientSaved.set(d.patientSaved);
+
+      if (d.patientForm) {
+        this.patientForm.patchValue(d.patientForm, { emitEvent: false });
+      }
+
+      let step = Math.min(4, Math.max(1, d.step ?? 1)) as 1 | 2 | 3 | 4;
+      if (step >= 2 && !this.selectedService()) step = 1;
+      if (step >= 3 && (!this.selectedDate() || !this.selectedSlot())) step = 2;
+      if (step === 4 && !this.patientData) step = 3;
+      this.step.set(step);
+
+      if (this.selectedDate() && this.selectedService() && this.selectedChairId()) {
+        this.loadSlots();
+      }
+    } catch {
+      this.clearDraft();
+    }
+  }
+
+  private clearDraft(): void {
+    try { sessionStorage.removeItem(this.draftKey()); } catch { /* ignore */ }
   }
 
   private applyLookup(matches: { id: string; name: string; email?: string; age?: number; gender?: string; address?: string; clinical_history?: string }[], opts: { skipNamePatch?: boolean } = {}) {
@@ -418,6 +531,7 @@ export class BookingComponent implements OnInit, OnDestroy {
         this.selectedChairId.set(activeChairs[0]?.id ?? null);
         if (!this.selectedChairId()) this.metaError.set('No active chairs configured for this clinic. Please set up chairs first.');
         this.servicesLoading.set(false);
+        this.restoreDraft();
         this.cdr.markForCheck();
       },
       error: () => {
@@ -442,6 +556,7 @@ export class BookingComponent implements OnInit, OnDestroy {
     this.selectedSlot.set(null);
     this.slots.set([]);
     this.step.set(2);
+    this.scheduleSaveDraft();
   }
 
   onChairSelect(id: string) {
@@ -452,6 +567,7 @@ export class BookingComponent implements OnInit, OnDestroy {
     this.selectedSlot.set(null);
     this.slotConflict.set('');
     if (this.selectedDate()) this.loadSlots();
+    this.scheduleSaveDraft();
   }
 
   onDateSelect(iso: string) {
@@ -460,6 +576,7 @@ export class BookingComponent implements OnInit, OnDestroy {
     this.selectedSlot.set(null);
     this.slotConflict.set('');
     this.loadSlots();
+    this.scheduleSaveDraft();
   }
 
   loadSlots() {
@@ -498,6 +615,7 @@ export class BookingComponent implements OnInit, OnDestroy {
     if (!date || !this.isSlotSelectable(slot, date)) return;
     this.selectedSlot.set(slot.time);
     this.slotConflict.set('');
+    this.scheduleSaveDraft();
   }
 
   proceedToDetails() {
@@ -510,6 +628,7 @@ export class BookingComponent implements OnInit, OnDestroy {
       return;
     }
     this.step.set(3);
+    this.scheduleSaveDraft();
   }
 
   private isSlotInPast(dateIso: string, time: string): boolean {
@@ -559,11 +678,27 @@ export class BookingComponent implements OnInit, OnDestroy {
     this.intakePayload = data;
 
     this.step.set(4);
+    this.scheduleSaveDraft();
   }
 
   goBack() {
     const cur = this.step();
-    if (cur > 1) this.step.set((cur - 1) as 1 | 2 | 3 | 4);
+    if (cur > 1) {
+      this.step.set((cur - 1) as 1 | 2 | 3 | 4);
+      this.scheduleSaveDraft();
+    }
+  }
+
+  leaveBooking(): void {
+    this.router.navigate(['/schedule']);
+  }
+
+  get scheduleViewQueryParams(): { date?: string } {
+    return this.confirmedDateIso ? { date: this.confirmedDateIso } : {};
+  }
+
+  private navigateToScheduleView(): void {
+    this.router.navigate(['/schedule'], { queryParams: this.scheduleViewQueryParams });
   }
 
   // ── Intake helpers ────────────────────────────────────────────────────────
@@ -635,11 +770,13 @@ export class BookingComponent implements OnInit, OnDestroy {
   selectPill(field: keyof IntakeModel, value: string) {
     (this.intake as unknown as Record<string, unknown>)[field] =
       this.intake[field] === value ? '' : value;
+    this.scheduleSaveDraft();
   }
 
   toggleAllergy(value: string) {
     const list = this.intake.known_allergies;
     this.intake.known_allergies = list.includes(value) ? list.filter(v => v !== value) : [...list, value];
+    this.scheduleSaveDraft();
   }
 
   isSelected(field: keyof IntakeModel, value: string): boolean { return this.intake[field] === value; }
@@ -687,6 +824,8 @@ export class BookingComponent implements OnInit, OnDestroy {
       next: () => {
         this.confirmedTime    = `${this.formattedDate()} at ${this.slotLabel(this.selectedSlot())}`;
         this.confirmedService = this.serviceLabel();
+        this.confirmedDateIso = this.selectedDate() ?? '';
+        this.clearDraft();
         this.submitted.set(true);
         this.submitting.set(false);
         this.startRedirectCountdown();
@@ -714,13 +853,14 @@ export class BookingComponent implements OnInit, OnDestroy {
       if (this.redirectCountdown <= 0) {
         clearInterval(this.redirectTimer!);
         this.redirectTimer = null;
-        this.router.navigate(['/schedule']);
+        this.navigateToScheduleView();
       }
     }, 1000);
   }
 
   resetAll() {
     if (this.redirectTimer) { clearInterval(this.redirectTimer); this.redirectTimer = null; }
+    this.clearDraft();
     this.step.set(1);
     this.selectedService.set(null);
     this.selectedDate.set(null);

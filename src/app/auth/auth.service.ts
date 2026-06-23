@@ -12,6 +12,7 @@ import {
 import { AuthStorageService } from './auth-storage.service';
 import { PermissionService } from '../core/rbac/permission.service';
 import { FeatureFlagsService } from '../services/feature-flags.service';
+import { BiometricSessionService } from './biometric-session.service';
 
 @Injectable({ providedIn: 'root' })
 export class AuthService {
@@ -19,6 +20,7 @@ export class AuthService {
   private readonly authStorage = inject(AuthStorageService);
   private readonly permissions = inject(PermissionService);
   private readonly featureFlags = inject(FeatureFlagsService);
+  private readonly biometric   = inject(BiometricSessionService);
   private readonly router      = inject(Router);
 
   private readonly _user = signal<AuthUser | null>(this.authStorage.getUser());
@@ -91,6 +93,7 @@ export class AuthService {
     const refreshToken = this.authStorage.getRefreshToken();
     this.authStorage.clearSession();
     this.permissions.clear();
+    this.biometric.clear();
     this._user.set(null);
     return this.http.post<void>(`${authApiConfig.baseUrl}/auth/logout`, {
       refresh_token: refreshToken,

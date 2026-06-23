@@ -115,6 +115,17 @@ export const authInterceptor: HttpInterceptorFn = (
         return EMPTY;
       }
 
+      // Biometric (Face ID / Touch ID) grant missing/expired — NOT a session
+      // problem. Re-throw so the screen can re-open its biometric gate instead
+      // of refreshing the token or logging the user out.
+      if (
+        err.error?.error === 'biometric_required' ||
+        err.error?.error === 'biometric_expired' ||
+        err.error?.error === 'biometric_invalid'
+      ) {
+        return throwError(() => err);
+      }
+
       // token_stale: role_version was bumped (role/permission change).
       // A refresh issues a new token with the updated rv — fall through to
       // the normal refresh flow below instead of hard-logging out.

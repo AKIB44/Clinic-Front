@@ -1,219 +1,267 @@
 <div class="chart-card">
-  @if (saving() || saved()) {
-    <div class="chart-status-bar">
-      @if (saving()) { <mat-spinner diameter="16"></mat-spinner> }
-      @if (saved()) { <span class="saved-hint"><i-tabler name="check" size="14"></i-tabler> Saved</span> }
+
+  <!-- Shared SVG defs (gradients + occlusal clip, reused by every tooth) -->
+  <svg class="defs-only" aria-hidden="true" focusable="false">
+    <defs>
+      <!-- Natural enamel shade: amber at the cervical (gum) end, bright/translucent at the incisal edge -->
+      <linearGradient id="enamelGrad" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0%"   stop-color="#e3cda4"/>
+        <stop offset="28%"  stop-color="#f1e4c8"/>
+        <stop offset="65%"  stop-color="#fbf4e6"/>
+        <stop offset="100%" stop-color="#fffefb"/>
+      </linearGradient>
+      <!-- Root cementum: darker/translucent at the apex, ivory near the crown -->
+      <linearGradient id="rootGrad" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0%"   stop-color="#d0bb92"/>
+        <stop offset="100%" stop-color="#eee3ca"/>
+      </linearGradient>
+      <radialGradient id="cervShade" cx="0.5" cy="0.05" r="0.7">
+        <stop offset="0%"   stop-color="#a98c54" stop-opacity=".38"/>
+        <stop offset="70%"  stop-color="#a98c54" stop-opacity="0"/>
+      </radialGradient>
+      <linearGradient id="metalGrad" x1="0" y1="0" x2="1" y2="0">
+        <stop offset="0%"  stop-color="#8b97a8"/>
+        <stop offset="45%" stop-color="#e6ebf2"/>
+        <stop offset="100%" stop-color="#8b97a8"/>
+      </linearGradient>
+      <clipPath id="occClip"><rect x="2.5" y="2.5" width="31" height="31" rx="7"/></clipPath>
+    </defs>
+  </svg>
+
+  <!-- Header: title + count + dentition toggle -->
+  <div class="chart-head">
+    <div class="head-left">
+      <span class="head-title">Dental Chart</span>
+      @if (annotatedCount() > 0) {
+        <span class="head-count">{{ annotatedCount() }} marked</span>
+      }
     </div>
-  }
+
+    <div class="head-right">
+      @if (saving()) { <mat-spinner diameter="16"></mat-spinner> }
+      @if (saved()) {
+        <span class="saved-hint"><i-tabler name="check" size="14"></i-tabler> Saved</span>
+      }
+      <div class="dentition-toggle" role="tablist" aria-label="Dentition">
+        <button type="button" role="tab" class="seg"
+                [class.active]="dentition() === 'permanent'"
+                [attr.aria-selected]="dentition() === 'permanent'"
+                (click)="setDentition('permanent')">
+          <i-tabler name="dental" size="15"></i-tabler> Permanent
+        </button>
+        <button type="button" role="tab" class="seg"
+                [class.active]="dentition() === 'primary'"
+                [attr.aria-selected]="dentition() === 'primary'"
+                (click)="setDentition('primary')">
+          <i-tabler name="mood-kid" size="15"></i-tabler> Primary
+        </button>
+      </div>
+    </div>
+  </div>
 
   <div class="chart-body">
 
-      <!-- Legend -->
-      <div class="legend">
-        @for (entry of conditionEntries; track entry.key) {
-          <span class="legend-pill" [style.color]="entry.color" [style.background]="entry.bg">
-            {{ entry.label }}
+    <!-- Legend -->
+    <div class="legend">
+      @for (entry of conditionEntries; track entry.key) {
+        <span class="legend-pill" [style.color]="entry.color" [style.background]="entry.bg">
+          <span class="legend-swatch" [style.background]="entry.color"></span>{{ entry.label }}
+        </span>
+      }
+      <span class="legend-hint"><i-tabler name="hand-finger" size="13"></i-tabler> Click a surface to mark it</span>
+    </div>
+
+    <!-- The arch -->
+    <div class="arch-stage">
+      <span class="side-label left">Right</span>
+      <span class="side-label right">Left</span>
+
+      <!-- Upper arch -->
+      <div class="arch upper">
+        <div class="arch-row">
+          <div class="quad">
+            @for (t of upperRight(); track t) {
+              <ng-container *ngTemplateOutlet="toothTpl; context: { $implicit: t, lower: false }"></ng-container>
+            }
+          </div>
+          <div class="midline"></div>
+          <div class="quad">
+            @for (t of upperLeft(); track t) {
+              <ng-container *ngTemplateOutlet="toothTpl; context: { $implicit: t, lower: false }"></ng-container>
+            }
+          </div>
+        </div>
+      </div>
+
+      <div class="occlusal-line"><span>occlusal plane</span></div>
+
+      <!-- Lower arch -->
+      <div class="arch lower">
+        <div class="arch-row">
+          <div class="quad">
+            @for (t of lowerRight(); track t) {
+              <ng-container *ngTemplateOutlet="toothTpl; context: { $implicit: t, lower: true }"></ng-container>
+            }
+          </div>
+          <div class="midline"></div>
+          <div class="quad">
+            @for (t of lowerLeft(); track t) {
+              <ng-container *ngTemplateOutlet="toothTpl; context: { $implicit: t, lower: true }"></ng-container>
+            }
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Detail panel -->
+    @if (selectedTooth() !== null) {
+      <div class="detail-panel">
+        <div class="detail-header">
+          <span class="detail-title">
+            <i-tabler name="dental" size="18"></i-tabler> Tooth {{ selectedTooth() }}
           </span>
+          <button mat-icon-button (click)="selectedTooth.set(null)">
+            <i-tabler name="x" size="16"></i-tabler>
+          </button>
+        </div>
+
+        <div class="detail-section-label">Condition</div>
+        <div class="condition-grid">
+          @for (entry of conditionEntries; track entry.key) {
+            <button class="condition-btn"
+                    [class.active]="getData(selectedTooth()!).condition === entry.key"
+                    [style.border-color]="getData(selectedTooth()!).condition === entry.key ? entry.color : '#e2e8f0'"
+                    [style.color]="getData(selectedTooth()!).condition === entry.key ? entry.color : '#374151'"
+                    [style.background]="getData(selectedTooth()!).condition === entry.key ? entry.bg : '#fff'"
+                    [disabled]="store.isSealed()"
+                    (click)="setCondition(selectedTooth()!, entry.key)">
+              <span class="cb-swatch" [style.background]="entry.color"></span>{{ entry.label }}
+            </button>
+          }
+        </div>
+
+        <div class="detail-section-label">Affected Surfaces <span class="hint-inline">— or click them on the tooth above</span></div>
+        <div class="surface-chips">
+          @for (s of allSurfaces; track s) {
+            <button class="surface-chip"
+                    [class.active]="getData(selectedTooth()!).surfaces.includes(s)"
+                    [disabled]="store.isSealed()"
+                    (click)="toggleSurface(selectedTooth()!, s)">
+              {{ s | titlecase }}
+            </button>
+          }
+        </div>
+
+        <div class="detail-section-label">Mobility Grade</div>
+        <div class="mobility-row">
+          @for (g of mobilityGrades; track g) {
+            <button class="mobility-btn"
+                    [class.active]="getData(selectedTooth()!).mobility === g.value"
+                    [disabled]="store.isSealed()"
+                    (click)="setMobility(selectedTooth()!, g.value)">
+              {{ g.label }}
+            </button>
+          }
+        </div>
+
+        <div class="detail-section-label">Notes</div>
+        <textarea class="tooth-notes" rows="2" placeholder="Per-tooth clinical note…"
+                  [value]="getData(selectedTooth()!).notes"
+                  [disabled]="store.isSealed()"
+                  (input)="setNotes(selectedTooth()!, $any($event.target).value)"></textarea>
+
+        @if (!store.isSealed()) {
+          <button mat-flat-button color="primary" class="save-btn" (click)="saveChart()">
+            @if (saving()) { <mat-spinner diameter="16"></mat-spinner> }
+            @else { <i-tabler name="device-floppy" size="16"></i-tabler>&nbsp;Save Chart }
+          </button>
         }
       </div>
+    }
 
-      <!-- Deciduous row label -->
-      <div class="row-label">Deciduous (Primary)</div>
-
-      <!-- Upper deciduous -->
-      <div class="quadrant-row">
-        <div class="quadrant dec">
-          @for (t of upperRightDec; track t) {
-            <div class="tooth-cell" [class.missing]="getData(t).condition === 'missing'"
-                 [style.background]="getBg(t)"
-                 (click)="selectTooth(t)">
-              <div class="tooth-num">{{ t }}</div>
-              <div class="tooth-icon" [style.border-color]="getColor(t)">
-                @if (getData(t).condition !== 'healthy') {
-                  <span class="tooth-dot" [style.background]="getColor(t)"></span>
-                }
-              </div>
-            </div>
-          }
-        </div>
-        <div class="midline-gap"></div>
-        <div class="quadrant dec">
-          @for (t of upperLeftDec; track t) {
-            <div class="tooth-cell" [class.missing]="getData(t).condition === 'missing'"
-                 [style.background]="getBg(t)"
-                 (click)="selectTooth(t)">
-              <div class="tooth-num">{{ t }}</div>
-              <div class="tooth-icon" [style.border-color]="getColor(t)">
-                @if (getData(t).condition !== 'healthy') {
-                  <span class="tooth-dot" [style.background]="getColor(t)"></span>
-                }
-              </div>
-            </div>
-          }
-        </div>
-      </div>
-
-      <!-- Lower deciduous -->
-      <div class="quadrant-row">
-        <div class="quadrant dec">
-          @for (t of lowerRightDec; track t) {
-            <div class="tooth-cell" [class.missing]="getData(t).condition === 'missing'"
-                 [style.background]="getBg(t)"
-                 (click)="selectTooth(t)">
-              <div class="tooth-icon" [style.border-color]="getColor(t)">
-                @if (getData(t).condition !== 'healthy') {
-                  <span class="tooth-dot" [style.background]="getColor(t)"></span>
-                }
-              </div>
-              <div class="tooth-num">{{ t }}</div>
-            </div>
-          }
-        </div>
-        <div class="midline-gap"></div>
-        <div class="quadrant dec">
-          @for (t of lowerLeftDec; track t) {
-            <div class="tooth-cell" [class.missing]="getData(t).condition === 'missing'"
-                 [style.background]="getBg(t)"
-                 (click)="selectTooth(t)">
-              <div class="tooth-icon" [style.border-color]="getColor(t)">
-                @if (getData(t).condition !== 'healthy') {
-                  <span class="tooth-dot" [style.background]="getColor(t)"></span>
-                }
-              </div>
-              <div class="tooth-num">{{ t }}</div>
-            </div>
-          }
-        </div>
-      </div>
-
-      <div class="row-label perm">Permanent</div>
-
-      <!-- Upper permanent -->
-      <div class="quadrant-row">
-        <div class="quadrant">
-          @for (t of upperRightPerm; track t) {
-            <div class="tooth-cell" [class.missing]="getData(t).condition === 'missing'"
-                 [style.background]="getBg(t)"
-                 (click)="selectTooth(t)">
-              <div class="tooth-num">{{ t }}</div>
-              <div class="tooth-icon" [style.border-color]="getColor(t)">
-                @if (getData(t).condition !== 'healthy') {
-                  <span class="tooth-dot" [style.background]="getColor(t)"></span>
-                }
-              </div>
-            </div>
-          }
-        </div>
-        <div class="midline-gap"></div>
-        <div class="quadrant">
-          @for (t of upperLeftPerm; track t) {
-            <div class="tooth-cell" [class.missing]="getData(t).condition === 'missing'"
-                 [style.background]="getBg(t)"
-                 (click)="selectTooth(t)">
-              <div class="tooth-num">{{ t }}</div>
-              <div class="tooth-icon" [style.border-color]="getColor(t)">
-                @if (getData(t).condition !== 'healthy') {
-                  <span class="tooth-dot" [style.background]="getColor(t)"></span>
-                }
-              </div>
-            </div>
-          }
-        </div>
-      </div>
-
-      <!-- Lower permanent -->
-      <div class="quadrant-row">
-        <div class="quadrant">
-          @for (t of lowerRightPerm; track t) {
-            <div class="tooth-cell" [class.missing]="getData(t).condition === 'missing'"
-                 [style.background]="getBg(t)"
-                 (click)="selectTooth(t)">
-              <div class="tooth-icon" [style.border-color]="getColor(t)">
-                @if (getData(t).condition !== 'healthy') {
-                  <span class="tooth-dot" [style.background]="getColor(t)"></span>
-                }
-              </div>
-              <div class="tooth-num">{{ t }}</div>
-            </div>
-          }
-        </div>
-        <div class="midline-gap"></div>
-        <div class="quadrant">
-          @for (t of lowerLeftPerm; track t) {
-            <div class="tooth-cell" [class.missing]="getData(t).condition === 'missing'"
-                 [style.background]="getBg(t)"
-                 (click)="selectTooth(t)">
-              <div class="tooth-icon" [style.border-color]="getColor(t)">
-                @if (getData(t).condition !== 'healthy') {
-                  <span class="tooth-dot" [style.background]="getColor(t)"></span>
-                }
-              </div>
-              <div class="tooth-num">{{ t }}</div>
-            </div>
-          }
-        </div>
-      </div>
-
-      <!-- Detail panel -->
-      @if (selectedTooth() !== null) {
-        <div class="detail-panel">
-          <div class="detail-header">
-            <span class="detail-title">Tooth {{ selectedTooth() }}</span>
-            <button mat-icon-button (click)="selectedTooth.set(null)">
-              <i-tabler name="x" size="16"></i-tabler>
-            </button>
-          </div>
-
-          <div class="detail-section-label">Condition</div>
-          <div class="condition-grid">
-            @for (entry of conditionEntries; track entry.key) {
-              <button class="condition-btn"
-                      [class.active]="getData(selectedTooth()!).condition === entry.key"
-                      [style.border-color]="getData(selectedTooth()!).condition === entry.key ? entry.color : '#e2e8f0'"
-                      [style.color]="getData(selectedTooth()!).condition === entry.key ? entry.color : '#374151'"
-                      [style.background]="getData(selectedTooth()!).condition === entry.key ? entry.bg : '#fff'"
-                      (click)="setCondition(selectedTooth()!, entry.key)">
-                {{ entry.label }}
-              </button>
-            }
-          </div>
-
-          <div class="detail-section-label">Affected Surfaces</div>
-          <div class="surface-chips">
-            @for (s of allSurfaces; track s) {
-              <button class="surface-chip"
-                      [class.active]="getData(selectedTooth()!).surfaces.includes(s)"
-                      (click)="toggleSurface(selectedTooth()!, s)">
-                {{ s | titlecase }}
-              </button>
-            }
-          </div>
-
-          <div class="detail-section-label">Mobility Grade</div>
-          <div class="mobility-row">
-            @for (g of mobilityGrades; track g) {
-              <button class="mobility-btn"
-                      [class.active]="getData(selectedTooth()!).mobility === g.value"
-                      (click)="setMobility(selectedTooth()!, g.value)">
-                {{ g.label }}
-              </button>
-            }
-          </div>
-
-          <div class="detail-section-label">Notes</div>
-          <textarea class="tooth-notes" rows="2" placeholder="Per-tooth clinical note…"
-                    [value]="getData(selectedTooth()!).notes"
-                    [disabled]="store.isSealed()"
-                    (input)="setNotes(selectedTooth()!, $any($event.target).value)"></textarea>
-
-          @if (!store.isSealed()) {
-            <button mat-flat-button color="primary" class="save-btn" (click)="saveChart()">
-              @if (saving()) { <mat-spinner diameter="16"></mat-spinner> }
-              @else { Save Chart }
-            </button>
-          }
-        </div>
-      }
-
-    </div>
+  </div>
 </div>
+
+<!-- ── Reusable tooth (anatomical view + clickable occlusal surface map) ──── -->
+<ng-template #toothTpl let-t let-lower="lower">
+  <div class="tooth-col"
+       [class.lower]="lower"
+       [class.is-selected]="selectedTooth() === t"
+       [class.is-missing]="getData(t).condition === 'missing'"
+       [class.is-annotated]="getData(t).condition !== 'healthy'">
+
+    @if (!lower) {
+      <ng-container *ngTemplateOutlet="anatTpl; context: { $implicit: t, lower: false }"></ng-container>
+      <ng-container *ngTemplateOutlet="occTpl;  context: { $implicit: t }"></ng-container>
+      <button type="button" class="tooth-num" (click)="selectTooth(t)"
+              [matTooltip]="'Tooth ' + t + ' — ' + conditionLabelOf(t)" matTooltipPosition="above">{{ t }}</button>
+    } @else {
+      <button type="button" class="tooth-num" (click)="selectTooth(t)"
+              [matTooltip]="'Tooth ' + t + ' — ' + conditionLabelOf(t)" matTooltipPosition="below">{{ t }}</button>
+      <ng-container *ngTemplateOutlet="occTpl;  context: { $implicit: t }"></ng-container>
+      <ng-container *ngTemplateOutlet="anatTpl; context: { $implicit: t, lower: true }"></ng-container>
+    }
+  </div>
+</ng-template>
+
+<!-- Anatomical side profile -->
+<ng-template #anatTpl let-t let-lower="lower">
+  <svg class="anat-svg" viewBox="0 0 100 180" [class.flip]="lower"
+       (click)="selectTooth(t)"
+       [attr.aria-label]="'Tooth ' + t">
+
+    <!-- Roots / implant post -->
+    @if (getData(t).condition === 'implant') {
+      <g class="implant">
+        <path class="post" d="M42,82 L42,40 Q42,28 50,26 Q58,28 58,40 L58,82 Z"/>
+        <path class="thread" d="M42,50 L58,46 M42,60 L58,56 M42,70 L58,66"/>
+      </g>
+    } @else {
+      <g class="roots" fill="url(#rootGrad)" stroke="#c9b78d" stroke-width="1.3">
+        @for (r of toothArt(t).roots; track r) { <path [attr.d]="r"/> }
+      </g>
+    }
+
+    <!-- Crown body -->
+    <g class="crown" [style.fill]="crownFill(t)" [style.stroke]="crownStroke(t)" stroke-width="1.3">
+      <path [attr.d]="toothArt(t).crown"/>
+    </g>
+
+    <!-- Cervical depth shadow -->
+    <path class="cerv" d="M27,82 Q50,90 73,82 L73,79 L27,79 Z" fill="url(#cervShade)" stroke="none"/>
+
+    <!-- Anatomical grooves / lobes -->
+    <g class="grooves" fill="none">
+      @for (g of toothArt(t).grooves; track g) { <path [attr.d]="g"/> }
+    </g>
+
+    <!-- Root-canal filling -->
+    @if (getData(t).condition === 'root_canal') {
+      <g class="canal">
+        @for (p of canalPaths(t); track p) { <path [attr.d]="p"/> }
+      </g>
+    }
+
+    <!-- Glossy enamel highlight -->
+    <path class="sheen" d="M36,95 C32,109 32,132 36,149 C38,132 38,111 40,95 Z"></path>
+  </svg>
+</ng-template>
+
+<!-- Occlusal surface map (clickable per surface) -->
+<ng-template #occTpl let-t>
+  <svg class="occ-svg" viewBox="0 0 36 36" [attr.aria-label]="'Tooth ' + t + ' surfaces'">
+    <rect class="occ-bg" x="2.5" y="2.5" width="31" height="31" rx="7"></rect>
+    <g clip-path="url(#occClip)">
+      @for (z of occlusalZones(t); track z.surface) {
+        <path class="occ-zone"
+              [attr.d]="z.d"
+              [class.active]="isSurface(t, z.surface)"
+              [style.fill]="surfaceFill(t, z.surface)"
+              (click)="$event.stopPropagation(); toggleSurfaceOn(t, z.surface)"
+              [matTooltip]="(z.surface | titlecase)"
+              matTooltipPosition="above"></path>
+      }
+    </g>
+    <rect class="occ-frame" x="2.5" y="2.5" width="31" height="31" rx="7"></rect>
+  </svg>
+</ng-template>

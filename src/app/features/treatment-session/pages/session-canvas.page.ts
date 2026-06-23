@@ -25,6 +25,7 @@ import { DfPreopChecklistComponent } from '../components/df-preop-checklist/df-p
 import { DfPostopRecordComponent } from '../components/df-postop-record/df-postop-record.component';
 import { DfTpaBlockComponent } from '../components/df-tpa-block/df-tpa-block.component';
 import { DfSessionBlockComponent } from '../components/df-session-block/df-session-block.component';
+import { DfReferSpecialtyComponent } from '../../specialty/shared/components/df-refer-specialty/df-refer-specialty.component';
 import { forkJoin, of, switchMap, Observable } from 'rxjs';
 import { catchError, finalize, map } from 'rxjs/operators';
 import { ToastService } from '../../../services/toast.service';
@@ -54,6 +55,7 @@ export interface ProgressStep {
     DfInvestigationsBlockComponent,
     DfConsentBlockComponent, DfPreopChecklistComponent, DfPostopRecordComponent,
     DfTpaBlockComponent,
+    DfReferSpecialtyComponent,
   ],
   templateUrl: './session-canvas.page.html',
   styleUrl: './session-canvas.page.scss',

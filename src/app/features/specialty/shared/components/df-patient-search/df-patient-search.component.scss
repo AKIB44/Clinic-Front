@@ -48,3 +48,24 @@
     font-style: italic;
   }
 }
+
+/* Referred (locked) patient chip — replaces the search when a referral pre-fills */
+.patient-search__locked {
+  display: flex; align-items: center; gap: 12px;
+  padding: 12px 14px; border-radius: 12px;
+  background: #f5f3ff; border: 1px solid #ddd6fe;
+}
+.patient-search__locked-ic {
+  display: inline-grid; place-items: center; width: 40px; height: 40px; min-width: 40px;
+  border-radius: 10px; background: #ede9fe; color: #6d28d9;
+  mat-icon { width: 22px; height: 22px; font-size: 22px; }
+}
+.patient-search__locked-info { display: flex; flex-direction: column; flex: 1; min-width: 0; }
+.patient-search__locked-name { font-size: 14px; font-weight: 700; color: #0f172a; }
+.patient-search__locked-phone { font-size: 12.5px; color: #64748b; }
+.patient-search__locked-tag {
+  display: inline-flex; align-items: center; gap: 4px;
+  font-size: 11.5px; font-weight: 700; color: #6d28d9; background: #ede9fe;
+  padding: 3px 9px; border-radius: 999px;
+  mat-icon { width: 14px; height: 14px; font-size: 14px; }
+}

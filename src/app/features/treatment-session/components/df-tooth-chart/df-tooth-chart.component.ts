@@ -27,6 +27,45 @@ const UPPER_LEFT_DEC  = [61, 62, 63, 64, 65];
 const LOWER_LEFT_DEC  = [71, 72, 73, 74, 75];
 const LOWER_RIGHT_DEC = [85, 84, 83, 82, 81];
 
+interface OcclZone { surface: ToothSurface; d: string; }
+interface ToothArt { roots: string[]; crown: string; grooves: string[]; }
+
+// Realistic side-profile tooth geometry (viewBox 0 0 100 180; root top, crown bottom).
+const TOOTH_ART: Record<'incisor' | 'canine' | 'premolar' | 'molar', ToothArt> = {
+  incisor: {
+    roots: ['M34,83 C33,60 39,30 50,20 C61,30 67,60 66,83 Z'],
+    crown: 'M35,82 C30,85 29,94 29,106 C29,131 37,164 50,164 C63,164 71,131 71,106 C71,94 70,85 65,82 Z',
+    grooves: ['M43,148 L44,104', 'M57,148 L56,104'],
+  },
+  canine: {
+    roots: ['M33,84 C30,54 38,20 50,10 C62,20 70,54 67,84 Z'],
+    crown: 'M35,82 C30,85 29,95 29,108 C29,133 38,167 50,172 C62,167 71,133 71,108 C71,95 70,85 65,82 Z',
+    grooves: ['M50,168 L50,110'],
+  },
+  premolar: {
+    roots: ['M32,84 C29,58 37,28 50,18 C63,28 71,58 68,84 Z'],
+    crown: 'M34,82 C28,85 26,95 26,108 C26,130 33,150 42,152 C47,153 48,141 50,141 C52,141 53,153 58,152 C67,150 74,130 74,108 C74,95 72,85 66,82 Z',
+    grooves: ['M50,141 L50,106', 'M34,120 Q50,113 66,120'],
+  },
+  molar: {
+    roots: [
+      'M32,83 C26,58 18,32 25,18 C33,32 40,58 47,83 Z',
+      'M68,83 C74,58 82,32 75,18 C67,32 60,58 53,83 Z',
+    ],
+    crown: 'M27,82 C20,85 18,94 18,106 C18,130 25,150 31,150 C36,150 37,140 42,140 C46,140 47,150 50,150 C53,150 54,140 58,140 C63,140 64,150 69,150 C75,150 82,130 82,106 C82,94 80,85 73,82 Z',
+    grooves: ['M50,150 L50,106', 'M19,116 Q50,108 81,116', 'M33,148 L33,110', 'M67,148 L67,110'],
+  },
+};
+
+// 5-surface occlusal diagram (36×36 box): centre table + 4 trapezoids.
+const OCCL_PATHS = {
+  top:    'M3,3 L33,3 L24,12 L12,12 Z',
+  right:  'M33,3 L33,33 L24,24 L24,12 Z',
+  bottom: 'M3,33 L33,33 L24,24 L12,24 Z',
+  left:   'M3,3 L3,33 L12,24 L12,12 Z',
+  center: 'M12,12 L24,12 L24,24 L12,24 Z',
+};
+
 export const CONDITION_META: Record<ToothCondition, { label: string; color: string; bg: string }> = {
   healthy:     { label: 'Healthy',     color: '#15803d', bg: '#f0fdf4' },
   caries:      { label: 'Caries',      color: '#b91c1c', bg: '#fff1f2' },
@@ -60,18 +99,18 @@ export class DfToothChartComponent implements OnInit {
   readonly saved        = signal(false);
   readonly selectedTooth = signal<number | null>(null);
 
+  /** Which dentition the arch shows. Toggled in the header. */
+  readonly dentition = signal<'permanent' | 'primary'>('permanent');
+
   readonly annotatedCount = computed(() =>
     Object.values(this.localData()).filter(d => d.condition !== 'healthy').length
   );
 
-  readonly upperRightPerm = UPPER_RIGHT_PERM;
-  readonly upperLeftPerm  = UPPER_LEFT_PERM;
-  readonly lowerLeftPerm  = LOWER_LEFT_PERM;
-  readonly lowerRightPerm = LOWER_RIGHT_PERM;
-  readonly upperRightDec  = UPPER_RIGHT_DEC;
-  readonly upperLeftDec   = UPPER_LEFT_DEC;
-  readonly lowerLeftDec   = LOWER_LEFT_DEC;
-  readonly lowerRightDec  = LOWER_RIGHT_DEC;
+  // Visible quadrants follow the dentition toggle.
+  readonly upperRight = computed(() => this.dentition() === 'permanent' ? UPPER_RIGHT_PERM : UPPER_RIGHT_DEC);
+  readonly upperLeft  = computed(() => this.dentition() === 'permanent' ? UPPER_LEFT_PERM  : UPPER_LEFT_DEC);
+  readonly lowerRight = computed(() => this.dentition() === 'permanent' ? LOWER_RIGHT_PERM : LOWER_RIGHT_DEC);
+  readonly lowerLeft  = computed(() => this.dentition() === 'permanent' ? LOWER_LEFT_PERM  : LOWER_LEFT_DEC);
 
   readonly allSurfaces: ToothSurface[] = ['mesial', 'distal', 'buccal', 'lingual', 'occlusal', 'incisal'];
 
@@ -106,6 +145,97 @@ export class DfToothChartComponent implements OnInit {
   getBg(tooth: number): string {
     const cond = this.getData(tooth).condition;
     return cond === 'healthy' ? '#fff' : CONDITION_META[cond]?.bg ?? '#fff';
+  }
+
+  /** Anatomical class of a tooth from its FDI position — drives the SVG shape. */
+  toothType(fdi: number): 'incisor' | 'canine' | 'premolar' | 'molar' {
+    const pos = fdi % 10;
+    const deciduous = fdi >= 51 && fdi <= 85;
+    if (pos <= 2) return 'incisor';
+    if (pos === 3) return 'canine';
+    // Deciduous arch has no premolars — positions 4 & 5 are primary molars.
+    if (deciduous) return 'molar';
+    return pos <= 5 ? 'premolar' : 'molar';
+  }
+
+  /**
+   * Crown fill. Teeth keep their natural enamel shade — the condition colour
+   * lives on the occlusal map. Only prosthetic restorations (crown/bridge)
+   * tint the crown itself; missing is drawn as a dashed outline via CSS.
+   */
+  crownFill(tooth: number): string {
+    const cond = this.getData(tooth).condition;
+    if (cond === 'crown' || cond === 'bridge') return CONDITION_META[cond]?.bg ?? 'url(#enamelGrad)';
+    return 'url(#enamelGrad)';
+  }
+
+  crownStroke(tooth: number): string {
+    const cond = this.getData(tooth).condition;
+    if (cond === 'crown' || cond === 'bridge') return CONDITION_META[cond]?.color ?? '#d9c39a';
+    return '#d3bd95';
+  }
+
+  markerColor(tooth: number): string {
+    return CONDITION_META[this.getData(tooth).condition]?.color ?? '#94a3b8';
+  }
+
+  conditionLabelOf(tooth: number): string {
+    return CONDITION_META[this.getData(tooth).condition]?.label ?? 'Healthy';
+  }
+
+  /** Surface for the centre table — incisal for anterior teeth, occlusal for posterior. */
+  centerSurface(fdi: number): ToothSurface {
+    const t = this.toothType(fdi);
+    return t === 'incisor' || t === 'canine' ? 'incisal' : 'occlusal';
+  }
+
+  /** Clickable surface zones of the occlusal map, oriented by quadrant (mesial faces midline). */
+  occlusalZones(fdi: number): OcclZone[] {
+    const q = Math.floor(fdi / 10);
+    const mesialOnRight = q === 1 || q === 4 || q === 5 || q === 8;
+    return [
+      { surface: 'buccal',  d: OCCL_PATHS.top },
+      { surface: 'lingual', d: OCCL_PATHS.bottom },
+      { surface: mesialOnRight ? 'mesial' : 'distal', d: OCCL_PATHS.right },
+      { surface: mesialOnRight ? 'distal' : 'mesial', d: OCCL_PATHS.left },
+      { surface: this.centerSurface(fdi), d: OCCL_PATHS.center },
+    ];
+  }
+
+  isSurface(tooth: number, surface: ToothSurface): boolean {
+    return this.getData(tooth).surfaces.includes(surface);
+  }
+
+  surfaceFill(tooth: number, surface: ToothSurface): string {
+    if (!this.isSurface(tooth, surface)) return '#ffffff';
+    const cond = this.getData(tooth).condition;
+    return cond === 'healthy' ? '#3b82f6' : CONDITION_META[cond]?.color ?? '#3b82f6';
+  }
+
+  /** Toggle a surface straight from the chart; also opens the tooth's detail panel. */
+  toggleSurfaceOn(tooth: number, surface: ToothSurface): void {
+    if (this.store.isSealed()) return;
+    this.selectedTooth.set(tooth);
+    this.toggleSurface(tooth, surface);
+  }
+
+  /** Side-profile geometry for the tooth's anatomical view. */
+  toothArt(fdi: number): ToothArt {
+    return TOOTH_ART[this.toothType(fdi)];
+  }
+
+  /** Root-canal filling lines drawn down the roots (viewBox 0 0 100 180). */
+  canalPaths(fdi: number): string[] {
+    switch (this.toothType(fdi)) {
+      case 'molar': return ['M40,80 C33,58 26,34 30,22', 'M60,80 C67,58 74,34 70,22'];
+      default:      return ['M50,80 L50,24'];
+    }
+  }
+
+  setDentition(d: 'permanent' | 'primary'): void {
+    if (this.dentition() === d) return;
+    this.dentition.set(d);
+    this.selectedTooth.set(null);
   }
 
   selectTooth(tooth: number): void {

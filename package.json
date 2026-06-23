@@ -29,6 +29,7 @@
     "@ng-matero/extensions": "^18.0.3",
     "@ngx-translate/core": "^14.0.0",
     "@ngx-translate/http-loader": "^7.0.0",
+    "@simplewebauthn/browser": "^13.3.0",
     "@types/three": "^0.184.1",
     "angular-calendar": "^0.31.1",
     "angular-tabler-icons": "^3.1.0",

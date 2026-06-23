@@ -2,7 +2,7 @@ import {
   ChangeDetectionStrategy, ChangeDetectorRef,
   Component, OnInit, computed, inject, signal,
 } from '@angular/core';
-import { CommonModule, DatePipe, TitleCasePipe } from '@angular/common';
+import { CommonModule, DatePipe, Location, TitleCasePipe } from '@angular/common';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { MaterialModule } from '../../../material.module';
@@ -16,6 +16,7 @@ import { ClinicService } from '../../../models/clinic.model';
 import { RxHistoryTabComponent } from '../../rx/rx-history-tab/rx-history-tab.component';
 import { SpecialtyApiService } from '../../../features/specialty/shared/services/specialty-api.service';
 import { DfSpecialtyCaseSummaryComponent } from '../../../features/specialty/shared/components/df-specialty-case-summary/df-specialty-case-summary.component';
+import { DfReferSpecialtyComponent } from '../../../features/specialty/shared/components/df-refer-specialty/df-refer-specialty.component';
 import { SpecialtyCase } from '../../../features/specialty/shared/models/specialty.model';
 import { format, parseISO } from 'date-fns';
 import { formatAppointmentDateTime12h } from '../../../utils/appointment-time';
@@ -47,7 +48,7 @@ const LAB_STATUS_LABEL: Record<string, string> = {
   imports: [
     CommonModule, DatePipe, TitleCasePipe, FormsModule,
     RouterLink, MaterialModule, TablerIconsModule, RxHistoryTabComponent,
-    DfSpecialtyCaseSummaryComponent,
+    DfSpecialtyCaseSummaryComponent, DfReferSpecialtyComponent,
   ],
   templateUrl: './patient-record.component.html',
   styleUrls: ['./patient-record.component.scss'],
@@ -56,6 +57,7 @@ const LAB_STATUS_LABEL: Record<string, string> = {
 export class PatientRecordComponent implements OnInit {
   private readonly route        = inject(ActivatedRoute);
   private readonly router       = inject(Router);
+  private readonly location     = inject(Location);
   private readonly patSvc       = inject(PatientsService);
   private readonly svcSvc       = inject(ClinicServicesService);
   private readonly specialtyApi = inject(SpecialtyApiService);
@@ -152,9 +154,25 @@ export class PatientRecordComponent implements OnInit {
     }
   }
 
-  goBack() {
+  goBack(): void {
+    const returnUrl = this.route.snapshot.queryParamMap.get('returnUrl');
+    if (returnUrl?.startsWith('/') && !returnUrl.startsWith('//')) {
+      void this.router.navigateByUrl(returnUrl);
+      return;
+    }
+
     const from = this.route.snapshot.queryParamMap.get('from');
-    this.router.navigate([from === 'schedule' ? '/schedule' : '/patients']);
+    if (from === 'schedule') {
+      void this.router.navigate(['/schedule']);
+      return;
+    }
+
+    if (typeof window !== 'undefined' && window.history.length > 1) {
+      this.location.back();
+      return;
+    }
+
+    void this.router.navigate(['/patients']);
   }
 
   formatDateTime(iso: string): string {

@@ -115,6 +115,20 @@
   width: 100%;
 }
 
+.table-wrap {
+  display: flex;
+  flex-direction: column;
+}
+
+.table-paginator {
+  border-top: 1px solid #eef2f6;
+  background: #fafbfc;
+}
+
+:host ::ng-deep .master-table {
+  .mat-sort-header-arrow { color: #64748b; }
+}
+
 .item-name {
   display: block;
   font-weight: 600;

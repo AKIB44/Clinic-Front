@@ -1,4 +1,14 @@
 <div class="patient-search">
+  @if (lockedPatient(); as lp) {
+    <div class="patient-search__locked">
+      <span class="patient-search__locked-ic"><mat-icon>person</mat-icon></span>
+      <span class="patient-search__locked-info">
+        <span class="patient-search__locked-name">{{ lp.name }}</span>
+        <span class="patient-search__locked-phone">{{ lp.phone }}</span>
+      </span>
+      <span class="patient-search__locked-tag"><mat-icon>lock</mat-icon> Referred patient</span>
+    </div>
+  } @else {
   <mat-form-field appearance="outline" class="patient-search__field">
     <mat-label>Search patient by name or phone</mat-label>
 
@@ -50,4 +60,5 @@
       </mat-option>
     }
   </mat-autocomplete>
+  }
 </div>

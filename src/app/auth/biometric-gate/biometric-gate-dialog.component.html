@@ -1,0 +1,67 @@
+<div class="bg-gate">
+  <button class="bg-gate__close" type="button" (click)="cancel()" aria-label="Cancel">
+    <i-tabler name="x"></i-tabler>
+  </button>
+
+  <div class="bg-gate__icon" [class.bg-gate__icon--error]="state() === 'unavailable' || state() === 'error'">
+    @if (state() === 'working' || state() === 'checking') {
+      <i-tabler name="loader-2" class="bg-gate__spin"></i-tabler>
+    } @else if (state() === 'unavailable' || state() === 'error') {
+      <i-tabler name="shield-x"></i-tabler>
+    } @else {
+      <i-tabler name="fingerprint"></i-tabler>
+    }
+  </div>
+
+  @switch (state()) {
+    @case ('checking') {
+      <h2 class="bg-gate__title">Checking device…</h2>
+      <p class="bg-gate__sub">Verifying biometric availability.</p>
+    }
+
+    @case ('enroll') {
+      <h2 class="bg-gate__title">Secure the activity log</h2>
+      <p class="bg-gate__sub">
+        The activity log is protected. Enroll this device's Face ID or Touch ID to continue —
+        you'll confirm with it each time you open the log.
+      </p>
+      <button mat-flat-button color="primary" class="bg-gate__cta" (click)="enroll()">
+        <i-tabler name="fingerprint" class="bg-gate__cta-ic"></i-tabler>
+        Enable & unlock
+      </button>
+    }
+
+    @case ('ready') {
+      <h2 class="bg-gate__title">Verify it's you</h2>
+      <p class="bg-gate__sub">Use Face ID or Touch ID to open the activity log.</p>
+      <button mat-flat-button color="primary" class="bg-gate__cta" (click)="unlock()">
+        <i-tabler name="fingerprint" class="bg-gate__cta-ic"></i-tabler>
+        Unlock with biometrics
+      </button>
+    }
+
+    @case ('working') {
+      <h2 class="bg-gate__title">Waiting for biometrics…</h2>
+      <p class="bg-gate__sub">Follow the prompt from your device.</p>
+    }
+
+    @case ('error') {
+      <h2 class="bg-gate__title">Couldn't verify</h2>
+      <p class="bg-gate__sub bg-gate__sub--error">{{ errorMsg() }}</p>
+      <button mat-flat-button color="primary" class="bg-gate__cta" (click)="unlock()">
+        <i-tabler name="refresh" class="bg-gate__cta-ic"></i-tabler>
+        Try again
+      </button>
+      <button mat-button class="bg-gate__ghost" (click)="cancel()">Cancel</button>
+    }
+
+    @case ('unavailable') {
+      <h2 class="bg-gate__title">Biometrics unavailable</h2>
+      <p class="bg-gate__sub">
+        This device or browser doesn't expose a Face ID / Touch ID authenticator, so the activity
+        log can't be unlocked here. Open it on a device with biometrics enabled.
+      </p>
+      <button mat-button class="bg-gate__ghost" (click)="cancel()">Close</button>
+    }
+  }
+</div>

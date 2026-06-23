@@ -1,13 +1,15 @@
 import {
-  Component, OnInit, ChangeDetectionStrategy, ChangeDetectorRef,
-  inject, signal, Inject,
+  Component, OnInit, AfterViewInit, ChangeDetectionStrategy, ChangeDetectorRef,
+  inject, signal, Inject, ViewChild,
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import {
   ReactiveFormsModule, FormGroup, FormControl, FormArray, Validators, AbstractControl,
 } from '@angular/forms';
 import { FormsModule } from '@angular/forms';
-import { MatTableModule } from '@angular/material/table';
+import { MatTableModule, MatTableDataSource } from '@angular/material/table';
+import { MatSort, MatSortModule } from '@angular/material/sort';
+import { MatPaginator, MatPaginatorModule } from '@angular/material/paginator';
 import { MatTabsModule } from '@angular/material/tabs';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
@@ -37,9 +39,14 @@ import { InventoryAlertsService, InventoryAlert } from '../../../services/invent
   selector: 'inv-item-form-dialog',
   standalone: true,
   imports: [CommonModule, ReactiveFormsModule, MatFormFieldModule, MatInputModule,
-    MatSelectModule, MatButtonModule, MatDialogModule, MatCheckboxModule],
+    MatSelectModule, MatButtonModule, MatDialogModule, MatCheckboxModule, MatIconModule],
   template: `
-    <h2 mat-dialog-title>{{ data?.id ? 'Edit Item' : 'Add Item' }}</h2>
+    <div class="inv-dialog-title-row">
+      <h2 mat-dialog-title>{{ data?.id ? 'Edit Item' : 'Add Item' }}</h2>
+      <button mat-icon-button mat-dialog-close class="inv-dialog-close" aria-label="Close">
+        <mat-icon>close</mat-icon>
+      </button>
+    </div>
     <mat-dialog-content>
       <form [formGroup]="form" class="inv-dialog-form">
         <mat-form-field appearance="outline" class="full">
@@ -97,6 +104,15 @@ import { InventoryAlertsService, InventoryAlert } from '../../../services/invent
     </mat-dialog-actions>
   `,
   styles: [`
+    .inv-dialog-title-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      padding-right: 8px;
+    }
+    .inv-dialog-title-row h2[mat-dialog-title] { margin: 0; flex: 1; min-width: 0; }
+    .inv-dialog-close { color: #64748b; flex-shrink: 0; }
     .inv-dialog-form { display: flex; flex-direction: column; gap: 4px; min-width: 420px; padding-top: 8px; }
     .full { width: 100%; }
     .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
@@ -288,7 +304,7 @@ export class PurchaseOrderDialogComponent implements OnInit {
   standalone: true,
   imports: [
     CommonModule, FormsModule, ReactiveFormsModule,
-    MatTableModule, MatTabsModule, MatFormFieldModule, MatInputModule,
+    MatTableModule, MatSortModule, MatPaginatorModule, MatTabsModule, MatFormFieldModule, MatInputModule,
     MatSelectModule, MatButtonModule, MatIconModule, MatProgressSpinnerModule,
     MatTooltipModule, MatDialogModule, MatChipsModule, MatDividerModule,
     MatCheckboxModule, MatDatepickerModule, MatNativeDateModule, MatBadgeModule,
@@ -297,13 +313,29 @@ export class PurchaseOrderDialogComponent implements OnInit {
   styleUrls:   ['./inventory.component.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class InventoryComponent implements OnInit {
+export class InventoryComponent implements OnInit, AfterViewInit {
   private svc       = inject(InventoryService);
   private alertsSvc = inject(InventoryAlertsService);
   private route     = inject(ActivatedRoute);
   private cdr       = inject(ChangeDetectorRef);
   private dialog    = inject(MatDialog);
   private snack     = inject(MatSnackBar);
+
+  readonly pageSizeOptions = [10, 25, 50];
+
+  stockDs     = new MatTableDataSource<StockLevel>([]);
+  itemsDs     = new MatTableDataSource<InventoryItem>([]);
+  movementsDs = new MatTableDataSource<StockMovement>([]);
+  posDs       = new MatTableDataSource<PurchaseOrder>([]);
+
+  @ViewChild('stockSort') stockSort!: MatSort;
+  @ViewChild('stockPaginator') stockPaginator!: MatPaginator;
+  @ViewChild('itemsSort') itemsSort!: MatSort;
+  @ViewChild('itemsPaginator') itemsPaginator!: MatPaginator;
+  @ViewChild('movementsSort') movementsSort!: MatSort;
+  @ViewChild('movementsPaginator') movementsPaginator!: MatPaginator;
+  @ViewChild('posSort') posSort!: MatSort;
+  @ViewChild('posPaginator') posPaginator!: MatPaginator;
 
   // ── Dashboard / catalog state ─────────────────────────────────────────────
   stock    = signal<StockLevel[]>([]);
@@ -365,6 +397,7 @@ export class InventoryComponent implements OnInit {
 
   // ── Lifecycle ─────────────────────────────────────────────────────────────
   ngOnInit(): void {
+    this.configureTableSources();
     this.loadStock();
     this.loadItems();
     this.alertsSvc.refresh();
@@ -381,6 +414,101 @@ export class InventoryComponent implements OnInit {
     }
   }
 
+  ngAfterViewInit(): void {
+    this.connectTables();
+  }
+
+  private configureTableSources(): void {
+    this.stockDs.filterPredicate = (row, filter) => {
+      const q = filter.trim().toLowerCase();
+      if (!q) return true;
+      return row.name.toLowerCase().includes(q)
+        || (row.generic_name ?? '').toLowerCase().includes(q)
+        || row.category.toLowerCase().includes(q)
+        || (this.categories[row.category] ?? row.category).toLowerCase().includes(q);
+    };
+
+    this.stockDs.sortingDataAccessor = (row, col) => {
+      switch (col) {
+        case 'name':      return row.name.toLowerCase();
+        case 'category':  return (this.categories[row.category] ?? row.category).toLowerCase();
+        case 'stock':     return row.qty_on_hand;
+        case 'status':    return this.stockStatusSort(row);
+        case 'reorder':   return row.reorder_point;
+        case 'expiring':  return row.expiring_soon_batches;
+        default:          return '';
+      }
+    };
+
+    this.itemsDs.sortingDataAccessor = (row, col) => {
+      switch (col) {
+        case 'name':       return row.name.toLowerCase();
+        case 'category':   return (this.categories[row.category] ?? row.category).toLowerCase();
+        case 'unit':       return row.unit.toLowerCase();
+        case 'reorder':    return row.reorder_point;
+        case 'traceable':  return row.is_traceable ? 1 : 0;
+        default:           return '';
+      }
+    };
+
+    this.movementsDs.sortingDataAccessor = (row, col) => {
+      switch (col) {
+        case 'date':   return new Date(row.created_at).getTime();
+        case 'item':   return row.item_name.toLowerCase();
+        case 'type':   return row.movement_type;
+        case 'qty':    return Number(row.quantity) * row.direction;
+        case 'cost':   return row.unit_cost ?? -1;
+        case 'source': return row.source_type.toLowerCase();
+        default:       return '';
+      }
+    };
+
+    this.posDs.sortingDataAccessor = (row, col) => {
+      switch (col) {
+        case 'po_number': return row.po_number.toLowerCase();
+        case 'supplier':  return (row.supplier ?? '').toLowerCase();
+        case 'status':    return this.poStatusSort(row.status);
+        case 'lines':     return row.line_count ?? 0;
+        case 'created':   return new Date(row.created_at).getTime();
+        default:          return '';
+      }
+    };
+  }
+
+  private connectTables(): void {
+    if (this.stockSort) this.stockDs.sort = this.stockSort;
+    if (this.stockPaginator) this.stockDs.paginator = this.stockPaginator;
+    if (this.itemsSort) this.itemsDs.sort = this.itemsSort;
+    if (this.itemsPaginator) this.itemsDs.paginator = this.itemsPaginator;
+    if (this.movementsSort) this.movementsDs.sort = this.movementsSort;
+    if (this.movementsPaginator) this.movementsDs.paginator = this.movementsPaginator;
+    if (this.posSort) this.posDs.sort = this.posSort;
+    if (this.posPaginator) this.posDs.paginator = this.posPaginator;
+  }
+
+  private refreshTableControls(): void {
+    setTimeout(() => {
+      this.connectTables();
+      this.cdr.markForCheck();
+    });
+  }
+
+  applyStockFilter(resetPage = true): void {
+    this.stockDs.filter = this.stockFilter.trim().toLowerCase();
+    if (resetPage) this.stockPaginator?.firstPage();
+  }
+
+  private stockStatusSort(item: StockLevel): number {
+    if (item.qty_on_hand <= 0) return 0;
+    if (item.qty_on_hand <= item.reorder_point) return 1;
+    return 2;
+  }
+
+  private poStatusSort(status: string): number {
+    const map: Record<string, number> = { draft: 0, sent: 1, received: 2, cancelled: 3 };
+    return map[status] ?? 99;
+  }
+
   onTabChange(index: number): void {
     if (index === 4 && !this.movesLoaded) this.loadMovements();
     if (index === 5 && !this.posLoaded)   this.loadPOs();
@@ -392,10 +520,12 @@ export class InventoryComponent implements OnInit {
     this.svc.getStock().subscribe({
       next: (res) => {
         this.stock.set(res.stock);
+        this.stockDs.data = res.stock;
+        this.applyStockFilter(false);
         this.loading.set(false);
         this.alertsSvc.refresh();
         this.loadInventoryValue();
-        this.cdr.markForCheck();
+        this.refreshTableControls();
       },
       error: () => { this.loading.set(false); this.cdr.markForCheck(); },
     });
@@ -403,7 +533,11 @@ export class InventoryComponent implements OnInit {
 
   loadItems(): void {
     this.svc.searchItems('', 200).subscribe({
-      next: (res) => { this.items.set(res.items); this.cdr.markForCheck(); },
+      next: (res) => {
+        this.items.set(res.items);
+        this.itemsDs.data = res.items;
+        this.cdr.markForCheck();
+      },
       error: () => {},
     });
   }
@@ -413,16 +547,6 @@ export class InventoryComponent implements OnInit {
       next: (res) => { this.inventoryValue.set(res.total_value); this.cdr.markForCheck(); },
       error: () => {},
     });
-  }
-
-  get filteredStock(): StockLevel[] {
-    const q = this.stockFilter.toLowerCase();
-    if (!q) return this.stock();
-    return this.stock().filter(s =>
-      s.name.toLowerCase().includes(q) ||
-      (s.generic_name ?? '').toLowerCase().includes(q) ||
-      s.category.toLowerCase().includes(q)
-    );
   }
 
   get totalItems(): number  { return this.stock().length; }
@@ -447,6 +571,7 @@ export class InventoryComponent implements OnInit {
       this.svc.createItem(payload).subscribe({
         next: (res) => {
           this.items.update(list => [res.item, ...list]);
+          this.itemsDs.data = [res.item, ...this.itemsDs.data];
           this.snack.open('Item added', 'OK', { duration: 3000 });
           this.saving.set(false);
           this.loadStock();
@@ -471,6 +596,7 @@ export class InventoryComponent implements OnInit {
       this.svc.updateItem(item.id, payload).subscribe({
         next: (res) => {
           this.items.update(list => list.map(i => i.id === res.item.id ? res.item : i));
+          this.itemsDs.data = this.itemsDs.data.map(i => i.id === res.item.id ? res.item : i);
           this.snack.open('Item updated', 'OK', { duration: 3000 });
           this.saving.set(false);
           this.loadStock();
@@ -546,15 +672,19 @@ export class InventoryComponent implements OnInit {
     }).subscribe({
       next: (res) => {
         this.movements.set(res.movements);
+        this.movementsDs.data = res.movements;
         this.movesLoaded = true;
         this.loadingMoves.set(false);
-        this.cdr.markForCheck();
+        this.refreshTableControls();
       },
       error: () => { this.loadingMoves.set(false); this.cdr.markForCheck(); },
     });
   }
 
-  applyMovFilter(): void { this.loadMovements(); }
+  applyMovFilter(): void {
+    this.movementsPaginator?.firstPage();
+    this.loadMovements();
+  }
 
   get totalConsumed(): number {
     return this.movements()
@@ -592,9 +722,10 @@ export class InventoryComponent implements OnInit {
     this.svc.getPurchaseOrders().subscribe({
       next: (res) => {
         this.pos.set(res.purchase_orders);
+        this.posDs.data = res.purchase_orders;
         this.posLoaded = true;
         this.loadingPOs.set(false);
-        this.cdr.markForCheck();
+        this.refreshTableControls();
       },
       error: () => { this.loadingPOs.set(false); this.cdr.markForCheck(); },
     });
@@ -621,6 +752,7 @@ export class InventoryComponent implements OnInit {
       this.svc.createPurchaseOrder(po).subscribe({
         next: (res) => {
           this.pos.update(list => [res.purchase_order, ...list]);
+          this.posDs.data = [res.purchase_order, ...this.posDs.data];
           this.posLoaded = true;
           this.snack.open(`Purchase order ${res.purchase_order.po_number} created`, 'OK', { duration: 3000 });
           this.saving.set(false);
@@ -639,6 +771,7 @@ export class InventoryComponent implements OnInit {
     this.svc.updatePOStatus(po.id, action).subscribe({
       next: (res) => {
         this.pos.update(list => list.map(p => p.id === res.purchase_order.id ? { ...p, ...res.purchase_order } : p));
+        this.posDs.data = this.posDs.data.map(p => p.id === res.purchase_order.id ? { ...p, ...res.purchase_order } : p);
         const labels = { send: 'marked as sent', receive: 'received — stock updated', cancel: 'cancelled' };
         this.snack.open(`PO ${po.po_number} ${labels[action]}`, 'OK', { duration: 3500 });
         if (action === 'receive') {

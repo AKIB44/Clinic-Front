@@ -1,9 +1,6 @@
 import { Component, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import {
-  trigger, transition, style, animate, query, stagger, state,
-} from '@angular/animations';
 import { MaterialModule } from '../../../material.module';
 import { TablerIconsModule } from 'angular-tabler-icons';
 import { MatDialogRef, MAT_DIALOG_DATA } from '@angular/material/dialog';
@@ -12,6 +9,7 @@ import { AppointmentsService, Appointment, Slot } from '../../../services/appoin
 import {
   formatAppointmentTime12h,
   formatSlotTime12h,
+  isSlotTimeInPast,
 } from '../../../utils/appointment-time';
 
 function appointmentFromPatchResponse(body: unknown): Appointment | undefined {
@@ -31,38 +29,6 @@ function appointmentFromPatchResponse(body: unknown): Appointment | undefined {
   imports: [CommonModule, FormsModule, MaterialModule, TablerIconsModule],
   templateUrl: './reschedule-dialog.component.html',
   styleUrl: './reschedule-dialog.component.scss',
-  animations: [
-    trigger('dialogEnter', [
-      transition(':enter', [
-        style({ opacity: 0, transform: 'translateY(16px) scale(0.97)' }),
-        animate('380ms cubic-bezier(0.16, 1, 0.3, 1)', style({ opacity: 1, transform: 'none' })),
-      ]),
-    ]),
-    trigger('reveal', [
-      transition(':enter', [
-        style({ opacity: 0, transform: 'translateY(10px)' }),
-        animate('300ms 60ms cubic-bezier(0.16, 1, 0.3, 1)', style({ opacity: 1, transform: 'none' })),
-      ]),
-    ]),
-    trigger('slotList', [
-      transition('* => *', [
-        query(':enter', [
-          style({ opacity: 0, transform: 'scale(0.9) translateY(8px)' }),
-          stagger(40, [
-            animate('260ms cubic-bezier(0.16, 1, 0.3, 1)', style({ opacity: 1, transform: 'none' })),
-          ]),
-        ], { optional: true }),
-      ]),
-    ]),
-    trigger('confirmPulse', [
-      state('ready', style({ transform: 'scale(1)' })),
-      state('idle', style({ transform: 'scale(1)' })),
-      transition('idle => ready', [
-        animate('200ms ease-out', style({ transform: 'scale(1.03)' })),
-        animate('200ms ease-in', style({ transform: 'scale(1)' })),
-      ]),
-    ]),
-  ],
 })
 export class RescheduleDialogComponent implements OnInit {
   private dialogRef = inject(MatDialogRef<RescheduleDialogComponent>);
@@ -77,11 +43,10 @@ export class RescheduleDialogComponent implements OnInit {
   slotsError   = '';
   updating     = false;
   error        = '';
-  confirmPulse = 'idle';
-  dateFlash    = false;
 
   readonly currentDate = this.formatCurrentDate();
   readonly currentTime = formatAppointmentTime12h(this.data.scheduled_at);
+  readonly shimmerSlots = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12];
 
   private formatCurrentDate(): string {
     try {
@@ -117,6 +82,26 @@ export class RescheduleDialogComponent implements OnInit {
     return this.selectedSlot ? formatSlotTime12h(this.selectedSlot) : '';
   }
 
+  private selectedDateIso(): string | null {
+    return this.selectedDate ? format(this.selectedDate, 'yyyy-MM-dd') : null;
+  }
+
+  isSlotPast(slot: Slot): boolean {
+    const dateIso = this.selectedDateIso();
+    return dateIso ? isSlotTimeInPast(dateIso, slot.time) : false;
+  }
+
+  isSlotSelectable(slot: Slot): boolean {
+    if (slot.taken) return false;
+    const dateIso = this.selectedDateIso();
+    if (!dateIso) return false;
+    return !isSlotTimeInPast(dateIso, slot.time);
+  }
+
+  hasSelectableSlots(): boolean {
+    return this.slots.some(s => this.isSlotSelectable(s));
+  }
+
   isDateChanged(): boolean {
     if (!this.selectedDate) return false;
     try {
@@ -131,28 +116,35 @@ export class RescheduleDialogComponent implements OnInit {
     if (!date) return;
     this.selectedDate = date;
     this.selectedSlot = null;
-    this.slots        = [];
     this.slotsError   = '';
     this.slotsLoading = true;
-    this.dateFlash    = true;
-    setTimeout(() => { this.dateFlash = false; }, 520);
 
     const dateStr = format(date, 'yyyy-MM-dd');
     this.apptSvc.getSlots(dateStr, this.data.service_id, this.data.chair_id).subscribe({
-      next:  r => { this.slots = r.slots ?? []; this.slotsLoading = false; },
+      next: r => {
+        this.slots = r.slots ?? [];
+        if (this.selectedSlot && !this.isSlotSelectable({ time: this.selectedSlot, taken: false })) {
+          this.selectedSlot = null;
+        }
+        this.slotsLoading = false;
+      },
       error: () => { this.slotsError = 'Could not load slots. Try again.'; this.slotsLoading = false; },
     });
   }
 
   selectSlot(time: string): void {
+    if (!this.isSlotSelectable({ time, taken: false })) return;
     if (this.selectedSlot === time) return;
     this.selectedSlot = time;
-    this.confirmPulse = 'ready';
-    setTimeout(() => { this.confirmPulse = 'idle'; }, 420);
   }
 
   confirm(): void {
     if (!this.selectedDate || !this.selectedSlot) return;
+    if (!this.isSlotSelectable({ time: this.selectedSlot, taken: false })) {
+      this.error = 'This time has passed. Please choose a future slot.';
+      this.selectedSlot = null;
+      return;
+    }
     this.updating = true;
     this.error    = '';
     const dateStr = format(this.selectedDate, 'yyyy-MM-dd');

@@ -556,6 +556,13 @@
     @if (activeTab() === 'specialty') {
       <section class="specialty-section">
 
+        <div class="specialty-toolbar">
+          <span class="specialty-toolbar__title">Specialty cases</span>
+          @if (patient(); as p) {
+            <df-refer-specialty [patientId]="p.id" [patientName]="p.name"></df-refer-specialty>
+          }
+        </div>
+
         @if (specialtyLoading()) {
           <div class="specialty-loading">
             <mat-spinner diameter="28"></mat-spinner>
@@ -567,6 +574,9 @@
           <div class="empty-state">
             <i-tabler name="stethoscope" size="40"></i-tabler>
             <p>No specialty cases on record.</p>
+            @if (patient(); as p) {
+              <df-refer-specialty [patientId]="p.id" [patientName]="p.name"></df-refer-specialty>
+            }
           </div>
         }
 

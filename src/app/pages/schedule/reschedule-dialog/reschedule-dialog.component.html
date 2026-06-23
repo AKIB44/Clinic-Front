@@ -1,10 +1,14 @@
-<div class="rs-root" @dialogEnter>
+<div class="rs-root">
+  <button mat-icon-button mat-dialog-close class="rs-dialog-close" aria-label="Close" [disabled]="updating">
+    <i-tabler name="x" size="18"></i-tabler>
+  </button>
   <div class="rs-header">
     <div class="rs-header-glow"></div>
-    <div class="rs-header-icon">
-      <i-tabler name="calendar-event" size="22"></i-tabler>
-    </div>
-    <div class="rs-header-text">
+    <div class="rs-header-main">
+      <div class="rs-header-icon">
+        <i-tabler name="calendar-event" size="22"></i-tabler>
+      </div>
+      <div class="rs-header-text">
       <h2 class="rs-title">Reschedule Appointment</h2>
       <div class="rs-subtitle">{{ data.patient_name }}</div>
       <div class="rs-service-chip">
@@ -24,35 +28,38 @@
         </div>
 
         @if (selectedDate) {
-          <i-tabler name="arrow-right" size="14" class="rs-visit-arrow" @reveal></i-tabler>
-          <div class="rs-visit-row rs-visit-row--new" @reveal [class.rs-visit-row--changed]="isDateChanged()">
-            <span class="rs-visit-label">
-              <i-tabler name="calendar-check" size="12"></i-tabler>
-              New date
-            </span>
-            <span class="rs-visit-date">{{ formatSelectedDate() }}</span>
-            @if (selectedSlot) {
-              <span class="rs-visit-sep">·</span>
-              <span class="rs-visit-time">{{ formatSelectedTime() }}</span>
-            }
-            @if (isDateChanged()) {
-              <span class="rs-pill-badge">Changed</span>
-            }
+          <div class="rs-visit-new-block">
+            <i-tabler name="arrow-right" size="14" class="rs-visit-arrow"></i-tabler>
+            <div class="rs-visit-row rs-visit-row--new" [class.rs-visit-row--changed]="isDateChanged()">
+              <span class="rs-visit-label">
+                <i-tabler name="calendar-check" size="12"></i-tabler>
+                New date
+              </span>
+              <span class="rs-visit-date">{{ formatSelectedDate() }}</span>
+              @if (selectedSlot) {
+                <span class="rs-visit-sep">·</span>
+                <span class="rs-visit-time">{{ formatSelectedTime() }}</span>
+              }
+              @if (isDateChanged()) {
+                <span class="rs-pill-badge">Changed</span>
+              }
+            </div>
           </div>
         }
       </div>
     </div>
+    </div>
   </div>
 
   <div class="rs-steps">
-    <div class="rs-step" [class.rs-step--active]="!selectedSlot" [class.rs-step--done]="!!selectedDate">
+    <div class="rs-step" [class.rs-step--active]="!selectedDate" [class.rs-step--done]="!!selectedDate">
       <span class="rs-step-num">1</span>
       <span>Pick date</span>
     </div>
     <div class="rs-step-track">
       <div class="rs-step-fill" [style.width.%]="selectedSlot ? 100 : (selectedDate ? 55 : 8)"></div>
     </div>
-    <div class="rs-step" [class.rs-step--active]="!!selectedDate && !selectedSlot" [class.rs-step--done]="!!selectedSlot">
+    <div class="rs-step" [class.rs-step--active]="selectedDate && !selectedSlot" [class.rs-step--done]="!!selectedSlot">
       <span class="rs-step-num">2</span>
       <span>Pick time</span>
     </div>
@@ -66,8 +73,7 @@
           Choose new date
         </div>
 
-        <div class="rs-calendar-card" [class.rs-calendar-card--flash]="dateFlash">
-          <div class="rs-calendar-shine"></div>
+        <div class="rs-calendar-card">
           <mat-calendar class="rs-calendar"
                         [selected]="selectedDate"
                         [minDate]="minDate"
@@ -78,50 +84,60 @@
 
       <div class="rs-col rs-col--slots">
     @if (slotsLoading) {
-      <div class="rs-slots-loading" @reveal>
-        <div class="rs-slot-skeletons">
-          @for (i of [1,2,3,4,5,6]; track i) {
-            <div class="rs-slot-skel"></div>
+      <div class="rs-slots-loading" aria-busy="true" aria-label="Loading available slots">
+        <div class="rs-section-label rs-section-label--slots">
+          <i-tabler name="clock" size="13"></i-tabler>
+          Available slots
+        </div>
+        <div class="rs-slot-grid rs-slot-grid--shimmer">
+          @for (i of shimmerSlots; track i) {
+            <div class="rs-slot-shimmer"></div>
           }
         </div>
-        <div class="rs-loading-row">
-          <mat-spinner diameter="20"></mat-spinner>
-          <span>Finding available slots…</span>
-        </div>
+        <p class="rs-loading-hint">Finding available slots…</p>
       </div>
     }
 
     @if (!slotsLoading && slotsError) {
-      <div class="rs-error" @reveal>
+      <div class="rs-error">
         <i-tabler name="alert-circle" size="16"></i-tabler>
         {{ slotsError }}
       </div>
     }
 
-    @if (!slotsLoading && !slotsError && slots.length > 0) {
-      <div class="rs-section-label rs-section-label--slots" @reveal>
+    @if (!slotsLoading && !slotsError && slots.length > 0 && hasSelectableSlots()) {
+      <div class="rs-section-label rs-section-label--slots">
         <i-tabler name="clock" size="13"></i-tabler>
         Available slots
         <span class="rs-slot-count">{{ slots.length }}</span>
       </div>
-      <div class="rs-slot-grid" @slotList>
+      <div class="rs-slot-grid">
         @for (s of slots; track s.time) {
           <button type="button" class="rs-slot"
                   [class.rs-slot--sel]="selectedSlot === s.time"
                   [class.rs-slot--taken]="s.taken"
-                  [disabled]="s.taken"
+                  [class.rs-slot--past]="isSlotPast(s)"
+                  [disabled]="!isSlotSelectable(s)"
                   (click)="selectSlot(s.time)">
-            @if (selectedSlot === s.time) {
-              <i-tabler name="check" size="13" class="rs-slot-check"></i-tabler>
-            }
-            {{ formatSlot(s.time) }}
+            <i-tabler name="check" size="13" class="rs-slot-check" [class.rs-slot-check--on]="selectedSlot === s.time"></i-tabler>
+            <span class="rs-slot-label">{{ formatSlot(s.time) }}</span>
           </button>
         }
       </div>
     }
 
+    @if (!slotsLoading && !slotsError && selectedDate && slots.length > 0 && !hasSelectableSlots()) {
+      <div class="rs-empty">
+        <div class="rs-empty-icon">
+          <i-tabler name="clock-off" size="28"></i-tabler>
+        </div>
+        <p>No future slots remain today</p>
+        <span>Please choose another date on the calendar</span>
+      </div>
+    }
+
     @if (!slotsLoading && !slotsError && selectedDate && slots.length === 0) {
-      <div class="rs-empty" @reveal>
+      <div class="rs-empty">
         <div class="rs-empty-icon">
           <i-tabler name="calendar-off" size="28"></i-tabler>
         </div>
@@ -131,7 +147,7 @@
     }
 
     @if (selectedSlot) {
-      <div class="rs-preview" @reveal>
+      <div class="rs-preview">
         <i-tabler name="arrow-right" size="14" class="rs-preview-arrow"></i-tabler>
         <div>
           <div class="rs-preview-label">New appointment</div>
@@ -141,7 +157,7 @@
     }
 
     @if (error) {
-      <div class="rs-error" @reveal>
+      <div class="rs-error">
         <i-tabler name="alert-circle" size="16"></i-tabler>
         {{ error }}
       </div>
@@ -155,7 +171,6 @@
       Cancel
     </button>
     <button mat-flat-button color="primary" class="rs-btn-confirm"
-            [@confirmPulse]="confirmPulse"
             [class.rs-btn-confirm--ready]="!!selectedSlot"
             [disabled]="!selectedDate || !selectedSlot || updating"
             (click)="confirm()">

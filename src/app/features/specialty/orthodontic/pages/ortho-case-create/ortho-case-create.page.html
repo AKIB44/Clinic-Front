@@ -7,7 +7,7 @@
     <mat-step label="Select Patient" [completed]="step1Valid">
       <div class="step-content">
         <p class="step-hint">Search for the patient this case belongs to.</p>
-        <df-patient-search (patientSelected)="onPatientSelected($event)" />
+        <df-patient-search [lockedPatient]="prefilledPatient()" (patientSelected)="onPatientSelected($event)" />
 
         @if (selectedPatient(); as p) {
           <mat-card class="patient-confirm-card">

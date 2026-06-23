@@ -1,0 +1,11 @@
+@if (canRefer) {
+  @if (flat) {
+    <button mat-flat-button color="primary" class="rs-btn" (click)="open()" type="button">
+      <i-tabler name="stethoscope" class="rs-ic"></i-tabler> {{ label }}
+    </button>
+  } @else {
+    <button mat-stroked-button class="rs-btn" (click)="open()" type="button">
+      <i-tabler name="stethoscope" class="rs-ic"></i-tabler> {{ label }}
+    </button>
+  }
+}

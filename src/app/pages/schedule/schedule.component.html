@@ -60,10 +60,16 @@
     @if (chairs.length > 1) {
       <div class="chair-filter">
         <button class="chair-chip" [class.chair-chip-active]="selectedChairId === 'all'"
-                (click)="selectedChairId = 'all'">All</button>
+                (click)="selectedChairId = 'all'">
+          <i-tabler name="layout-grid" size="12"></i-tabler>
+          All
+        </button>
         @for (ch of chairs; track ch.id) {
           <button class="chair-chip" [class.chair-chip-active]="selectedChairId === ch.id"
-                  (click)="selectedChairId = ch.id">{{ ch.name }}</button>
+                  (click)="selectedChairId = ch.id" [matTooltip]="ch.name">
+            <i-tabler name="armchair" size="12"></i-tabler>
+            {{ getChairShortLabel(ch.id) }}
+          </button>
         }
       </div>
     }
@@ -256,7 +262,7 @@
                         }
                         {{ statusLabel[appt.status] || appt.status }}
                       </span>
-                      @if (appt.chair_id && chairs.length > 1 && selectedChairId === 'all') {
+                      @if (appt.chair_id && chairs.length > 1) {
                         <span class="card-chair-pill" [matTooltip]="getChairName(appt.chair_id)">
                           <i-tabler name="armchair" size="11"></i-tabler>
                           {{ getChairShortLabel(appt.chair_id) }}

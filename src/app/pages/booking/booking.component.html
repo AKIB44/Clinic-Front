@@ -15,7 +15,7 @@
           <i-tabler name="calendar-plus" class="btn-icon"></i-tabler>
           Book Another Appointment
         </button>
-        <button mat-stroked-button routerLink="/schedule">View Schedule</button>
+        <button mat-stroked-button [routerLink]="['/schedule']" [queryParams]="scheduleViewQueryParams">View Schedule</button>
       </div>
     </div>
   </div>
@@ -26,8 +26,14 @@
   <div class="bk-page">
 
     <div class="bk-header">
-      <h1>New Appointment</h1>
-      <p>Internal booking — select treatment, date &amp; patient details</p>
+      <button type="button" class="bk-back" (click)="leaveBooking()">
+        <i-tabler name="arrow-left" size="16"></i-tabler>
+        Back
+      </button>
+      <div class="bk-header-text">
+        <h1>New Appointment</h1>
+        <p>Internal booking — select treatment, date &amp; patient details</p>
+      </div>
     </div>
 
     <div class="bk-body">

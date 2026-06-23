@@ -8,13 +8,33 @@
 // ── Page header ───────────────────────────────────────────────────────────────
 .bk-header {
   margin-bottom: 24px;
+}
 
+.bk-back {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 12px;
+  padding: 0;
+  border: none;
+  background: none;
+  cursor: pointer;
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: #64748b;
+  transition: color 0.15s;
+
+  &:hover { color: #0074ba; }
+}
+
+.bk-header-text {
   h1 {
     font-size: 1.35rem;
     font-weight: 700;
     color: #0f172a;
     margin: 0 0 4px;
   }
+
   p {
     font-size: 0.82rem;
     color: #94a3b8;

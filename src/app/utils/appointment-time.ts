@@ -23,6 +23,19 @@ export function formatAppointmentDateTime12h(iso: string): string {
 }
 
 /**
+ * Whether a slot start time on the given calendar day is already in the past (IST).
+ */
+export function isSlotTimeInPast(dateIso: string, time: string): boolean {
+  const trimmed = time.trim();
+  const match = /^(\d{1,2}):(\d{2})/.exec(trimmed);
+  if (!match) return true;
+  const normalized = `${match[1].padStart(2, '0')}:${match[2]}`;
+  const slotStart = new Date(`${dateIso}T${normalized}:00+05:30`);
+  if (Number.isNaN(slotStart.getTime())) return true;
+  return slotStart.getTime() <= Date.now();
+}
+
+/**
  * Normalize slot time strings from the API (`14:30` or `2:30 PM`) to 12-hour display.
  */
 export function formatSlotTime12h(time: string): string {

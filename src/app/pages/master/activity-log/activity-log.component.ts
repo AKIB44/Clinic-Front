@@ -17,6 +17,7 @@ import { MatDialogModule, MatDialog, MAT_DIALOG_DATA } from '@angular/material/d
 import { MatChipsModule } from '@angular/material/chips';
 import { MatDividerModule } from '@angular/material/divider';
 import { ActivityLogService, ActivityLog } from '../../../services/activity-log.service';
+import { BiometricGateDialogComponent } from '../../../auth/biometric-gate/biometric-gate-dialog.component';
 
 // ── Detail Dialog ─────────────────────────────────────────────────────────────
 @Component({
@@ -346,6 +347,7 @@ export class ActivityLogComponent implements OnInit {
   page    = signal(1);
   limit   = 50;
   loading = signal(false);
+  private gating = false;
 
   searchQuery      = '';
   entityTypeFilter = '';
@@ -377,7 +379,29 @@ export class ActivityLogComponent implements OnInit {
         this.loading.set(false);
         this.cdr.markForCheck();
       },
-      error: () => { this.loading.set(false); this.cdr.markForCheck(); },
+      error: (err) => {
+        this.loading.set(false);
+        this.cdr.markForCheck();
+        const code = err?.error?.error;
+        if (code === 'biometric_required' || code === 'biometric_expired' || code === 'biometric_invalid') {
+          this.reGate();
+        }
+      },
+    });
+  }
+
+  /** Biometric grant lapsed mid-session — re-prompt Face ID / Touch ID, then reload. */
+  private reGate(): void {
+    if (this.gating) return;
+    this.gating = true;
+    this.dialog.open(BiometricGateDialogComponent, {
+      panelClass: 'biometric-gate-panel',
+      autoFocus: false,
+      disableClose: true,
+      maxWidth: '92vw',
+    }).afterClosed().subscribe((ok) => {
+      this.gating = false;
+      if (ok) this.load();
     });
   }
 

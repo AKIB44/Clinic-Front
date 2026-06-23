@@ -73,9 +73,9 @@
         <mat-form-field appearance="outline" class="stock-search">
           <mat-label>Search items</mat-label>
           <mat-icon matPrefix class="prefix-icon">search</mat-icon>
-          <input matInput [(ngModel)]="stockFilter" placeholder="Name, category…">
+          <input matInput [(ngModel)]="stockFilter" (ngModelChange)="applyStockFilter()" placeholder="Name, category…">
           @if (stockFilter) {
-            <button mat-icon-button matSuffix (click)="stockFilter = ''">
+            <button mat-icon-button matSuffix (click)="stockFilter = ''; applyStockFilter()">
               <mat-icon>close</mat-icon>
             </button>
           }
@@ -86,12 +86,12 @@
           <div class="center-loader"><mat-spinner diameter="40"></mat-spinner></div>
         } @else {
 
-          <div class="master-card">
-            <table mat-table [dataSource]="filteredStock" class="master-table">
+          <div class="master-card table-wrap">
+            <table mat-table [dataSource]="stockDs" matSort #stockSort="matSort" class="master-table">
 
               <!-- Name -->
               <ng-container matColumnDef="name">
-                <th mat-header-cell *matHeaderCellDef>Item</th>
+                <th mat-header-cell *matHeaderCellDef mat-sort-header>Item</th>
                 <td mat-cell *matCellDef="let row">
                   <span class="item-name">{{ row.name }}</span>
                   @if (row.generic_name) {
@@ -102,7 +102,7 @@
 
               <!-- Category -->
               <ng-container matColumnDef="category">
-                <th mat-header-cell *matHeaderCellDef>Category</th>
+                <th mat-header-cell *matHeaderCellDef mat-sort-header>Category</th>
                 <td mat-cell *matCellDef="let row">
                   <span class="cat-chip">{{ categories[row.category] ?? row.category }}</span>
                 </td>
@@ -110,7 +110,7 @@
 
               <!-- Stock -->
               <ng-container matColumnDef="stock">
-                <th mat-header-cell *matHeaderCellDef>Stock</th>
+                <th mat-header-cell *matHeaderCellDef mat-sort-header>Stock</th>
                 <td mat-cell *matCellDef="let row">
                   <span class="qty">{{ row.qty_on_hand }} {{ row.unit }}</span>
                 </td>
@@ -118,7 +118,7 @@
 
               <!-- Status -->
               <ng-container matColumnDef="status">
-                <th mat-header-cell *matHeaderCellDef>Status</th>
+                <th mat-header-cell *matHeaderCellDef mat-sort-header>Status</th>
                 <td mat-cell *matCellDef="let row">
                   <span class="status-chip" [class]="'status-chip--' + stockStatus(row)">
                     @if (stockStatus(row) === 'in-stock') { In Stock }
@@ -130,7 +130,7 @@
 
               <!-- Reorder -->
               <ng-container matColumnDef="reorder">
-                <th mat-header-cell *matHeaderCellDef>Reorder At</th>
+                <th mat-header-cell *matHeaderCellDef mat-sort-header>Reorder At</th>
                 <td mat-cell *matCellDef="let row">
                   {{ row.reorder_point }} {{ row.unit }}
                 </td>
@@ -138,7 +138,7 @@
 
               <!-- Expiring -->
               <ng-container matColumnDef="expiring">
-                <th mat-header-cell *matHeaderCellDef>Expiring Soon</th>
+                <th mat-header-cell *matHeaderCellDef mat-sort-header>Expiring Soon</th>
                 <td mat-cell *matCellDef="let row">
                   @if (row.expiring_soon_batches > 0) {
                     <span class="expiry-badge">{{ row.expiring_soon_batches }} batch{{ row.expiring_soon_batches > 1 ? 'es' : '' }}</span>
@@ -161,6 +161,13 @@
                 </td>
               </tr>
             </table>
+            <mat-paginator #stockPaginator
+                             class="table-paginator"
+                             [pageSizeOptions]="pageSizeOptions"
+                             [pageSize]="10"
+                             showFirstLastButtons
+                             aria-label="Stock table pagination">
+            </mat-paginator>
           </div>
         }
       </div>
@@ -179,12 +186,12 @@
           </button>
         </div>
 
-        <div class="master-card">
-          <table mat-table [dataSource]="items()" class="master-table">
+        <div class="master-card table-wrap">
+          <table mat-table [dataSource]="itemsDs" matSort #itemsSort="matSort" class="master-table">
 
             <!-- Name -->
             <ng-container matColumnDef="name">
-              <th mat-header-cell *matHeaderCellDef>Name</th>
+              <th mat-header-cell *matHeaderCellDef mat-sort-header>Name</th>
               <td mat-cell *matCellDef="let row">
                 <span class="item-name">{{ row.name }}</span>
                 @if (row.generic_name) {
@@ -195,7 +202,7 @@
 
             <!-- Category -->
             <ng-container matColumnDef="category">
-              <th mat-header-cell *matHeaderCellDef>Category</th>
+              <th mat-header-cell *matHeaderCellDef mat-sort-header>Category</th>
               <td mat-cell *matCellDef="let row">
                 <span class="cat-chip">{{ categories[row.category] ?? row.category }}</span>
               </td>
@@ -203,13 +210,13 @@
 
             <!-- Unit -->
             <ng-container matColumnDef="unit">
-              <th mat-header-cell *matHeaderCellDef>Unit</th>
+              <th mat-header-cell *matHeaderCellDef mat-sort-header>Unit</th>
               <td mat-cell *matCellDef="let row">{{ row.unit }}</td>
             </ng-container>
 
             <!-- Reorder -->
             <ng-container matColumnDef="reorder">
-              <th mat-header-cell *matHeaderCellDef>Reorder At / Qty</th>
+              <th mat-header-cell *matHeaderCellDef mat-sort-header>Reorder At / Qty</th>
               <td mat-cell *matCellDef="let row">
                 {{ row.reorder_point }} / {{ row.reorder_quantity }} {{ row.unit }}
               </td>
@@ -217,7 +224,7 @@
 
             <!-- Traceable -->
             <ng-container matColumnDef="traceable">
-              <th mat-header-cell *matHeaderCellDef>Traceable</th>
+              <th mat-header-cell *matHeaderCellDef mat-sort-header>Traceable</th>
               <td mat-cell *matCellDef="let row">
                 @if (row.is_traceable) {
                   <mat-icon class="flag-yes" matTooltip="Batch traceable">verified</mat-icon>
@@ -247,6 +254,13 @@
               </td>
             </tr>
           </table>
+          <mat-paginator #itemsPaginator
+                           class="table-paginator"
+                           [pageSizeOptions]="pageSizeOptions"
+                           [pageSize]="10"
+                           showFirstLastButtons
+                           aria-label="Item catalog pagination">
+          </mat-paginator>
         </div>
       </div>
     </mat-tab>
@@ -483,12 +497,12 @@
         @if (loadingMoves()) {
           <div class="center-loader"><mat-spinner diameter="40"></mat-spinner></div>
         } @else {
-          <div class="master-card">
-            <table mat-table [dataSource]="movements()" class="master-table">
+          <div class="master-card table-wrap">
+            <table mat-table [dataSource]="movementsDs" matSort #movementsSort="matSort" class="master-table">
 
               <!-- Date -->
               <ng-container matColumnDef="date">
-                <th mat-header-cell *matHeaderCellDef>Date & Time</th>
+                <th mat-header-cell *matHeaderCellDef mat-sort-header>Date & Time</th>
                 <td mat-cell *matCellDef="let row">
                   <span class="mov-date">{{ row.created_at | date:'dd MMM yyyy' }}</span>
                   <span class="mov-time">{{ row.created_at | date:'HH:mm' }}</span>
@@ -497,7 +511,7 @@
 
               <!-- Item -->
               <ng-container matColumnDef="item">
-                <th mat-header-cell *matHeaderCellDef>Item</th>
+                <th mat-header-cell *matHeaderCellDef mat-sort-header>Item</th>
                 <td mat-cell *matCellDef="let row">
                   <span class="item-name">{{ row.item_name }}</span>
                   @if (row.lot_number) {
@@ -508,7 +522,7 @@
 
               <!-- Type -->
               <ng-container matColumnDef="type">
-                <th mat-header-cell *matHeaderCellDef>Type</th>
+                <th mat-header-cell *matHeaderCellDef mat-sort-header>Type</th>
                 <td mat-cell *matCellDef="let row">
                   <span class="mov-chip" [class]="movTypeClass(row.movement_type)">
                     {{ movTypeLabel(row.movement_type) }}
@@ -518,7 +532,7 @@
 
               <!-- Qty -->
               <ng-container matColumnDef="qty">
-                <th mat-header-cell *matHeaderCellDef>Qty Change</th>
+                <th mat-header-cell *matHeaderCellDef mat-sort-header>Qty Change</th>
                 <td mat-cell *matCellDef="let row">
                   <span class="mov-qty" [class.mov-qty--pos]="row.direction > 0" [class.mov-qty--neg]="row.direction < 0">
                     {{ row.direction > 0 ? '+' : '−' }}{{ row.quantity | number:'1.0-3' }} {{ row.unit }}
@@ -528,7 +542,7 @@
 
               <!-- Cost -->
               <ng-container matColumnDef="cost">
-                <th mat-header-cell *matHeaderCellDef>Unit Cost</th>
+                <th mat-header-cell *matHeaderCellDef mat-sort-header>Unit Cost</th>
                 <td mat-cell *matCellDef="let row">
                   @if (row.unit_cost != null) {
                     <span class="mov-cost">₹{{ row.unit_cost | number:'1.0-2' }}</span>
@@ -540,7 +554,7 @@
 
               <!-- Source -->
               <ng-container matColumnDef="source">
-                <th mat-header-cell *matHeaderCellDef>Source</th>
+                <th mat-header-cell *matHeaderCellDef mat-sort-header>Source</th>
                 <td mat-cell *matCellDef="let row">
                   <span class="source-label">{{ row.source_type }}</span>
                 </td>
@@ -556,6 +570,13 @@
                 </td>
               </tr>
             </table>
+            <mat-paginator #movementsPaginator
+                             class="table-paginator"
+                             [pageSizeOptions]="pageSizeOptions"
+                             [pageSize]="10"
+                             showFirstLastButtons
+                             aria-label="Stock movements pagination">
+            </mat-paginator>
           </div>
         }
       </div>
@@ -584,12 +605,12 @@
         @if (loadingPOs()) {
           <div class="center-loader"><mat-spinner diameter="40"></mat-spinner></div>
         } @else {
-          <div class="master-card">
-            <table mat-table [dataSource]="pos()" class="master-table">
+          <div class="master-card table-wrap">
+            <table mat-table [dataSource]="posDs" matSort #posSort="matSort" class="master-table">
 
               <!-- PO Number -->
               <ng-container matColumnDef="po_number">
-                <th mat-header-cell *matHeaderCellDef>PO Number</th>
+                <th mat-header-cell *matHeaderCellDef mat-sort-header>PO Number</th>
                 <td mat-cell *matCellDef="let row">
                   <span class="item-name">{{ row.po_number }}</span>
                 </td>
@@ -597,7 +618,7 @@
 
               <!-- Supplier -->
               <ng-container matColumnDef="supplier">
-                <th mat-header-cell *matHeaderCellDef>Supplier</th>
+                <th mat-header-cell *matHeaderCellDef mat-sort-header>Supplier</th>
                 <td mat-cell *matCellDef="let row">
                   {{ row.supplier || '—' }}
                 </td>
@@ -605,7 +626,7 @@
 
               <!-- Status -->
               <ng-container matColumnDef="status">
-                <th mat-header-cell *matHeaderCellDef>Status</th>
+                <th mat-header-cell *matHeaderCellDef mat-sort-header>Status</th>
                 <td mat-cell *matCellDef="let row">
                   <span class="po-status-chip" [class]="poStatusClass(row.status)">
                     {{ poStatusLabel(row.status) }}
@@ -615,13 +636,13 @@
 
               <!-- Lines -->
               <ng-container matColumnDef="lines">
-                <th mat-header-cell *matHeaderCellDef>Lines</th>
+                <th mat-header-cell *matHeaderCellDef mat-sort-header>Lines</th>
                 <td mat-cell *matCellDef="let row">{{ row.line_count }}</td>
               </ng-container>
 
               <!-- Created -->
               <ng-container matColumnDef="created">
-                <th mat-header-cell *matHeaderCellDef>Created</th>
+                <th mat-header-cell *matHeaderCellDef mat-sort-header>Created</th>
                 <td mat-cell *matCellDef="let row">
                   <span class="mov-date">{{ row.created_at | date:'dd MMM yyyy' }}</span>
                 </td>
@@ -664,6 +685,13 @@
                 </td>
               </tr>
             </table>
+            <mat-paginator #posPaginator
+                             class="table-paginator"
+                             [pageSizeOptions]="pageSizeOptions"
+                             [pageSize]="10"
+                             showFirstLastButtons
+                             aria-label="Purchase orders pagination">
+            </mat-paginator>
           </div>
         }
       </div>

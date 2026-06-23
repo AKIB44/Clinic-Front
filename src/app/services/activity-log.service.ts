@@ -1,7 +1,8 @@
 import { Injectable, inject } from '@angular/core';
-import { HttpClient, HttpParams } from '@angular/common/http';
+import { HttpClient, HttpParams, HttpHeaders } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { authApiConfig } from '../auth/auth.config';
+import { BiometricSessionService } from '../auth/biometric-session.service';
 
 export interface ActivityLog {
   id: number;
@@ -36,6 +37,7 @@ export interface ActivityLogParams {
 @Injectable({ providedIn: 'root' })
 export class ActivityLogService {
   private http = inject(HttpClient);
+  private biometric = inject(BiometricSessionService);
   private base = `${authApiConfig.baseUrl}/activity-log`;
 
   getLogs(params: ActivityLogParams = {}): Observable<{ logs: ActivityLog[]; total: number }> {
@@ -47,6 +49,11 @@ export class ActivityLogService {
     if (params.date_from)   p = p.set('date_from',   params.date_from);
     if (params.date_to)     p = p.set('date_to',     params.date_to);
     if (params.search)      p = p.set('search',      params.search);
-    return this.http.get<{ logs: ActivityLog[]; total: number }>(this.base, { params: p });
+
+    // Biometric step-up grant (Face ID / Touch ID) — required by the backend.
+    const token = this.biometric.getToken();
+    const headers = token ? new HttpHeaders({ 'X-Biometric-Token': token }) : undefined;
+
+    return this.http.get<{ logs: ActivityLog[]; total: number }>(this.base, { params: p, headers });
   }
 }

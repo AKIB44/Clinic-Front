@@ -723,6 +723,22 @@
   padding: 4px 0;
 }
 
+.specialty-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-bottom: 12px;
+
+  &__title {
+    font-size: 15px;
+    font-weight: 700;
+    color: #1f2937;
+    letter-spacing: -0.01em;
+  }
+}
+
 .specialty-loading {
   display: flex;
   align-items: center;

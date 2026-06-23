@@ -6,7 +6,7 @@ import { FormsModule } from '@angular/forms';
 import { MaterialModule } from '../../material.module';
 import { TablerIconsModule } from 'angular-tabler-icons';
 import { MatDialog, MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
-import { Router, NavigationEnd } from '@angular/router';
+import { Router, NavigationEnd, ActivatedRoute } from '@angular/router';
 import { interval, Subject, fromEvent, forkJoin, merge, of } from 'rxjs';
 import { map, switchMap, takeUntil, filter, debounceTime } from 'rxjs/operators';
 import { ScheduleEventsService } from '../../services/schedule-events.service';
@@ -519,6 +519,8 @@ export class AppointmentDetailDialog {
       maxHeight:  '94dvh',
       autoFocus:  false,
       panelClass: 'reschedule-dialog-panel',
+      enterAnimationDuration: '0ms',
+      exitAnimationDuration: '0ms',
     }).afterClosed().subscribe(r => {
       this.pendingKey = null;
       if (r && typeof r === 'object' && 'reload' in r && (r as { reload: boolean }).reload) {
@@ -542,7 +544,9 @@ export class AppointmentDetailDialog {
 
   openPatientRecord() {
     this.dialogRef.close();
-    this.router.navigate(['/patients', this.data.patient_id]);
+    this.router.navigate(['/patients', this.data.patient_id], {
+      queryParams: { from: 'schedule' },
+    });
   }
 
   openEditPatient() {
@@ -691,6 +695,7 @@ export class ScheduleComponent implements OnInit, OnDestroy {
   private chairsSvc      = inject(ChairsService);
   private authSvc        = inject(AuthService);
   private router         = inject(Router);
+  private route          = inject(ActivatedRoute);
   private dialog         = inject(MatDialog);
   private cdr            = inject(ChangeDetectorRef);
   private releaseNotesSvc = inject(ReleaseNotesService);
@@ -724,6 +729,8 @@ export class ScheduleComponent implements OnInit, OnDestroy {
   private destroy$ = new Subject<void>();
 
   ngOnInit() {
+    this.applyDateQueryParam(this.route.snapshot.queryParamMap.get('date'));
+
     // Greeting: show for 2.4s then fade out over 0.9s
     const greetingTotalMs = this.showGreeting ? 3300 : 0;
     if (this.showGreeting) {
@@ -814,6 +821,15 @@ export class ScheduleComponent implements OnInit, OnDestroy {
   }
 
   // ── Date helpers ──────────────────────────────────────────────────────────
+
+  private applyDateQueryParam(dateParam: string | null | undefined): void {
+    if (!dateParam || !/^\d{4}-\d{2}-\d{2}$/.test(dateParam)) return;
+    const d = parseISO(`${dateParam}T00:00:00`);
+    if (Number.isNaN(d.getTime())) return;
+    this.statFilter = 'all';
+    this.pillSelected = false;
+    this.selectedDate = d;
+  }
 
   get dateIso():   string { return format(this.selectedDate, 'yyyy-MM-dd'); }
   get dateLabel(): string {
