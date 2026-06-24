@@ -22,21 +22,21 @@
     @case ('enroll') {
       <h2 class="bg-gate__title">Secure the activity log</h2>
       <p class="bg-gate__sub">
-        The activity log is protected. Enroll this device's Face ID or Touch ID to continue —
+        The activity log is protected. Enroll this device's {{ label }} to continue —
         you'll confirm with it each time you open the log.
       </p>
       <button mat-flat-button color="primary" class="bg-gate__cta" (click)="enroll()">
         <i-tabler name="fingerprint" class="bg-gate__cta-ic"></i-tabler>
-        Enable & unlock
+        Enable {{ label }}
       </button>
     }
 
     @case ('ready') {
       <h2 class="bg-gate__title">Verify it's you</h2>
-      <p class="bg-gate__sub">Use Face ID or Touch ID to open the activity log.</p>
+      <p class="bg-gate__sub">Use {{ label }} to open the activity log.</p>
       <button mat-flat-button color="primary" class="bg-gate__cta" (click)="unlock()">
         <i-tabler name="fingerprint" class="bg-gate__cta-ic"></i-tabler>
-        Unlock with biometrics
+        Unlock with {{ label }}
       </button>
     }
 
@@ -58,7 +58,7 @@
     @case ('unavailable') {
       <h2 class="bg-gate__title">Biometrics unavailable</h2>
       <p class="bg-gate__sub">
-        This device or browser doesn't expose a Face ID / Touch ID authenticator, so the activity
+        This device or browser doesn't expose a {{ label }} authenticator, so the activity
         log can't be unlocked here. Open it on a device with biometrics enabled.
       </p>
       <button mat-button class="bg-gate__ghost" (click)="cancel()">Close</button>

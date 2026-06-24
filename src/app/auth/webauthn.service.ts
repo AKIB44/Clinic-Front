@@ -31,6 +31,17 @@ export class WebAuthnService {
     try { return await platformAuthenticatorIsAvailable(); } catch { return false; }
   }
 
+  /** Device-appropriate name for the on-device biometric (Touch ID / Face ID …). */
+  biometricLabel(): string {
+    const ua = navigator.userAgent;
+    if (/iPhone/.test(ua)) return 'Face ID';
+    if (/iPad/.test(ua)) return 'Touch ID';
+    if (/Macintosh|Mac OS X/.test(ua)) return 'Touch ID';
+    if (/Windows/.test(ua)) return 'Windows Hello';
+    if (/Android/.test(ua)) return 'fingerprint unlock';
+    return 'device biometrics';
+  }
+
   async listCredentials(): Promise<WebAuthnCredentialInfo[]> {
     const res = await firstValueFrom(
       this.http.get<{ credentials: WebAuthnCredentialInfo[] }>(`${this.base}/credentials`),

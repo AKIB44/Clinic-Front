@@ -1,0 +1,74 @@
+<mat-card class="bio-card cardWithShadow">
+  <mat-card-content class="bio-card__body">
+
+    <div class="bio-head">
+      <div class="bio-head__icon">
+        <i-tabler name="fingerprint"></i-tabler>
+      </div>
+      <div class="bio-head__text">
+        <h3 class="bio-head__title">Biometric sign-in</h3>
+        <p class="bio-head__sub">
+          Use <strong>{{ label }}</strong> to unlock sensitive areas (like the activity log)
+          without a password.
+        </p>
+      </div>
+    </div>
+
+    @switch (state()) {
+      @case ('checking') {
+        <div class="bio-state">
+          <mat-spinner diameter="22"></mat-spinner>
+          <span>Checking this device…</span>
+        </div>
+      }
+
+      @case ('unavailable') {
+        <div class="bio-state bio-state--muted">
+          <i-tabler name="shield-x" class="bio-state__ic"></i-tabler>
+          <span>
+            This device or browser doesn't expose a {{ label }} authenticator,
+            so biometric sign-in can't be set up here.
+          </span>
+        </div>
+      }
+
+      @case ('ready') {
+        <button mat-flat-button color="primary" class="bio-register"
+                [disabled]="busy()" (click)="registerDevice()">
+          @if (busy()) { <mat-spinner diameter="18"></mat-spinner> }
+          @else { <i-tabler name="plus" class="bio-register__ic"></i-tabler> }
+          Register {{ label }} on this device
+        </button>
+
+        <div class="bio-list-label">Registered devices</div>
+
+        @if (creds().length === 0) {
+          <div class="bio-empty">
+            <i-tabler name="device-desktop-off" class="bio-empty__ic"></i-tabler>
+            No devices registered yet. Add this one to enable {{ label }}.
+          </div>
+        } @else {
+          <div class="bio-list">
+            @for (c of creds(); track c.id) {
+              <div class="bio-row">
+                <div class="bio-row__icon"><i-tabler name="device-laptop"></i-tabler></div>
+                <div class="bio-row__main">
+                  <div class="bio-row__name">{{ c.device_label || 'This device' }}</div>
+                  <div class="bio-row__meta">
+                    Added {{ c.created_at | date:'d MMM y' }}
+                    @if (c.last_used_at) { · Last used {{ c.last_used_at | date:'d MMM y, h:mm a' }} }
+                  </div>
+                </div>
+                <button mat-icon-button class="bio-row__remove" [disabled]="busy()"
+                        (click)="remove(c)" aria-label="Remove device">
+                  <i-tabler name="trash"></i-tabler>
+                </button>
+              </div>
+            }
+          </div>
+        }
+      }
+    }
+
+  </mat-card-content>
+</mat-card>

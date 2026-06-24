@@ -21,6 +21,8 @@ export class BiometricGateDialogComponent implements OnInit {
 
   protected readonly state = signal<GateState>('checking');
   protected readonly errorMsg = signal<string>('');
+  /** "Touch ID" / "Face ID" / "Windows Hello" … based on the device. */
+  protected readonly label = this.webauthn.biometricLabel();
 
   async ngOnInit(): Promise<void> {
     if (!(await this.webauthn.isPlatformAvailable())) {
