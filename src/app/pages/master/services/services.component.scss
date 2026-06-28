@@ -23,9 +23,37 @@
   overflow: hidden;
 }
 
-.master-table { width: 100%; }
+.master-table {
+  width: 100%;
+  table-layout: fixed;
+}
+
+.mat-column-name { width: 38%; min-width: 160px; }
+.mat-column-duration { width: 12%; }
+.mat-column-price { width: 12%; }
+.mat-column-status { width: 14%; }
+.mat-column-doctor { width: 16%; }
+.mat-column-actions { width: 18%; }
+
+.master-table .mat-mdc-cell,
+.master-table .mat-mdc-header-cell {
+  vertical-align: top;
+  padding-top: 14px;
+  padding-bottom: 14px;
+}
+
 .cell-primary { font-weight: 600; }
-.cell-sub     { font-size: .76rem; color: #9e9e9e; margin-top: 2px; }
+.cell-sub     { font-size: .76rem; color: #9e9e9e; margin-top: 4px; }
+
+.cell-desc {
+  white-space: normal;
+  word-wrap: break-word;
+  overflow-wrap: anywhere;
+  line-height: 1.45;
+  max-width: 100%;
+}
+
+.col-name { min-width: 0; }
 
 .status-chip {
   display: inline-flex;
@@ -42,6 +70,7 @@
 }
 
 .action-row { display: flex; gap: 4px; }
+
 .empty-row  { text-align: center; padding: 40px; color: #9e9e9e; }
 
 .doctor-chip {

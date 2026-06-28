@@ -62,7 +62,9 @@
             <select [(ngModel)]="selectedServiceId">
               <option value="">— general consent —</option>
               @for (svc of store.services(); track svc.id) {
-                <option [value]="svc.id">{{ svc.service_name || 'Service' }}</option>
+                <!-- consent_record.service_id FKs the catalog services(id), which the API
+                     returns as `service_id` on a performed service — NOT the row `id`. -->
+                <option [value]="svc.service_id">{{ svc.service_name || 'Service' }}</option>
               }
             </select>
           </div>

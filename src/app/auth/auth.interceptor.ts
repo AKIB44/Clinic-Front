@@ -38,6 +38,19 @@ function showForbiddenToast(toast: ToastService, err: HttpErrorResponse) {
   toast.error(msg);
 }
 
+// Detect a backend outage / maintenance / 500 that should take the user to the
+// full-screen "server unavailable" page. Returns the reason, or null if the
+// error is something the component should handle itself.
+function serverOutageReason(err: HttpErrorResponse): 'offline' | 'maintenance' | 'server' | null {
+  const s = err.status;
+  // status 0 = network unreachable (browser ProgressEvent/Error). Plain aborted
+  // requests on navigation also surface as 0 but without that body — skip those.
+  if (s === 0 && (err.error instanceof ProgressEvent || err.error instanceof Error)) return 'offline';
+  if (s === 503) return 'maintenance';
+  if (s === 500 || s === 502 || s === 504) return 'server';
+  return null;
+}
+
 // Retry the request with a known-good token. If the retry itself fails with
 // 401/403, surface it as a toast instead of stranding the user on a forbidden
 // page they can't get out of.
@@ -83,6 +96,21 @@ export const authInterceptor: HttpInterceptorFn = (
 
   return next(authedReq).pipe(
     catchError((err: HttpErrorResponse) => {
+      // Backend outage / maintenance / 500 → full-screen "server unavailable"
+      // page (with a return URL so the user lands back where they were once the
+      // backend recovers). Skip the health probe and avoid redirect loops.
+      const outage = serverOutageReason(err);
+      if (
+        outage &&
+        !req.url.includes('/health') &&
+        !router.url.startsWith('/authentication/server-error')
+      ) {
+        router.navigate(['/authentication/server-error'], {
+          queryParams: { reason: outage, returnUrl: router.url },
+        });
+        return throwError(() => err);
+      }
+
       // Pass non-401 errors through (components handle 4xx/5xx themselves).
       // Exception: 403 → friendly toast; clinic_inactive is a session problem
       // and goes to login. All other 403s we toast AND re-throw so the

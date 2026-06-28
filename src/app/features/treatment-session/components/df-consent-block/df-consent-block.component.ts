@@ -172,13 +172,21 @@ export class DfConsentBlockComponent implements OnInit, AfterViewInit, OnDestroy
             method: 'PUT',
             body: blob,
             headers: { 'Content-Type': 'image/png' },
-          }).then(r => {
-            if (!r.ok) throw new Error('Upload failed');
-            // Step 3: confirm
+          }).then(async (r) => {
+            if (!r.ok) {
+              const detail = await r.text().catch(() => '');
+              throw new Error(`UPLOAD_FAILED:${r.status}:${detail.slice(0, 300)}`);
+            }
+            // Step 3: confirm. Guard against an option that rendered a literal
+            // "undefined"/"null" string (e.g. a missing field on the bound object).
+            const cleanId = (v: string) => {
+              const s = (v || '').trim();
+              return s && s !== 'undefined' && s !== 'null' ? s : undefined;
+            };
             return this.api.addConsent(sessionId, {
               procedure_type:        this.procedureType.trim(),
-              service_id:            this.selectedServiceId || undefined,
-              template_id:           this.selectedTemplateId || undefined,
+              service_id:            cleanId(this.selectedServiceId),
+              template_id:           cleanId(this.selectedTemplateId),
               patient_signature_url: s3_key,
               is_minor:              this.isMinor,
               guardian_name:         this.guardianName.trim() || undefined,
@@ -189,9 +197,19 @@ export class DfConsentBlockComponent implements OnInit, AfterViewInit, OnDestroy
             this.store.addConsent(resp.consent);
             this.closeForm();
             this.toast.success('Consent recorded.');
-          }).catch((err: Error) => {
+          }).catch((err: any) => {
             this.saving.set(false);
-            const msg = 'Failed to save consent. Please try again.';
+            // A blocked/failed PUT to S3 (CORS or network) rejects as a TypeError
+            // with no response; an S3 4xx surfaces as UPLOAD_FAILED:<status>. Only
+            // a real save error means the request actually reached our API.
+            const m: string = err?.message || '';
+            const isUploadProblem = err instanceof TypeError || m.startsWith('UPLOAD_FAILED');
+            // Keep the real reason in the console for diagnosis.
+            // eslint-disable-next-line no-console
+            console.error('[consent] save failed:', err);
+            const msg = isUploadProblem
+              ? 'Could not upload the signature to storage. This is usually an S3 CORS/bucket setting — check the PUT request to S3 in the Network tab.'
+              : 'Failed to save the consent record. Please try again.';
             this.saveError.set(msg);
             this.toast.error(msg);
           });

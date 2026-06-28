@@ -274,7 +274,7 @@
                   </mat-form-field>
                 </div>
 
-                <!-- Row 2: Age + Sex side by side -->
+                <!-- Row 2: Age + Gender side by side -->
                 <div class="age-sex-row">
                   <div class="age-col">
                     <mat-form-field appearance="outline" class="w-100">
@@ -294,7 +294,7 @@
                   </div>
                   <div class="sex-col">
                     <div class="demo-row" [class.demo-row-error]="patientForm.get('gender')?.touched && patientForm.get('gender')?.invalid">
-                      <div class="demo-label">Sex <span class="demo-required">*</span></div>
+                      <div class="demo-label">Gender <span class="demo-required">*</span></div>
                       <div class="gender-chips">
                         @for (g of genderOptions; track g.value) {
                           <button type="button" class="gender-chip"
@@ -305,7 +305,7 @@
                         }
                       </div>
                       @if (patientForm.get('gender')?.touched && patientForm.get('gender')?.invalid) {
-                        <div class="demo-error">Select a sex</div>
+                        <div class="demo-error">Select a gender</div>
                       }
                     </div>
                   </div>
@@ -705,7 +705,7 @@
                     <div class="review-cell">
                       <i-tabler name="gender-bigender" class="review-cell-icon"></i-tabler>
                       <div>
-                        <div class="review-cell-lbl">Sex</div>
+                        <div class="review-cell-lbl">Gender</div>
                         <div class="review-cell-val">{{ patientData?.gender | titlecase }}</div>
                       </div>
                     </div>

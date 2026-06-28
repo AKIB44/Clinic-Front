@@ -1,0 +1,55 @@
+<div class="se-stage" [attr.data-reason]="reason()" [style.--accent]="meta().accent">
+  <div class="se-orbits" aria-hidden="true">
+    <span class="se-orbit se-orbit--1"></span>
+    <span class="se-orbit se-orbit--2"></span>
+    <span class="se-orbit se-orbit--3"></span>
+  </div>
+
+  <div class="se-card">
+    <div class="se-icon" [class.se-icon--busy]="checking()">
+      <i-tabler [name]="meta().icon"></i-tabler>
+      <span class="se-ping"></span>
+    </div>
+
+    <span class="se-badge">
+      <span class="se-dot" [class.se-dot--live]="checking()"></span>
+      {{ meta().badge }}
+    </span>
+
+    <h1 class="se-title">{{ meta().title }}</h1>
+    <p class="se-body">{{ meta().body }}</p>
+
+    <!-- Live reconnect status -->
+    <div class="se-status" [class.se-status--checking]="checking()">
+      @if (checking()) {
+        <mat-spinner diameter="18"></mat-spinner>
+        <span>Reconnecting…</span>
+      } @else if (stillDown()) {
+        <i-tabler name="alert-circle" class="se-status__ic"></i-tabler>
+        <span>Still unreachable — retrying in {{ countdown() }}s</span>
+      } @else {
+        <i-tabler name="clock" class="se-status__ic"></i-tabler>
+        <span>Auto-retrying in {{ countdown() }}s</span>
+      }
+    </div>
+
+    <!-- progress bar to next auto-retry -->
+    <div class="se-progress" aria-hidden="true">
+      <span class="se-progress__fill"
+            [style.width.%]="checking() ? 100 : (countdown() / 15) * 100"></span>
+    </div>
+
+    <div class="se-actions">
+      <button mat-flat-button color="primary" class="se-retry"
+              [disabled]="checking()" (click)="retry()">
+        @if (checking()) { <mat-spinner diameter="18"></mat-spinner> }
+        @else { <i-tabler name="refresh" class="se-retry__ic"></i-tabler> }
+        Try again now
+      </button>
+    </div>
+
+    <p class="se-foot">
+      If this keeps happening, please contact your clinic administrator or DentaFlow support.
+    </p>
+  </div>
+</div>

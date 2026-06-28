@@ -13,6 +13,11 @@ export class ToastService {
     this.snack.open(message, 'Dismiss', { panelClass: ['toast-error'], duration: 6000 });
   }
 
+  /** Red notice without dismiss action (e.g. service disabled). */
+  deactivated(message: string): void {
+    this.snack.open(message, '', { panelClass: ['toast-error'], duration: 3000 });
+  }
+
   /** Destructive action completed (removed, cancelled, abandoned, etc.). */
   warn(message: string): void {
     this.snack.open(message, '', { panelClass: ['toast-warn'], duration: 3000 });

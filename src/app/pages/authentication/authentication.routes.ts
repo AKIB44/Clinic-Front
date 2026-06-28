@@ -42,6 +42,11 @@ export const AuthenticationRoutes: Routes = [
         component: AppMaintenanceComponent,
       },
       {
+        path: 'server-error',
+        loadComponent: () =>
+          import('./server-error/server-error.component').then(m => m.ServerErrorComponent),
+      },
+      {
         path: 'side-forgot-pwd',
         component: AppSideForgotPasswordComponent,
       },

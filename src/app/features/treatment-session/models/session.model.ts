@@ -107,6 +107,8 @@ export interface Diagnosis {
 export interface ServicePerformed {
   id: ServiceId;
   session_id: SessionId;
+  /** Catalog services(id) this performed-service references (API returns `service_id`). */
+  service_id?: string;
   catalog_item_id: string;
   catalogItemName?: string;
   tooth_numbers: number[];

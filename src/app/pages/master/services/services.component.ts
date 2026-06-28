@@ -3,6 +3,7 @@ import {
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule, FormGroup, FormControl, Validators } from '@angular/forms';
+import { MatSlideToggleChange } from '@angular/material/slide-toggle';
 import { MaterialModule } from '../../../material.module';
 import { TablerIconsModule } from 'angular-tabler-icons';
 import { MatDialog, MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
@@ -13,12 +14,19 @@ import { ClinicService } from '../../../models/clinic.model';
 
 // ── Service form dialog ───────────────────────────────────────────────────────
 
+export const SERVICE_DESCRIPTION_MAX = 200;
+
 @Component({
   selector: 'service-form-dialog',
   standalone: true,
   imports: [CommonModule, ReactiveFormsModule, MaterialModule],
   template: `
-    <h2 mat-dialog-title>{{ data.service?.id ? 'Edit Service' : 'Add Service' }}</h2>
+    <div class="dialog-title-row">
+      <h2 mat-dialog-title>{{ data.service?.id ? 'Edit Service' : 'Add Service' }}</h2>
+      <button mat-icon-button mat-dialog-close class="dialog-close" aria-label="Close">
+        <mat-icon>close</mat-icon>
+      </button>
+    </div>
     <mat-dialog-content>
       <form [formGroup]="form" class="dialog-form">
         <mat-form-field appearance="outline" class="full-width">
@@ -38,10 +46,30 @@ import { ClinicService } from '../../../models/clinic.model';
         <mat-form-field appearance="outline" class="full-width">
           <mat-label>Description</mat-label>
           <textarea matInput formControlName="description" rows="3"
+            [attr.maxlength]="descriptionMax"
             placeholder="Brief description of the procedure"></textarea>
+          <mat-hint align="end">{{ descriptionLength }}/{{ descriptionMax }}</mat-hint>
+          @if (form.get('description')?.hasError('maxlength')) {
+            <mat-error>Description cannot exceed {{ descriptionMax }} characters</mat-error>
+          }
         </mat-form-field>
         @if (isAdmin) {
-          <mat-slide-toggle formControlName="is_active" color="primary">Active</mat-slide-toggle>
+          <div class="active-toggle-row" [class.active-toggle-row--on]="form.get('is_active')?.value">
+            <div class="active-toggle-shell">
+              <span class="active-toggle-state">{{ form.get('is_active')?.value ? 'On' : 'Off' }}</span>
+              <mat-slide-toggle
+                formControlName="is_active"
+                class="dialog-active-toggle"
+                hideIcon
+                color="primary"
+                (change)="onActiveToggle($event)">
+                Active
+              </mat-slide-toggle>
+            </div>
+            <span class="active-toggle-label">
+              {{ form.get('is_active')?.value ? 'Service is enabled' : 'Service is disabled' }}
+            </span>
+          </div>
         }
       </form>
     </mat-dialog-content>
@@ -53,26 +81,121 @@ import { ClinicService } from '../../../models/clinic.model';
     </mat-dialog-actions>
   `,
   styles: [`
+    .dialog-title-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      padding-right: 8px;
+    }
+    .dialog-title-row h2[mat-dialog-title] { margin: 0; flex: 1; min-width: 0; }
+    .dialog-close { color: #64748b; flex-shrink: 0; }
     .dialog-form { display: flex; flex-direction: column; gap: 4px; min-width: 440px; padding-top: 8px; }
     .full-width { width: 100%; }
     .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    .active-toggle-row {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-top: 4px;
+      padding: 10px 12px;
+      border-radius: 10px;
+      border: 1.5px solid #e2e8f0;
+      background: #f8fafc;
+    }
+    .active-toggle-row--on {
+      border-color: #22c55e;
+      background: linear-gradient(135deg, #ecfdf5, #d1fae5);
+      box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.7),
+        0 2px 10px rgba(22, 163, 74, 0.28),
+        0 0 0 3px rgba(34, 197, 94, 0.14);
+    }
+    .active-toggle-shell {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 4px 10px 4px 8px;
+      border-radius: 999px;
+      border: 1.5px solid #cbd5e1;
+      background: #f1f5f9;
+      box-shadow: inset 0 1px 2px rgba(15, 23, 42, 0.08);
+    }
+    .active-toggle-row--on .active-toggle-shell {
+      border-color: #16a34a;
+      background: #fff;
+      box-shadow:
+        inset 0 1px 2px rgba(22, 163, 74, 0.08),
+        0 2px 6px rgba(22, 163, 74, 0.35);
+    }
+    .active-toggle-state {
+      font-size: 0.65rem;
+      font-weight: 700;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+      color: #64748b;
+      min-width: 20px;
+    }
+    .active-toggle-row--on .active-toggle-state { color: #15803d; }
+    .active-toggle-label {
+      font-size: 0.8rem;
+      font-weight: 600;
+      color: #94a3b8;
+    }
+    .active-toggle-row--on .active-toggle-label { color: #059669; }
+    :host ::ng-deep .dialog-active-toggle .mdc-switch__track {
+      opacity: 1 !important;
+      border: 1px solid #94a3b8;
+      box-shadow: inset 0 1px 3px rgba(15, 23, 42, 0.12);
+    }
+    :host ::ng-deep .dialog-active-toggle .mdc-switch--unselected .mdc-switch__track {
+      background: #94a3b8 !important;
+    }
+    :host ::ng-deep .dialog-active-toggle .mdc-switch--selected .mdc-switch__track {
+      background: #16a34a !important;
+      border-color: #15803d;
+      box-shadow:
+        inset 0 1px 2px rgba(255, 255, 255, 0.3),
+        0 2px 6px rgba(22, 163, 74, 0.45);
+    }
+    :host ::ng-deep .dialog-active-toggle .mdc-switch__shadow {
+      box-shadow: 0 2px 4px rgba(15, 23, 42, 0.25) !important;
+    }
+    :host ::ng-deep .active-toggle-row--on .dialog-active-toggle .mdc-switch--selected .mdc-switch__shadow {
+      box-shadow: 0 2px 8px rgba(22, 163, 74, 0.5) !important;
+    }
   `]
 })
 export class ServiceFormDialog {
   dialogRef   = inject(MatDialogRef<ServiceFormDialog>);
   data        = inject<{ service: ClinicService | null; isAdmin: boolean }>(MAT_DIALOG_DATA);
-  private svc = inject(ClinicServicesService);
+  private svc   = inject(ClinicServicesService);
+  private toast = inject(ToastService);
 
   saving  = false;
   isAdmin = this.data.isAdmin;
+  readonly descriptionMax = SERVICE_DESCRIPTION_MAX;
 
   form = new FormGroup({
     name:             new FormControl(this.data.service?.name             ?? '', [Validators.required]),
     duration_minutes: new FormControl(this.data.service?.duration_minutes ?? 30, [Validators.required, Validators.min(1)]),
     price:            new FormControl(this.data.service?.price            ?? 0,  [Validators.required, Validators.min(0)]),
-    description:      new FormControl(this.data.service?.description      ?? ''),
+    description:      new FormControl(this.data.service?.description      ?? '', [Validators.maxLength(SERVICE_DESCRIPTION_MAX)]),
     is_active:        new FormControl(this.data.service?.is_active        ?? true),
   });
+
+  get descriptionLength(): number {
+    const v = this.form.get('description')?.value;
+    return typeof v === 'string' ? v.length : 0;
+  }
+
+  onActiveToggle(event: MatSlideToggleChange): void {
+    if (event.checked) {
+      this.toast.success('Service enabled');
+    } else {
+      this.toast.deactivated('Service disabled');
+    }
+  }
 
   save() {
     if (this.form.invalid) return;
@@ -146,10 +269,22 @@ export class ServicesMasterComponent implements OnInit {
       width: '520px',
     });
     ref.afterClosed().subscribe(result => {
-      if (result) {
-        this.toast.success(service ? 'Service updated' : 'Service added');
-        this.load();
+      if (!result) return;
+      const saved = result as ClinicService;
+      if (service) {
+        if (service.is_active !== saved.is_active) {
+          if (saved.is_active) {
+            this.toast.success(`${saved.name} enabled`);
+          } else {
+            this.toast.deactivated(`${saved.name} disabled`);
+          }
+        } else {
+          this.toast.success('Service updated');
+        }
+      } else {
+        this.toast.success('Service added');
       }
+      this.load();
     });
   }
 
@@ -159,7 +294,11 @@ export class ServicesMasterComponent implements OnInit {
         const idx = this.services.findIndex(s => s.id === service.id);
         if (idx >= 0) this.services[idx] = r.service;
         this.services = [...this.services];
-        this.toast.success(r.service.is_active ? 'Service activated' : 'Service deactivated');
+        if (r.service.is_active) {
+          this.toast.success(`${r.service.name} enabled`);
+        } else {
+          this.toast.deactivated(`${r.service.name} disabled`);
+        }
         this.cdr.markForCheck();
       },
       error: () => this.toast.error('Could not toggle service'),

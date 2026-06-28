@@ -121,6 +121,16 @@ const STATUS_ACTIONS: Record<AppointmentStatus, Array<{ label: string; next: App
   cancelled:   [],
 };
 
+/** Live visits: confirmed, started, or currently in treatment session. */
+function isActiveScheduleStatus(status: AppointmentStatus): boolean {
+  return status === 'confirmed' || status === 'in_progress' || status === 'in_treatment';
+}
+
+/** Default kanban columns when no pill is selected. */
+function isDefaultBoardStatus(status: AppointmentStatus): boolean {
+  return status === 'booked' || isActiveScheduleStatus(status);
+}
+
 // ── Detail Dialog ─────────────────────────────────────────────────────────────
 
 @Component({
@@ -982,7 +992,7 @@ export class ScheduleComponent implements OnInit, OnDestroy {
       case 'done':
         return this.filtered.filter(a => a.status === 'done');
       case 'active':
-        return this.boardEligible.filter(a => a.status === 'in_progress' || a.status === 'confirmed');
+        return this.boardEligible.filter(a => isActiveScheduleStatus(a.status));
       case 'pending':
         return this.boardEligible.filter(a => a.status === 'booked');
       default:
@@ -993,7 +1003,7 @@ export class ScheduleComponent implements OnInit, OnDestroy {
   /** Columns sorted by total day bookings (most → least).
    *  Visible set is scoped to the active pill filter so each column always has
    *  relevant cards. Without a pill the default shows only services with
-   *  upcoming / in-progress work (booked | confirmed | in_progress). */
+   *  upcoming / in-progress work (booked | confirmed | in_progress | in_treatment). */
   get sortedColumns(): ServiceColumn[] {
     const source = this.statFilter === 'cancelled' ? this.cancelledFiltered : this.filtered;
     const counts = new Map<string, number>();
@@ -1005,7 +1015,7 @@ export class ScheduleComponent implements OnInit, OnDestroy {
     if (!this.pillSelected) {
       relevantIds = new Set(
         this.filtered
-          .filter(a => a.status === 'booked' || a.status === 'confirmed' || a.status === 'in_progress')
+          .filter(a => isDefaultBoardStatus(a.status))
           .map(a => a.service_id),
       );
     } else {
@@ -1016,7 +1026,7 @@ export class ScheduleComponent implements OnInit, OnDestroy {
         case 'active':
           relevantIds = new Set(
             this.filtered
-              .filter(a => a.status === 'in_progress' || a.status === 'confirmed')
+              .filter(a => isActiveScheduleStatus(a.status))
               .map(a => a.service_id),
           );
           break;
@@ -1050,7 +1060,7 @@ export class ScheduleComponent implements OnInit, OnDestroy {
   }
 
   get totalCount():   number { return this.filtered.length; }
-  get activeCount():  number { return this.filtered.filter(a => a.status === 'in_progress' || a.status === 'confirmed').length; }
+  get activeCount():  number { return this.filtered.filter(a => isActiveScheduleStatus(a.status)).length; }
   get doneCount():    number { return this.filtered.filter(a => a.status === 'done').length; }
   get pendingCount(): number { return this.filtered.filter(a => a.status === 'booked').length; }
   get cancelledCount(): number { return this.cancelledFiltered.length; }
