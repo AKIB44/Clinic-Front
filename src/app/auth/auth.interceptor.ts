@@ -38,16 +38,18 @@ function showForbiddenToast(toast: ToastService, err: HttpErrorResponse) {
   toast.error(msg);
 }
 
-// Detect a backend outage / maintenance / 500 that should take the user to the
-// full-screen "server unavailable" page. Returns the reason, or null if the
-// error is something the component should handle itself.
+// Detect a genuine backend OUTAGE that warrants the full-screen "server
+// unavailable" page. Returns the reason, or null if it's something the component
+// should handle itself. A plain 500 is an application error from ONE endpoint —
+// it must NOT hijack the whole screen (and, with the retry-to-returnUrl page,
+// would loop): the component surfaces it inline instead.
 function serverOutageReason(err: HttpErrorResponse): 'offline' | 'maintenance' | 'server' | null {
   const s = err.status;
   // status 0 = network unreachable (browser ProgressEvent/Error). Plain aborted
   // requests on navigation also surface as 0 but without that body — skip those.
   if (s === 0 && (err.error instanceof ProgressEvent || err.error instanceof Error)) return 'offline';
-  if (s === 503) return 'maintenance';
-  if (s === 500 || s === 502 || s === 504) return 'server';
+  if (s === 503) return 'maintenance'; // whole backend in maintenance
+  if (s === 502 || s === 504) return 'server'; // gateway down = real infra outage
   return null;
 }
 

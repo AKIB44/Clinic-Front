@@ -38,6 +38,17 @@
   color: #64748b;
 }
 
+.sc-paused-banner {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 20px;
+  background: #fff8e1;
+  color: #e65100;
+  font-size: 0.84rem;
+  border-bottom: 1px solid #ffe082;
+}
+
 // ── Top bar ───────────────────────────────────────────────────────────────────
 .sc-topbar {
   display: flex; align-items: center; justify-content: space-between;

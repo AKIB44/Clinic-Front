@@ -1,4 +1,6 @@
 import { Injectable, signal, computed, inject } from '@angular/core';
+import { Observable, of, throwError } from 'rxjs';
+import { catchError, finalize, map, shareReplay, tap } from 'rxjs/operators';
 import {
   ClinicalSession,
   ClinicalNote,
@@ -27,11 +29,15 @@ import {
 } from '../models/session.model';
 import { SessionApiService } from '../services/session-api.service';
 import { OfflineQueueService } from '../../../core/offline/offline-queue.service';
+import { ToastService } from '../../../services/toast.service';
 
 @Injectable({ providedIn: 'root' })
 export class SessionStore {
   private api     = inject(SessionApiService);
   private offline = inject(OfflineQueueService);
+  private toast   = inject(ToastService);
+
+  private resumeInFlight$: Observable<void> | null = null;
 
   // ── Root session state ────────────────────────────────────────────────────
   readonly sessionId       = signal<SessionId | null>(null);
@@ -94,6 +100,8 @@ export class SessionStore {
 
   // ── Derived ───────────────────────────────────────────────────────────────
   readonly isSealed = computed(() => !!this.sealedAt());
+  readonly isPaused  = computed(() => this.status() === 'PAUSED');
+  readonly resuming    = signal(false);
 
   readonly totalCharges = computed(() =>
     this.services().reduce((sum, s) =>
@@ -273,6 +281,47 @@ export class SessionStore {
 
   setStatus(status: SessionStatus): void {
     this.status.set(status);
+  }
+
+  /**
+   * Resume a paused session before clinical writes. No-op when already active.
+   * Deduplicates concurrent resume calls (manual Resume + auto-resume on edit).
+   */
+  ensureResumedForEdit(): Observable<void> {
+    if (this.isSealed()) {
+      return throwError(() => new Error('Session is sealed'));
+    }
+    if (!this.isPaused()) {
+      return of(undefined);
+    }
+
+    const sessionId = this.sessionId();
+    if (!sessionId) {
+      return throwError(() => new Error('No active session'));
+    }
+
+    if (!this.resumeInFlight$) {
+      this.resuming.set(true);
+      this.resumeInFlight$ = this.api.resumeSession(sessionId).pipe(
+        tap(({ session }) => {
+          this.applyResumedState(session);
+          this.toast.success('Session resumed.');
+        }),
+        map(() => undefined),
+        catchError((err) => {
+          this.resumeInFlight$ = null;
+          this.resuming.set(false);
+          return throwError(() => err);
+        }),
+        finalize(() => {
+          this.resumeInFlight$ = null;
+          this.resuming.set(false);
+        }),
+        shareReplay({ bufferSize: 1, refCount: true }),
+      );
+    }
+
+    return this.resumeInFlight$;
   }
 
   /** Align timer with server hydration; merge persisted client cache when API omits fields. */

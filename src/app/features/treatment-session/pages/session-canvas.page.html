@@ -46,8 +46,8 @@
 
       @if (!store.isSealed() && store.sessionId()) {
         @if (store.status() === 'PAUSED') {
-          <button mat-stroked-button (click)="resumeSession()" [disabled]="pausing()" class="sc-action-btn">
-            @if (pausing()) { <mat-spinner diameter="13" style="display:inline-block;margin-right:4px"></mat-spinner> }
+          <button mat-stroked-button (click)="resumeSession()" [disabled]="pausing() || store.resuming()" class="sc-action-btn">
+            @if (pausing() || store.resuming()) { <mat-spinner diameter="13" style="display:inline-block;margin-right:4px"></mat-spinner> }
             <i-tabler name="player-play" size="14"></i-tabler> Resume
           </button>
         } @else {
@@ -82,6 +82,13 @@
       }
     </div>
   </div>
+
+  @if (store.isPaused() && !store.isSealed()) {
+    <div class="sc-paused-banner" role="status">
+      <i-tabler name="player-pause" size="16"></i-tabler>
+      Session is paused. Click Resume or start editing — your changes will resume the session automatically.
+    </div>
+  }
 
   <!-- ── Loading ─────────────────────────────────────────────────────────── -->
   @if (store.loading()) {

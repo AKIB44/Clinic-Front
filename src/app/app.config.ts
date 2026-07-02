@@ -21,6 +21,7 @@ import { TranslateLoader, TranslateModule } from '@ngx-translate/core';
 import { TranslateHttpLoader } from '@ngx-translate/http-loader';
 import { authInterceptor } from './auth/auth.interceptor';
 import { offlineInterceptor } from './core/offline/offline.interceptor';
+import { sessionAutoResumeInterceptor } from './features/treatment-session/interceptors/session-auto-resume.interceptor';
 import { AuthService } from './auth/auth.service';
 
 // icons
@@ -54,7 +55,11 @@ export const appConfig: ApplicationConfig = {
       }),
       withComponentInputBinding()
     ),
-    provideHttpClient(withInterceptors([offlineInterceptor, authInterceptor])),
+    provideHttpClient(withInterceptors([
+      offlineInterceptor,
+      sessionAutoResumeInterceptor,
+      authInterceptor,
+    ])),
     {
       provide: APP_INITIALIZER,
       useFactory: (auth: AuthService) => () => auth.initPermissions(),

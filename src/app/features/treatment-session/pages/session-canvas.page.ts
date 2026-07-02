@@ -323,14 +323,13 @@ export class SessionCanvasPage implements OnInit, OnDestroy {
   }
 
   resumeSession(): void {
-    const sessionId = this.store.sessionId();
-    if (!sessionId || this.pausing()) return;
+    if (!this.store.sessionId() || this.pausing() || this.store.resuming()) return;
+    if (!this.store.isPaused()) return;
+
     this.pausing.set(true);
-    this.api.resumeSession(sessionId).subscribe({
-      next: ({ session }) => {
+    this.store.ensureResumedForEdit().subscribe({
+      next: () => {
         this.pausing.set(false);
-        this.store.applyResumedState(session);
-        this.toast.success('Session resumed.');
         this.cdr.markForCheck();
       },
       error: (err) => {

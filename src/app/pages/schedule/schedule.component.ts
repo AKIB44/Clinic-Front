@@ -108,12 +108,10 @@ const STATUS_ACTIONS: Record<AppointmentStatus, Array<{ label: string; next: App
   ],
   confirmed:   [
     { label: 'Start',    next: 'in_progress', color: 'primary' },
-    { label: 'No Show',  next: 'no_show',     color: 'warn'    },
     { label: 'Cancel',   next: 'cancelled',   color: 'warn'    },
   ],
   in_progress: [
     { label: 'Done',     next: 'done',        color: 'primary' },
-    { label: 'No Show',  next: 'no_show',     color: 'warn'    },
     { label: 'Cancel',   next: 'cancelled',   color: 'warn'    },
   ],
   done:        [],
@@ -207,7 +205,7 @@ function isDefaultBoardStatus(status: AppointmentStatus): boolean {
             @if (nonCancelActions.length) {
               <div class="action-row">
                 @for (a of nonCancelActions; track a.next) {
-                  <button mat-flat-button color="primary"
+                  <button mat-flat-button [color]="a.color"
                           [disabled]="pendingKey === statusActionKey(a.next)"
                           (click)="doAction(a.next)">
                     @if (pendingKey === statusActionKey(a.next)) {
