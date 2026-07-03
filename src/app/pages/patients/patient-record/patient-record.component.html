@@ -24,47 +24,106 @@
 
     <!-- ── Header ──────────────────────────────────────────────────────────── -->
     <section class="patient-header">
-      <div class="patient-header__left">
-        <div class="avatar">{{ initials() }}</div>
-        <div class="patient-title">
-          <h1>{{ p.name }}</h1>
-          <div class="patient-meta">
-            <span><i-tabler name="phone" size="14"></i-tabler>{{ p.phone }}</span>
-            @if (p.email) {
-              <span><i-tabler name="mail" size="14"></i-tabler>{{ p.email }}</span>
-            }
+
+      <!-- Top row: avatar + identity + stats -->
+      <div class="patient-header__top">
+        <div class="patient-header__left">
+
+          <!-- Avatar with gender accent ring -->
+          <div class="avatar" [class.avatar--male]="p.gender === 'male'"
+                              [class.avatar--female]="p.gender === 'female'">
+            {{ initials() }}
             @if (p.gender) {
-              <span><i-tabler name="user" size="14"></i-tabler>{{ p.gender | titlecase }}</span>
-            }
-            @if (p.age) {
-              <span><i-tabler name="clock" size="14"></i-tabler>{{ p.age }} yrs</span>
-            }
-            @if (p.dob) {
-              <span><i-tabler name="calendar" size="14"></i-tabler>{{ p.dob | date:'dd MMM yyyy' }}</span>
+              <span class="avatar-gender-dot" [class.dot--male]="p.gender === 'male'"
+                                              [class.dot--female]="p.gender === 'female'"
+                                              [class.dot--other]="p.gender === 'other'">
+              </span>
             }
           </div>
-        </div>
-      </div>
 
-      <!-- Stat chips -->
-      <div class="header-stats">
-        <div class="stat-chip">
-          <span class="stat-val">{{ allAppts().length }}</span>
-          <span class="stat-label">Appointments</span>
+          <div class="patient-title">
+            <div class="patient-name-row">
+              <h1>{{ p.name }}</h1>
+              @if (p.blood_group) {
+                <span class="blood-group-badge">
+                  <i-tabler name="droplet" size="11"></i-tabler>{{ p.blood_group }}
+                </span>
+              }
+            </div>
+
+            <!-- Core demo inline -->
+            <div class="patient-meta">
+              <span><i-tabler name="phone" size="14"></i-tabler>{{ p.phone }}</span>
+              @if (p.email) {
+                <span><i-tabler name="mail" size="14"></i-tabler>{{ p.email }}</span>
+              }
+              @if (p.age) {
+                <span><i-tabler name="user" size="14"></i-tabler>{{ p.age }} yrs
+                  @if (p.gender) { · {{ p.gender | titlecase }} }
+                </span>
+              }
+              @if (p.dob) {
+                <span><i-tabler name="calendar" size="14"></i-tabler>{{ p.dob | date:'dd MMM yyyy' }}</span>
+              }
+              @if (p.occupation) {
+                <span><i-tabler name="briefcase" size="14"></i-tabler>{{ p.occupation }}</span>
+              }
+            </div>
+
+            <!-- Medical flag pills -->
+            @if (medicalFlags().length > 0) {
+              <div class="medical-flags">
+                @for (flag of medicalFlags(); track flag.key) {
+                  <span class="medical-flag"
+                        [style.color]="flag.color"
+                        [style.background]="flag.bg"
+                        [title]="flag.key === 'allergy' ? 'Allergies: ' + (p.known_allergies ?? '') : flag.label">
+                    <i-tabler [name]="flag.icon" size="12"></i-tabler>
+                    {{ flag.label }}
+                    @if (flag.key === 'allergy' && p.known_allergies) {
+                      <span class="flag-detail">: {{ p.known_allergies }}</span>
+                    }
+                  </span>
+                }
+              </div>
+            }
+
+          </div><!-- /patient-title -->
+        </div><!-- /patient-header__left -->
+
+        <!-- Stat chips (right side) -->
+        <div class="header-stats">
+          <div class="stat-chip">
+            <span class="stat-val">{{ allAppts().length }}</span>
+            <span class="stat-label">Appointments</span>
+          </div>
+          <div class="stat-chip">
+            <span class="stat-val">{{ record()?.sessions?.length ?? 0 }}</span>
+            <span class="stat-label">Sessions</span>
+          </div>
+          <div class="stat-chip stat-chip--primary">
+            <span class="stat-val">₹{{ (record()?.billing?.total_billed ?? 0) | number:'1.0-0' }}</span>
+            <span class="stat-label">Total Billed</span>
+          </div>
+          <div class="stat-chip">
+            <span class="stat-val">{{ activePlansCount() }}</span>
+            <span class="stat-label">Active Plans</span>
+          </div>
         </div>
-        <div class="stat-chip">
-          <span class="stat-val">{{ record()?.sessions?.length ?? 0 }}</span>
-          <span class="stat-label">Sessions</span>
+      </div><!-- /patient-header__top -->
+
+      <!-- Emergency contact strip (only when present) -->
+      @if (p.emergency_contact_name || p.emergency_contact_phone) {
+        <div class="emergency-strip">
+          <i-tabler name="phone-call" size="13"></i-tabler>
+          <span class="emergency-label">Emergency contact:</span>
+          @if (p.emergency_contact_name) { <span class="emergency-name">{{ p.emergency_contact_name }}</span> }
+          @if (p.emergency_contact_phone) {
+            <a class="emergency-phone" href="tel:{{ p.emergency_contact_phone }}">{{ p.emergency_contact_phone }}</a>
+          }
         </div>
-        <div class="stat-chip stat-chip--primary">
-          <span class="stat-val">₹{{ (record()?.billing?.total_billed ?? 0) | number:'1.0-0' }}</span>
-          <span class="stat-label">Total Billed</span>
-        </div>
-        <div class="stat-chip">
-          <span class="stat-val">{{ activePlansCount() }}</span>
-          <span class="stat-label">Active Plans</span>
-        </div>
-      </div>
+      }
+
     </section>
 
     <!-- ── Tabs ────────────────────────────────────────────────────────────── -->
@@ -128,11 +187,62 @@
             @if (p.age) { <div><dt>Age</dt><dd>{{ p.age }} yrs</dd></div> }
             @if (p.gender) { <div><dt>Sex</dt><dd>{{ p.gender | titlecase }}</dd></div> }
             @if (p.dob) { <div><dt>Date of Birth</dt><dd>{{ p.dob | date:'dd MMM yyyy' }}</dd></div> }
+            @if (p.blood_group) { <div><dt>Blood Group</dt><dd class="dd--blood">{{ p.blood_group }}</dd></div> }
+            @if (p.occupation) { <div><dt>Occupation</dt><dd>{{ p.occupation }}</dd></div> }
+            @if (p.preferred_language) { <div><dt>Language</dt><dd>{{ p.preferred_language }}</dd></div> }
             @if (p.address) { <div><dt>Address</dt><dd>{{ p.address }}</dd></div> }
-            @if (!p.age && !p.gender && !p.dob && !p.address) {
+            @if (p.emergency_contact_name || p.emergency_contact_phone) {
+              <div>
+                <dt>Emergency Contact</dt>
+                <dd>{{ p.emergency_contact_name }}
+                  @if (p.emergency_contact_phone) { · {{ p.emergency_contact_phone }} }
+                </dd>
+              </div>
+            }
+            @if (!p.age && !p.gender && !p.dob && !p.address && !p.blood_group) {
               <div><dt>—</dt><dd>No demographics recorded</dd></div>
             }
           </dl>
+        </div>
+
+        <!-- Medical Flags & Allergies -->
+        <div class="info-panel">
+          <h2><i-tabler name="shield-heart" size="16"></i-tabler> Medical Alerts</h2>
+          @if (medicalFlags().length === 0 && !p.known_allergies) {
+            <p class="no-flags-msg">No medical alerts flagged.</p>
+          } @else {
+            <div class="medical-flags-grid">
+              <div class="mf-item" [class.mf-active]="p.is_smoker">
+                <i-tabler name="smoking" size="18"></i-tabler>
+                <span>Smoker</span>
+              </div>
+              <div class="mf-item" [class.mf-active]="p.is_diabetic">
+                <i-tabler name="droplet" size="18"></i-tabler>
+                <span>Diabetic</span>
+              </div>
+              <div class="mf-item" [class.mf-active]="p.is_hypertensive">
+                <i-tabler name="activity" size="18"></i-tabler>
+                <span>Hypertensive</span>
+              </div>
+              <div class="mf-item" [class.mf-active]="p.is_pregnant">
+                <i-tabler name="heart" size="18"></i-tabler>
+                <span>Pregnant</span>
+              </div>
+              <div class="mf-item" [class.mf-active]="p.is_on_blood_thinner">
+                <i-tabler name="tint" size="18"></i-tabler>
+                <span>Blood Thinner</span>
+              </div>
+            </div>
+            @if (p.known_allergies) {
+              <div class="allergy-box">
+                <i-tabler name="alert-triangle" size="14"></i-tabler>
+                <div>
+                  <div class="allergy-title">Known Allergies</div>
+                  <div class="allergy-text">{{ p.known_allergies }}</div>
+                </div>
+              </div>
+            }
+          }
         </div>
 
         <!-- Clinical History -->

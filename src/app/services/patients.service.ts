@@ -15,6 +15,18 @@ export interface Patient {
   clinical_history?: string;
   last_visit?: string;
   last_service?: string;
+  // medical flags (migration 084)
+  blood_group?: string | null;
+  is_smoker?: boolean;
+  is_diabetic?: boolean;
+  is_hypertensive?: boolean;
+  is_pregnant?: boolean;
+  is_on_blood_thinner?: boolean;
+  known_allergies?: string | null;
+  emergency_contact_name?: string | null;
+  emergency_contact_phone?: string | null;
+  preferred_language?: string | null;
+  occupation?: string | null;
 }
 
 export interface PatientAppointment {

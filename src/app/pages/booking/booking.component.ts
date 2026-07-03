@@ -13,7 +13,7 @@ import { debounceTime, distinctUntilChanged, switchMap, takeUntil, filter } from
 import { Router, RouterLink } from '@angular/router';
 import { trigger, transition, style, animate, query, stagger, state } from '@angular/animations';
 import { AppointmentsService, BookingPayload, Slot } from '../../services/appointments.service';
-import { PatientsService } from '../../services/patients.service';
+import { PatientsService, Patient } from '../../services/patients.service';
 import { ClinicServicesService } from '../../services/clinic-services.service';
 import { ChairsService } from '../../services/chairs.service';
 import { AuthService } from '../../auth/auth.service';
@@ -238,7 +238,14 @@ export class BookingComponent implements OnInit, OnDestroy {
   patientForm!: FormGroup;
   readonly welcomeBack  = signal('');
   readonly patientSaved = signal(false);
-  patientData: { name: string; phone: string; email: string; age?: number; gender?: string; address?: string; clinical_history?: string } | null = null;
+  patientData: {
+    name: string; phone: string; email: string; age?: number; gender?: string;
+    address?: string; clinical_history?: string;
+    blood_group?: string; is_smoker?: boolean; is_diabetic?: boolean;
+    is_hypertensive?: boolean; is_pregnant?: boolean; is_on_blood_thinner?: boolean;
+    known_allergies?: string; emergency_contact_name?: string; emergency_contact_phone?: string;
+    occupation?: string;
+  } | null = null;
 
   // ── Clinical file attachments ─────────────────────────────────────────────
   readonly clinicalFiles = signal<File[]>([]);
@@ -293,6 +300,7 @@ export class BookingComponent implements OnInit, OnDestroy {
     { value: 'other',  label: 'Other' },
   ];
 
+  readonly bloodGroups         = ['A+','A-','B+','B-','AB+','AB-','O+','O-'];
   readonly lastVisitOptions    = LAST_VISIT_OPTIONS;
   readonly allergyOptions      = ALLERGY_OPTIONS;
   readonly sensitivityOptions  = SENSITIVITY_OPTIONS;
@@ -342,13 +350,24 @@ export class BookingComponent implements OnInit, OnDestroy {
 
   ngOnInit() {
     this.patientForm = this.fb.group({
-      name:             ['', [Validators.required, Validators.minLength(2), Validators.pattern(/^[A-Za-z\s]+$/)]],
-      phone:            ['', [Validators.required, Validators.pattern(/^[6-9]\d{9}$/)]],
-      age:              [null, [Validators.required, Validators.min(this.ageMin), Validators.max(this.ageMax)]],
-      gender:           ['', Validators.required],
-      address:          ['', Validators.required],
-      email:            ['', Validators.email],
-      clinical_history: [''],
+      name:                 ['', [Validators.required, Validators.minLength(2), Validators.pattern(/^[A-Za-z\s]+$/)]],
+      phone:                ['', [Validators.required, Validators.pattern(/^[6-9]\d{9}$/)]],
+      age:                  [null, [Validators.required, Validators.min(this.ageMin), Validators.max(this.ageMax)]],
+      gender:               ['', Validators.required],
+      address:              ['', Validators.required],
+      email:                ['', Validators.email],
+      clinical_history:     [''],
+      // medical flags
+      blood_group:          [null],
+      is_smoker:            [false],
+      is_diabetic:          [false],
+      is_hypertensive:      [false],
+      is_pregnant:          [false],
+      is_on_blood_thinner:  [false],
+      known_allergies:      [''],
+      emergency_contact_name:  [''],
+      emergency_contact_phone: [''],
+      occupation:           [''],
     });
 
     this.loadServicesAndChairs();
@@ -483,7 +502,7 @@ export class BookingComponent implements OnInit, OnDestroy {
     try { sessionStorage.removeItem(this.draftKey()); } catch { /* ignore */ }
   }
 
-  private applyLookup(matches: { id: string; name: string; email?: string; age?: number; gender?: string; address?: string; clinical_history?: string }[], opts: { skipNamePatch?: boolean } = {}) {
+  private applyLookup(matches: Patient[], opts: { skipNamePatch?: boolean } = {}) {
     this.lookupBusy.set(false);
     const typedName = (this.patientForm.get('name')?.value ?? '').trim().toLowerCase();
     const exact = typedName
@@ -492,13 +511,23 @@ export class BookingComponent implements OnInit, OnDestroy {
 
     if (exact) {
       const patch: Record<string, unknown> = {
-        email:            exact.email ?? '',
-        age:              exact.age != null
+        email:                  exact.email ?? '',
+        age:                    exact.age != null
           ? Math.min(this.ageMax, Math.max(this.ageMin, exact.age))
           : null,
-        gender:           exact.gender ?? '',
-        address:          exact.address ?? '',
-        clinical_history: exact.clinical_history ?? '',
+        gender:                 exact.gender ?? '',
+        address:                exact.address ?? '',
+        clinical_history:       exact.clinical_history ?? '',
+        blood_group:            exact.blood_group ?? null as string | null,
+        is_smoker:              exact.is_smoker ?? false,
+        is_diabetic:            exact.is_diabetic ?? false,
+        is_hypertensive:        exact.is_hypertensive ?? false,
+        is_pregnant:            exact.is_pregnant ?? false,
+        is_on_blood_thinner:    exact.is_on_blood_thinner ?? false,
+        known_allergies:        exact.known_allergies ?? '',
+        emergency_contact_name:  exact.emergency_contact_name ?? '',
+        emergency_contact_phone: exact.emergency_contact_phone ?? '',
+        occupation:             exact.occupation ?? '',
       };
       if (!opts.skipNamePatch) patch['name'] = exact.name;
       this.patientForm.patchValue(patch, { emitEvent: false });
@@ -657,13 +686,23 @@ export class BookingComponent implements OnInit, OnDestroy {
     if (this.patientForm.invalid) return;
     const v = this.patientForm.value;
     this.patientData = {
-      name:             v.name,
-      phone:            v.phone,
-      email:            v.email ?? '',
-      age:              v.age != null && v.age !== '' ? Number(v.age) : undefined,
-      gender:           v.gender || undefined,
-      address:          v.address || undefined,
-      clinical_history: v.clinical_history || undefined,
+      name:                   v.name,
+      phone:                  v.phone,
+      email:                  v.email ?? '',
+      age:                    v.age != null && v.age !== '' ? Number(v.age) : undefined,
+      gender:                 v.gender || undefined,
+      address:                v.address || undefined,
+      clinical_history:       v.clinical_history || undefined,
+      blood_group:            v.blood_group || undefined,
+      is_smoker:              v.is_smoker ?? false,
+      is_diabetic:            v.is_diabetic ?? false,
+      is_hypertensive:        v.is_hypertensive ?? false,
+      is_pregnant:            v.is_pregnant ?? false,
+      is_on_blood_thinner:    v.is_on_blood_thinner ?? false,
+      known_allergies:        v.known_allergies || undefined,
+      emergency_contact_name:  v.emergency_contact_name || undefined,
+      emergency_contact_phone: v.emergency_contact_phone || undefined,
+      occupation:             v.occupation || undefined,
     };
     this.patientSaved.set(true);
 
@@ -717,7 +756,9 @@ export class BookingComponent implements OnInit, OnDestroy {
 
   setGender(value: string) {
     const current = this.patientForm.get('gender')?.value;
-    this.patientForm.patchValue({ gender: current === value ? '' : value });
+    const next = current === value ? '' : value;
+    this.patientForm.patchValue({ gender: next });
+    if (next !== 'female') this.patientForm.patchValue({ is_pregnant: false });
   }
 
   onNameInput(event: Event): void {

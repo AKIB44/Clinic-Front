@@ -37,56 +37,105 @@
 .patient-header {
   background: #fff;
   border: 1px solid #e6edf5;
-  border-radius: 12px;
+  border-radius: 14px;
+  padding: 20px;
+  box-shadow: 0 1px 6px rgba(0,0,0,.06);
   display: flex;
-  align-items: center;
+  flex-direction: column;
+  gap: 0;
+}
+
+.patient-header__top {
+  display: flex;
+  align-items: flex-start;
   justify-content: space-between;
   gap: 16px;
-  padding: 20px;
   flex-wrap: wrap;
-  box-shadow: 0 1px 4px rgba(0,0,0,.05);
 }
 
 .patient-header__left {
   display: flex;
-  align-items: center;
-  gap: 14px;
+  align-items: flex-start;
+  gap: 16px;
   flex: 1;
   min-width: 0;
 }
 
+// Avatar
 .avatar {
+  position: relative;
   align-items: center;
   background: #e6f7f1;
   border-radius: 50%;
   color: #0d7a5f;
   display: flex;
-  flex: 0 0 56px;
-  font-size: 18px;
+  flex: 0 0 64px;
+  font-size: 20px;
   font-weight: 800;
-  height: 56px;
+  height: 64px;
   justify-content: center;
-  width: 56px;
+  width: 64px;
+  box-shadow: 0 0 0 3px #fff, 0 0 0 5px #b7e4d3;
+
+  &--male   { box-shadow: 0 0 0 3px #fff, 0 0 0 5px #bfdbfe; }
+  &--female { box-shadow: 0 0 0 3px #fff, 0 0 0 5px #fbcfe8; }
+}
+
+.avatar-gender-dot {
+  position: absolute;
+  bottom: 1px;
+  right: 1px;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  border: 2px solid #fff;
+
+  &.dot--male   { background: #3b82f6; }
+  &.dot--female { background: #ec4899; }
+  &.dot--other  { background: #8b5cf6; }
 }
 
 .patient-title {
   min-width: 0;
+  flex: 1;
+  padding-top: 2px;
+}
+
+.patient-name-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-bottom: 5px;
 
   h1 {
     color: #102a43;
     font-size: 22px;
-    line-height: 1.2;
-    margin: 0 0 6px;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
+    font-weight: 800;
+    line-height: 1.15;
+    margin: 0;
   }
+}
+
+.blood-group-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  background: #fee2e2;
+  color: #b91c1c;
+  font-size: 11px;
+  font-weight: 800;
+  padding: 2px 8px;
+  border-radius: 20px;
+  letter-spacing: .3px;
+  white-space: nowrap;
 }
 
 .patient-meta {
   display: flex;
   flex-wrap: wrap;
-  gap: 8px 14px;
+  gap: 6px 14px;
+  margin-bottom: 8px;
 
   span {
     align-items: center;
@@ -95,6 +144,57 @@
     font-size: 13px;
     gap: 4px;
   }
+}
+
+// Medical flag pills in header
+.medical-flags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+  margin-top: 4px;
+}
+
+.medical-flag {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 11px;
+  font-weight: 700;
+  padding: 3px 9px;
+  border-radius: 20px;
+  white-space: nowrap;
+  letter-spacing: .2px;
+  cursor: default;
+
+  .flag-detail {
+    font-weight: 400;
+    max-width: 120px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+}
+
+// Emergency contact strip
+.emergency-strip {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 14px;
+  padding-top: 12px;
+  border-top: 1px dashed #e2e8f0;
+  font-size: 12px;
+  color: #475569;
+  flex-wrap: wrap;
+}
+
+.emergency-label { font-weight: 700; color: #b91c1c; }
+.emergency-name  { color: #334e68; font-weight: 600; }
+.emergency-phone {
+  color: #0d7a5f;
+  font-weight: 700;
+  text-decoration: none;
+  &:hover { text-decoration: underline; }
 }
 
 // ── Stat chips ─────────────────────────────────────────────────────────────────
@@ -267,6 +367,72 @@
 .history-panel {
   margin-top: 14px;
   overflow: hidden;
+}
+
+// ── Medical flags panel (overview) ────────────────────────────────────────────
+
+.no-flags-msg { color: #94a3b8; font-size: 13px; margin: 0; }
+
+.medical-flags-grid {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.mf-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding: 10px 6px;
+  border-radius: 10px;
+  border: 1.5px solid #e2e8f0;
+  background: #f8fafc;
+  color: #cbd5e1;
+  font-size: 10px;
+  font-weight: 700;
+  text-align: center;
+  transition: all .15s;
+
+  &.mf-active {
+    border-color: #fca5a5;
+    background: #fff1f2;
+    color: #b91c1c;
+
+    &:nth-child(1) { border-color: #fcd34d; background: #fffbeb; color: #92400e; } // smoker
+    &:nth-child(2) { border-color: #93c5fd; background: #eff6ff; color: #1d4ed8; } // diabetic
+    &:nth-child(3) { border-color: #fca5a5; background: #fff1f2; color: #b91c1c; } // htn
+    &:nth-child(4) { border-color: #f9a8d4; background: #fdf2f8; color: #be185d; } // pregnant
+    &:nth-child(5) { border-color: #c4b5fd; background: #f5f3ff; color: #7c3aed; } // blood thinner
+  }
+}
+
+.allergy-box {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  background: #fef9c3;
+  border: 1.5px solid #fde047;
+  border-radius: 8px;
+  padding: 10px 12px;
+  color: #92400e;
+}
+
+.allergy-title { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .04em; }
+.allergy-text  { font-size: 13px; margin-top: 2px; color: #78350f; }
+
+.dd--blood {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  background: #fee2e2;
+  color: #b91c1c;
+  font-size: 12px;
+  font-weight: 700;
+  padding: 1px 8px;
+  border-radius: 12px;
+  width: fit-content;
 }
 
 // ── Recent sessions in overview ────────────────────────────────────────────────
@@ -759,10 +925,11 @@
 
 @media (max-width: 820px) {
   .patient-record-page { padding: 12px; }
-  .patient-header { flex-direction: column; align-items: flex-start; }
+  .patient-header__top { flex-direction: column; }
   .header-stats { width: 100%; }
   .overview-grid { grid-template-columns: 1fr; }
   .svc-summary-panel { grid-column: 1; }
+  .medical-flags-grid { grid-template-columns: repeat(3, 1fr); }
   .procedure-header,
   .procedure-row { grid-template-columns: 2fr 1fr 1fr 1fr; }
   .procedure-header span:nth-child(3),

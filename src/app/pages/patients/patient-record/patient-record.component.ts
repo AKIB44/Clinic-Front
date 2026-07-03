@@ -82,6 +82,20 @@ export class PatientRecordComponent implements OnInit {
     return name.split(/\s+/).slice(0, 2).map(p => p[0]?.toUpperCase()).join('');
   });
 
+  /** Active medical flags — only those that are truthy or meaningful. */
+  readonly medicalFlags = computed(() => {
+    const p = this.patient();
+    if (!p) return [];
+    const flags: { key: string; icon: string; label: string; color: string; bg: string }[] = [];
+    if (p.is_smoker)           flags.push({ key: 'smoker',     icon: 'smoking',          label: 'Smoker',           color: '#92400e', bg: '#fef3c7' });
+    if (p.is_diabetic)         flags.push({ key: 'diabetic',   icon: 'droplet',          label: 'Diabetic',         color: '#1d4ed8', bg: '#dbeafe' });
+    if (p.is_hypertensive)     flags.push({ key: 'htn',        icon: 'activity',         label: 'Hypertensive',     color: '#b91c1c', bg: '#fee2e2' });
+    if (p.is_pregnant)         flags.push({ key: 'pregnant',   icon: 'heart',            label: 'Pregnant',         color: '#be185d', bg: '#fce7f3' });
+    if (p.is_on_blood_thinner) flags.push({ key: 'bt',         icon: 'tint',             label: 'Blood Thinner',    color: '#7c3aed', bg: '#ede9fe' });
+    if (p.known_allergies)     flags.push({ key: 'allergy',    icon: 'alert-triangle',   label: 'Allergies',        color: '#b45309', bg: '#fef3c7' });
+    return flags;
+  });
+
   readonly allAppts = computed(() => this.record()?.appointments ?? []);
 
   readonly filteredAppts = computed(() => {

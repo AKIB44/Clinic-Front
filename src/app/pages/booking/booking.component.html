@@ -368,6 +368,85 @@
                     <div class="intake-body">
                       <p class="intake-hint">All fields are optional and help the doctor prepare.</p>
 
+                      <!-- ── Medical flags ──────────────────────────────────── -->
+                      <div class="intake-q">
+                        <div class="intake-q-label">Medical conditions <span class="intake-q-sub">(tap to flag)</span></div>
+                        <div class="mf-toggle-row">
+                          <button type="button" class="mf-toggle"
+                                  [class.mf-toggle--on]="patientForm.get('is_smoker')?.value"
+                                  (click)="patientForm.get('is_smoker')!.setValue(!patientForm.get('is_smoker')!.value)">
+                            <i-tabler name="smoking" size="15"></i-tabler> Smoker
+                          </button>
+                          <button type="button" class="mf-toggle"
+                                  [class.mf-toggle--on]="patientForm.get('is_diabetic')?.value"
+                                  (click)="patientForm.get('is_diabetic')!.setValue(!patientForm.get('is_diabetic')!.value)">
+                            <i-tabler name="droplet" size="15"></i-tabler> Diabetic
+                          </button>
+                          <button type="button" class="mf-toggle"
+                                  [class.mf-toggle--on]="patientForm.get('is_hypertensive')?.value"
+                                  (click)="patientForm.get('is_hypertensive')!.setValue(!patientForm.get('is_hypertensive')!.value)">
+                            <i-tabler name="activity" size="15"></i-tabler> Hypertensive
+                          </button>
+                          @if (patientForm.get('gender')?.value === 'female') {
+                            <button type="button" class="mf-toggle"
+                                    [class.mf-toggle--on]="patientForm.get('is_pregnant')?.value"
+                                    (click)="patientForm.get('is_pregnant')!.setValue(!patientForm.get('is_pregnant')!.value)">
+                              <i-tabler name="heart" size="15"></i-tabler> Pregnant
+                            </button>
+                          }
+                          <button type="button" class="mf-toggle"
+                                  [class.mf-toggle--on]="patientForm.get('is_on_blood_thinner')?.value"
+                                  (click)="patientForm.get('is_on_blood_thinner')!.setValue(!patientForm.get('is_on_blood_thinner')!.value)">
+                            <i-tabler name="tint" size="15"></i-tabler> Blood Thinner
+                          </button>
+                        </div>
+                      </div>
+
+                      <!-- Blood group + occupation row -->
+                      <div class="intake-q">
+                        <div class="intake-inline-row">
+                          <div class="intake-inline-field">
+                            <div class="intake-q-label">Blood group</div>
+                            <div class="pill-group">
+                              @for (bg of bloodGroups; track bg) {
+                                <button type="button" class="intake-pill intake-pill--sm"
+                                        [class.selected]="patientForm.get('blood_group')?.value === bg"
+                                        (click)="patientForm.get('blood_group')!.setValue(patientForm.get('blood_group')?.value === bg ? null : bg)">
+                                  {{ bg }}
+                                </button>
+                              }
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+
+                      <!-- Known allergies text -->
+                      <div class="intake-q">
+                        <div class="intake-q-label">Known allergies (free text)</div>
+                        <input class="intake-text-input" type="text" formControlName="known_allergies"
+                               placeholder="e.g. Penicillin, Latex, Ibuprofen…">
+                      </div>
+
+                      <!-- Emergency contact -->
+                      <div class="intake-q">
+                        <div class="intake-q-label">Emergency contact</div>
+                        <div class="intake-two-col">
+                          <input class="intake-text-input" type="text" formControlName="emergency_contact_name"
+                                 placeholder="Name">
+                          <input class="intake-text-input" type="tel" formControlName="emergency_contact_phone"
+                                 placeholder="Phone number">
+                        </div>
+                      </div>
+
+                      <!-- Occupation -->
+                      <div class="intake-q">
+                        <div class="intake-q-label">Occupation <span class="intake-q-sub">(helps understand risk exposure)</span></div>
+                        <input class="intake-text-input" type="text" formControlName="occupation"
+                               placeholder="e.g. Teacher, Software Engineer, Farmer…">
+                      </div>
+
+                      <div class="intake-divider"></div>
+
                       <div class="intake-q">
                         <div class="intake-q-label">Last dental visit</div>
                         <div class="pill-group">
