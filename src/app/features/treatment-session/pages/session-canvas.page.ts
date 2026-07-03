@@ -315,6 +315,12 @@ export class SessionCanvasPage implements OnInit, OnDestroy {
       },
       error: (err) => {
         this.pausing.set(false);
+        if (this.store.isAlreadyPausedError(err)) {
+          this.store.syncPausedFromServer();
+          this.toast.info('Session is already paused.');
+          this.cdr.markForCheck();
+          return;
+        }
         this.store.revertPauseClock();
         this.toast.error(err?.error?.error ?? 'Could not pause session.');
         this.cdr.markForCheck();
@@ -361,6 +367,7 @@ export class SessionCanvasPage implements OnInit, OnDestroy {
   private shouldAutoPauseOnLeave(): boolean {
     if (!this.store.sessionId() || this.store.loading() || this.store.error()) return false;
     if (this.store.isSealed()) return false;
+    if (this.store.isPaused()) return false;
     return !this.isTerminalStatus(this.store.status());
   }
 
@@ -383,6 +390,10 @@ export class SessionCanvasPage implements OnInit, OnDestroy {
         return true;
       }),
       catchError((err) => {
+        if (this.store.isAlreadyPausedError(err)) {
+          this.store.syncPausedFromServer();
+          return of(true);
+        }
         this.store.revertPauseClock();
         this.toast.error(err?.error?.error ?? 'Could not auto-pause session. Please pause manually before leaving.');
         return of(false);

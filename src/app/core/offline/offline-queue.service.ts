@@ -17,6 +17,16 @@ const STORE_NAME = 'request_queue';
 const DB_VERSION = 1;
 
 /**
+ * True when an HttpErrorResponse is the "queued for offline replay" signal the
+ * offline interceptor emits (status 0 + `offline_queued`). Callers use it to
+ * treat the mutation as a local success and update the UI optimistically.
+ */
+export function isOfflineQueued(err: unknown): boolean {
+  const e = err as { status?: number; error?: { error?: string } } | null;
+  return !!e && e.status === 0 && e.error?.error === 'offline_queued';
+}
+
+/**
  * App-wide offline write queue. Mutations that can't reach the server (because the
  * device is offline, or a request fails with a network error) are persisted to
  * IndexedDB by the offline interceptor and replayed in order once connectivity

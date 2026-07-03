@@ -25,7 +25,11 @@
 
             <mat-form-field appearance="outline" class="lab-field">
               <mat-label>Expected Delivery</mat-label>
-              <input matInput type="date" [(ngModel)]="newExpectedDate">
+              <input matInput [matDatepicker]="expectedDeliveryPicker"
+                     [(ngModel)]="newExpectedDate"
+                     placeholder="Select date">
+              <mat-datepicker-toggle matIconSuffix [for]="expectedDeliveryPicker"></mat-datepicker-toggle>
+              <mat-datepicker #expectedDeliveryPicker></mat-datepicker>
             </mat-form-field>
           </div>
 

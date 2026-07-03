@@ -33,11 +33,13 @@ export class DfServicesBlockComponent implements OnInit {
   addDiscountPct = 0;
   pendingPlanItemId: string | null = null;
 
-  readonly adding        = signal(false);
-  readonly updating      = signal<string | null>(null);
-  readonly addError      = signal<string | null>(null);
-  readonly pendingService = signal<ClinicService | null>(null);
-  readonly allServices   = signal<ClinicService[]>([]);
+  readonly adding          = signal(false);
+  readonly updating        = signal<string | null>(null);
+  readonly addError        = signal<string | null>(null);
+  readonly pendingService  = signal<ClinicService | null>(null);
+  readonly allServices     = signal<ClinicService[]>([]);
+  readonly abandonTarget   = signal<ServicePerformed | null>(null);
+  abandonReason            = '';
 
   // Accepted plan items not yet started in this session
   readonly acceptedPlanItems = computed<TreatmentPlanItem[]>(() => {
@@ -147,13 +149,23 @@ export class DfServicesBlockComponent implements OnInit {
       });
   }
 
+  startAbandon(svc: ServicePerformed): void {
+    this.abandonTarget.set(svc);
+    this.abandonReason = '';
+  }
+
+  cancelAbandon(): void {
+    this.abandonTarget.set(null);
+    this.abandonReason = '';
+  }
+
   abandonService(svc: ServicePerformed): void {
-    const reason = window.prompt('Reason for abandoning this service?');
-    if (reason === null) return;
+    const reason = this.abandonReason.trim() || 'Not specified';
+    this.abandonTarget.set(null);
     this.updating.set(svc.id);
     this.api.updateService(svc.id, {
       status: 'ABANDONED',
-      abandon_reason: reason || 'Not specified',
+      abandon_reason: reason,
     }).pipe(finalize(() => this.updating.set(null)))
       .subscribe({
         next: ({ service, plan_item }) => {

@@ -100,7 +100,7 @@ export class SessionStore {
 
   // ── Derived ───────────────────────────────────────────────────────────────
   readonly isSealed = computed(() => !!this.sealedAt());
-  readonly isPaused  = computed(() => this.status() === 'PAUSED');
+  readonly isPaused  = computed(() => this.status() === 'PAUSED' || !!this.pausedAt());
   readonly resuming    = signal(false);
 
   readonly totalCharges = computed(() =>
@@ -224,7 +224,7 @@ export class SessionStore {
     // All fields are snake_case from the API — read them as-is
     this.sessionId.set(session.id);
     this.appointmentId.set(session.appointment_id);
-    this.status.set(session.status);
+    this.status.set(this.resolveSessionStatus(session));
     this.startedAt.set(session.started_at);
     this.sealedAt.set(session.sealed_at ?? null);
     this.syncTimerFromSession(session);
@@ -322,6 +322,23 @@ export class SessionStore {
     }
 
     return this.resumeInFlight$;
+  }
+
+  /** Align local pause state when the server reports the session is already paused. */
+  syncPausedFromServer(anchor?: string | null): void {
+    const sessionId = this.sessionId();
+    if (!sessionId) return;
+
+    const pausedAt = anchor ?? this.pausedAt() ?? new Date().toISOString();
+    this.status.set('PAUSED');
+    this.pausedAt.set(pausedAt);
+    this.writeTimerCache(sessionId, this.totalPausedMs(), pausedAt);
+  }
+
+  /** True when pause API rejects because the session is already paused server-side. */
+  isAlreadyPausedError(err: unknown): boolean {
+    const msg = (err as { error?: { error?: string } })?.error?.error ?? '';
+    return /already paused/i.test(msg);
   }
 
   /** Align timer with server hydration; merge persisted client cache when API omits fields. */
@@ -450,6 +467,13 @@ export class SessionStore {
   }
 
   // ── Private ───────────────────────────────────────────────────────────────
+
+  private resolveSessionStatus(session: ClinicalSession): SessionStatus {
+    if (session.status === 'PAUSED' || session.paused_at) {
+      return 'PAUSED';
+    }
+    return session.status;
+  }
 
   private timerCacheKey(sessionId: string): string {
     return `df:session-timer:${sessionId}`;

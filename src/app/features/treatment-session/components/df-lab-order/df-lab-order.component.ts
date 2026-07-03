@@ -4,6 +4,8 @@ import {
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { finalize } from 'rxjs/operators';
+import { MatDatepickerModule } from '@angular/material/datepicker';
+import { MatNativeDateModule, provideNativeDateAdapter } from '@angular/material/core';
 import { MaterialModule } from '../../../../material.module';
 import { TablerIconsModule } from 'angular-tabler-icons';
 import { SessionStore } from '../../store/session.store';
@@ -25,7 +27,15 @@ export const LAB_STATUS_LABELS: Record<LabOrderStatus, string> = {
   selector: 'df-lab-order',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [CommonModule, FormsModule, MaterialModule, TablerIconsModule],
+  imports: [
+    CommonModule,
+    FormsModule,
+    MaterialModule,
+    MatDatepickerModule,
+    MatNativeDateModule,
+    TablerIconsModule,
+  ],
+  providers: [provideNativeDateAdapter()],
   templateUrl: './df-lab-order.component.html',
   styleUrl: './df-lab-order.component.scss',
 })
@@ -46,7 +56,7 @@ export class DfLabOrderComponent {
   // ── Create form ───────────────────────────────────────────────────────────
   showCreateForm = false;
   newShade          = '';
-  newExpectedDate   = '';
+  newExpectedDate: Date | null = null;
   newNotes          = '';
 
   readonly creating = signal(false);
@@ -58,7 +68,7 @@ export class DfLabOrderComponent {
   openCreateForm(): void {
     this.showCreateForm = true;
     this.newShade       = '';
-    this.newExpectedDate = '';
+    this.newExpectedDate = null;
     this.newNotes       = '';
     this.createError.set(null);
   }
@@ -73,7 +83,7 @@ export class DfLabOrderComponent {
 
     this.api.addLabOrder(this.service().id, {
       shade:                  this.newShade.trim() || undefined,
-      expected_delivery_date: this.newExpectedDate || undefined,
+      expected_delivery_date: this.formatExpectedDate(this.newExpectedDate),
       notes:                  this.newNotes.trim() || undefined,
     }).pipe(finalize(() => this.creating.set(false))).subscribe({
       next: ({ lab_order }) => {
@@ -87,6 +97,14 @@ export class DfLabOrderComponent {
         this.toast.error(msg);
       },
     });
+  }
+
+  private formatExpectedDate(date: Date | null): string | undefined {
+    if (!date) return undefined;
+    const y = date.getFullYear();
+    const m = String(date.getMonth() + 1).padStart(2, '0');
+    const d = String(date.getDate()).padStart(2, '0');
+    return `${y}-${m}-${d}`;
   }
 
   changeStatus(newStatus: LabOrderStatus): void {

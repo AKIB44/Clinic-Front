@@ -138,15 +138,19 @@ export class SessionApiService {
   }
 
   /** POST /patients/:id/treatment-plans */
-  createPlan(patientId: string, title?: string): Observable<{ plan: TreatmentPlan }> {
+  createPlan(patientId: string, opts?: { id?: string; title?: string }): Observable<{ plan: TreatmentPlan }> {
     return this.http.post<{ plan: TreatmentPlan }>(
       `${this.base}/patients/${patientId}/treatment-plans`,
-      title ? { title } : {}
+      {
+        ...(opts?.id    ? { id: opts.id }       : {}),
+        ...(opts?.title ? { title: opts.title } : {}),
+      }
     );
   }
 
   /** POST /treatment-plans/:id/items */
   addPlanItem(planId: string, payload: {
+    id?: string;
     service_id: string;
     tooth_numbers?: number[];
     estimated_sessions?: number;

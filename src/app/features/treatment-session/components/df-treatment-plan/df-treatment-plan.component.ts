@@ -10,6 +10,7 @@ import { SessionApiService } from '../../services/session-api.service';
 import { ToastService } from '../../../../services/toast.service';
 import { ClinicServicesService } from '../../../../services/clinic-services.service';
 import { ClinicService } from '../../../../models/clinic.model';
+import { isOfflineQueued } from '../../../../core/offline/offline-queue.service';
 import {
   TreatmentPlan, TreatmentPlanItem, PlanPriority, PlanDeclineReason
 } from '../../models/session.model';
@@ -101,15 +102,26 @@ export class DfTreatmentPlanComponent implements OnInit {
     const patientId = this.store.patient()?.id;
     if (!patientId) return;
     this.creating.set(true);
-    this.api.createPlan(patientId).subscribe({
+    // Mint the id client-side so an offline create can be shown immediately and
+    // replayed with a stable id (the backend accepts it via COALESCE).
+    const id = crypto.randomUUID();
+    this.api.createPlan(patientId, { id }).subscribe({
       next: ({ plan }) => {
         this.creating.set(false);
         this.store.setPlans([{ ...plan, items: [] }, ...this.store.plans()]);
         this.toast.success('Treatment plan created.');
       },
-      error: () => {
+      error: (err) => {
         this.creating.set(false);
-        this.toast.error('Failed to create treatment plan.');
+        if (isOfflineQueued(err)) {
+          this.store.setPlans([
+            { id, patient_id: patientId, title: 'Treatment Plan', items: [], created_at: new Date().toISOString() },
+            ...this.store.plans(),
+          ]);
+          this.toast.success('Plan saved offline — will sync when you’re back online.');
+        } else {
+          this.toast.error('Failed to create treatment plan.');
+        }
       },
     });
   }
@@ -136,7 +148,9 @@ export class DfTreatmentPlanComponent implements OnInit {
     if (!svc) return;
     this.addingItem.set(true);
     this.addError.set(null);
+    const id = crypto.randomUUID();
     this.api.addPlanItem(planId, {
+      id,
       service_id:           svc.id,
       priority:             this.addPriority,
       estimated_sessions:   this.addSessions || 1,
@@ -152,9 +166,31 @@ export class DfTreatmentPlanComponent implements OnInit {
       },
       error: (err) => {
         this.addingItem.set(false);
-        const msg = err?.error?.error ?? 'Failed to add plan item.';
-        this.addError.set(msg);
-        this.toast.error(msg);
+        if (isOfflineQueued(err)) {
+          this.store.addPlanItem(planId, {
+            id,
+            plan_id:              planId,
+            service_id:           svc.id,
+            service_name:         svc.name,
+            linked_diagnosis_id:  null,
+            tooth_numbers:        [],
+            estimated_sessions:   this.addSessions || 1,
+            done_sessions:        0,
+            cost_min:             this.addCostMin ?? null,
+            cost_max:             this.addCostMax ?? null,
+            priority:             this.addPriority,
+            status:               'PROPOSED',
+            decline_reason:       null,
+            patient_facing_notes: this.addNotes || null,
+            created_at:           new Date().toISOString(),
+          });
+          this.cancelAdd();
+          this.toast.success(`${svc.name} added offline — will sync when you’re back online.`);
+        } else {
+          const msg = err?.error?.error ?? 'Failed to add plan item.';
+          this.addError.set(msg);
+          this.toast.error(msg);
+        }
       },
     });
   }
@@ -167,9 +203,14 @@ export class DfTreatmentPlanComponent implements OnInit {
         this.store.updatePlanItem(updated);
         this.toast.success('Plan item accepted.');
       },
-      error: () => {
+      error: (err) => {
         this.updating.set(null);
-        this.toast.error('Failed to update plan item.');
+        if (isOfflineQueued(err)) {
+          this.store.updatePlanItem({ ...item, status: 'ACCEPTED' });
+          this.toast.success('Accepted offline — will sync when you’re back online.');
+        } else {
+          this.toast.error('Failed to update plan item.');
+        }
       },
     });
   }
@@ -196,9 +237,15 @@ export class DfTreatmentPlanComponent implements OnInit {
         this.cancelDecline();
         this.toast.warn('Plan item declined.');
       },
-      error: () => {
+      error: (err) => {
         this.updating.set(null);
-        this.toast.error('Failed to decline plan item.');
+        if (isOfflineQueued(err)) {
+          this.store.updatePlanItem({ ...item, status: 'DECLINED', decline_reason: reason });
+          this.cancelDecline();
+          this.toast.warn('Declined offline — will sync when you’re back online.');
+        } else {
+          this.toast.error('Failed to decline plan item.');
+        }
       },
     });
   }

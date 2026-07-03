@@ -1,9 +1,11 @@
 <div class="svc-card">
+
+  <!-- Total charges bar -->
   <div class="svc-total-bar">
     Total charges: <strong>₹{{ store.totalCharges() | number:'1.2-2' }}</strong>
   </div>
 
-  <!-- Plan items quick-add (accepted items from treatment plan) -->
+  <!-- Accepted plan items — quick-add chips -->
   @if (!store.isSealed() && acceptedPlanItems().length > 0) {
     <div class="svc-plan-items">
       <div class="svc-plan-label">
@@ -26,7 +28,7 @@
     </div>
   }
 
-  <!-- Add service picker (hidden when sealed) -->
+  <!-- Search & add service -->
   @if (!store.isSealed()) {
     <div class="svc-picker">
       <mat-form-field appearance="outline" class="svc-search-field">
@@ -48,38 +50,42 @@
       </mat-form-field>
     </div>
 
-    <!-- Add confirmation row — shown after selecting a service -->
+    <!-- Confirm panel — shown after a service is selected -->
     @if (pendingService()) {
-      <div class="svc-confirm-row">
-        <div class="svc-confirm-name">{{ pendingService()!.name }}</div>
-        <div class="svc-confirm-price">₹{{ pendingService()!.price | number:'1.2-2' }}</div>
-
-        <mat-form-field appearance="outline" class="svc-qty-field">
-          <mat-label>Qty</mat-label>
-          <input matInput type="number" [(ngModel)]="addQty" min="1" max="10" />
-        </mat-form-field>
-
-        <mat-form-field appearance="outline" class="svc-disc-field">
-          <mat-label>Discount %</mat-label>
-          <input matInput type="number" [(ngModel)]="addDiscountPct" min="0" max="100" />
-        </mat-form-field>
-
-        <button mat-flat-button color="primary" [disabled]="adding()" (click)="confirmAdd()">
-          @if (adding()) { <mat-spinner diameter="16" style="display:inline-block;margin-right:6px"></mat-spinner> }
-          Add
-        </button>
-        <button mat-icon-button (click)="cancelPending()" title="Cancel">
-          <i-tabler name="x" size="16"></i-tabler>
-        </button>
+      <div class="svc-confirm-panel">
+        <div class="svc-confirm-panel-header">
+          <i-tabler name="stethoscope" size="15" class="svc-confirm-icon"></i-tabler>
+          <span class="svc-confirm-name">{{ pendingService()!.name }}</span>
+          <span class="svc-confirm-price">₹{{ pendingService()!.price | number:'1.2-2' }}</span>
+          <button mat-icon-button class="svc-confirm-close" (click)="cancelPending()" title="Cancel">
+            <i-tabler name="x" size="15"></i-tabler>
+          </button>
+        </div>
+        <div class="svc-confirm-fields">
+          <mat-form-field appearance="outline" class="svc-qty-field">
+            <mat-label>Qty</mat-label>
+            <input matInput type="number" [(ngModel)]="addQty" min="1" max="10" />
+          </mat-form-field>
+          <mat-form-field appearance="outline" class="svc-disc-field">
+            <mat-label>Discount %</mat-label>
+            <input matInput type="number" [(ngModel)]="addDiscountPct" min="0" max="100" />
+          </mat-form-field>
+          <button mat-flat-button color="primary" class="svc-confirm-btn"
+                  [disabled]="adding()" (click)="confirmAdd()">
+            @if (adding()) {
+              <mat-spinner diameter="16" style="display:inline-block;margin-right:6px"></mat-spinner>
+            }
+            Add Service
+          </button>
+        </div>
+        @if (addError()) {
+          <div class="svc-error">{{ addError() }}</div>
+        }
       </div>
-
-      @if (addError()) {
-        <div class="svc-error">{{ addError() }}</div>
-      }
     }
   }
 
-  <!-- Service list -->
+  <!-- Services list -->
   @if (store.services().length === 0) {
     <div class="svc-empty">
       <i-tabler name="stethoscope" size="32"></i-tabler>
@@ -92,42 +98,65 @@
                               [class.svc-abandoned]="svc.status === 'ABANDONED'"
                               [class.svc-partial]="svc.status === 'PARTIAL'">
 
-          <div class="svc-item-left">
-            <div class="svc-item-name">{{ svc.service_name || 'Service' }}</div>
-            <div class="svc-item-meta">
-              Qty {{ svc.quantity }} · Base ₹{{ svc.base_price | number:'1.2-2' }}
-              @if (svc.discount_pct > 0) { · {{ svc.discount_pct }}% off }
+          <!-- Header row: name · charge · status · actions -->
+          <div class="svc-item-header">
+            <div class="svc-item-left">
+              <div class="svc-item-name">{{ svc.service_name || 'Service' }}</div>
+              <div class="svc-item-meta">
+                Qty {{ svc.quantity }} · Base ₹{{ svc.base_price | number:'1.2-2' }}
+                @if (svc.discount_pct > 0) { · {{ svc.discount_pct }}% off }
+              </div>
+            </div>
+            <div class="svc-item-right">
+              <div class="svc-item-charge">₹{{ svc.final_charge | number:'1.2-2' }}</div>
+              <div class="svc-status-chip s-{{ svc.status | lowercase }}">
+                {{ svc.status | titlecase }}
+              </div>
+              @if (svc.status === 'IN_PROGRESS' && !store.isSealed()) {
+                <div class="svc-item-actions">
+                  <button mat-stroked-button color="primary" class="btn-sm"
+                          [disabled]="updating() === svc.id"
+                          (click)="completeService(svc)">
+                    @if (updating() === svc.id) {
+                      <mat-spinner diameter="14" style="display:inline-block;margin-right:4px"></mat-spinner>
+                    }
+                    Done
+                  </button>
+                  <button mat-stroked-button color="warn" class="btn-sm"
+                          [disabled]="updating() === svc.id"
+                          (click)="startAbandon(svc)">
+                    Abandon
+                  </button>
+                </div>
+              }
             </div>
           </div>
 
-          <div class="svc-item-charge">₹{{ svc.final_charge | number:'1.2-2' }}</div>
-
-          <div class="svc-status-chip s-{{ svc.status | lowercase }}">
-            {{ svc.status | titlecase }}
-          </div>
-
-          <!-- Action buttons — only for in-progress services when not sealed -->
-          @if (svc.status === 'IN_PROGRESS' && !store.isSealed()) {
-            <div class="svc-item-actions">
-              <button mat-stroked-button color="primary" class="btn-sm"
-                      [disabled]="updating() === svc.id"
-                      (click)="completeService(svc)">
-                @if (updating() === svc.id) { <mat-spinner diameter="14" style="display:inline-block;margin-right:4px"></mat-spinner> }
-                Done
-              </button>
-              <button mat-stroked-button color="warn" class="btn-sm"
-                      [disabled]="updating() === svc.id"
-                      (click)="abandonService(svc)">
-                Abandon
-              </button>
+          <!-- Inline abandon confirmation -->
+          @if (abandonTarget()?.id === svc.id) {
+            <div class="svc-abandon-panel">
+              <span class="svc-abandon-label">
+                <i-tabler name="alert-triangle" size="14"></i-tabler>
+                Abandon reason
+              </span>
+              <input class="svc-abandon-input" [(ngModel)]="abandonReason"
+                     placeholder="Optional — describe why this service is being abandoned" />
+              <div class="svc-abandon-actions">
+                <button mat-stroked-button class="btn-sm" (click)="cancelAbandon()">Cancel</button>
+                <button mat-flat-button color="warn" class="btn-sm"
+                        [disabled]="updating() === svc.id"
+                        (click)="abandonService(svc)">
+                  Confirm Abandon
+                </button>
+              </div>
             </div>
           }
 
-          <!-- Materials cart (T4.2) -->
-          <df-materials-cart [service]="svc" />
-
-          <!-- Lab work order (T3.3) -->
-          <df-lab-order [service]="svc" />
+          <!-- Sub-section: materials cart + lab order (full width, below header) -->
+          <div class="svc-item-sub">
+            <df-materials-cart [service]="svc" />
+            <df-lab-order [service]="svc" />
+          </div>
 
         </div>
       }
