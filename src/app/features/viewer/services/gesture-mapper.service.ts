@@ -5,10 +5,12 @@ import {
 } from '../models/gesture.model';
 import { OneEuroFilter } from './one-euro-filter';
 
-const THUMB_TIP = 4;
-const INDEX_MCP = 5;
-const INDEX_PIP = 6;
-const INDEX_TIP = 8;
+const WRIST      = 0;
+const THUMB_TIP  = 4;
+const INDEX_MCP  = 5;
+const INDEX_PIP  = 6;
+const INDEX_TIP  = 8;
+const MIDDLE_MCP = 9;
 
 const dist2 = (a: NormalizedLandmark, b: NormalizedLandmark) =>
   Math.hypot(a.x - b.x, a.y - b.y);
@@ -38,7 +40,13 @@ export class GestureMapperService {
   private prevSpan = 0;
   private filtersReady = false;
 
-  private outVel = { x: 0, y: 0, pinch: 0 };
+  /** Smoothed wrist→middle-MCP distance — the depth-invariance reference. */
+  private handScale = 0;
+
+  /** Span (hand units) captured when the current pinch-zoom engaged. */
+  private zoomSpanRef = 0;
+
+  private outVel = { x: 0, y: 0 };
 
   readonly activeMode: { value: GestureControlMode } = { value: 'IDLE' };
 
@@ -49,12 +57,13 @@ export class GestureMapperService {
     this.touchFrames = 0;
     this.lockCooldownUntil = 0;
     this.filtersReady = false;
+    this.handScale = 0;
+    this.zoomSpanRef = 0;
     this.midXFilter.reset();
     this.midYFilter.reset();
     this.spanFilter.reset();
     this.outVel.x = 0;
     this.outVel.y = 0;
-    this.outVel.pinch = 0;
     this.activeMode.value = 'IDLE';
   }
 
@@ -71,6 +80,19 @@ export class GestureMapperService {
       if (this.lostFrames > this.cfg.handLostFrames) this.reset();
       return empty;
     }
+
+    // Depth-invariance reference: normalize all spans & motion by hand size so
+    // the gesture reads identically at any distance from the camera.
+    const rawScale = dist2(lms[WRIST], lms[MIDDLE_MCP]);
+    if (rawScale < this.cfg.handScaleMin) {
+      // Hand too far / clipped — landmarks unreliable, treat as not seen.
+      this.lostFrames++;
+      if (this.lostFrames > this.cfg.handLostFrames) this.reset();
+      return empty;
+    }
+    this.handScale = this.handScale > 0
+      ? this.cfg.handScaleAlpha * rawScale + (1 - this.cfg.handScaleAlpha) * this.handScale
+      : rawScale;
 
     if (!this.isTwoFingerPose(lms)) {
       this.lostFrames++;
@@ -94,7 +116,8 @@ export class GestureMapperService {
 
   private isTwoFingerPose(lms: NormalizedLandmark[]): boolean {
     if (!this.indexExtended(lms)) return false;
-    return dist2(lms[THUMB_TIP], lms[INDEX_TIP]) <= this.cfg.pinchMaxSpan;
+    const scale = this.handScale || dist2(lms[WRIST], lms[MIDDLE_MCP]) || 1;
+    return dist2(lms[THUMB_TIP], lms[INDEX_TIP]) / scale <= this.cfg.pinchMaxSpan;
   }
 
   private indexExtended(lms: NormalizedLandmark[]): boolean {
@@ -107,9 +130,14 @@ export class GestureMapperService {
   ): GestureCommand | null {
     const thumb = lms[THUMB_TIP];
     const index = lms[INDEX_TIP];
+    const scale = this.handScale;
+    // Span is a relative quantity — normalize by hand size BEFORE filtering so
+    // it is depth-invariant. Midpoint stays in image space (dividing a position
+    // by a drifting scale would inject phantom motion); its *deltas* are
+    // normalized below instead.
     const rawMidX = (thumb.x + index.x) * 0.5;
     const rawMidY = (thumb.y + index.y) * 0.5;
-    const rawSpan = dist2(thumb, index);
+    const rawSpan = dist2(thumb, index) / scale;
 
     const sx = this.midXFilter.filter(rawMidX, dtMs);
     const sy = this.midYFilter.filter(rawMidY, dtMs);
@@ -124,8 +152,8 @@ export class GestureMapperService {
     }
 
     const timeScale = dtMs / this.cfg.refFrameMs;
-    const midDx = (sx - this.prevMidX) / timeScale;
-    const midDy = (sy - this.prevMidY) / timeScale;
+    const midDx = (sx - this.prevMidX) / timeScale / scale;
+    const midDy = (sy - this.prevMidY) / timeScale / scale;
     const spanDelta = (smoothSpan - this.prevSpan) / timeScale;
     this.prevMidX = sx;
     this.prevMidY = sy;
@@ -160,16 +188,24 @@ export class GestureMapperService {
     if (zoomOnly) {
       this.outVel.x *= 0.7;
       this.outVel.y *= 0.7;
-      const va = this.cfg.outputAlpha;
-      this.outVel.pinch = va * (spanDelta * this.cfg.pinchGain) + (1 - va) * this.outVel.pinch;
 
-      if (Math.abs(this.outVel.pinch) < this.cfg.spanDeadzone) return null;
+      // Absolute zoom: anchor the span when the pinch engages, then command
+      // the ratio of current span to that anchor. Fingers back to the anchor
+      // span → zoom back to the anchor level — repeatable, no velocity drift.
+      if (this.zoomSpanRef <= 0) {
+        this.zoomSpanRef = smoothSpan;
+        return null; // anchor frame — nothing to apply yet
+      }
+      let ratio = smoothSpan / this.zoomSpanRef;
+      ratio = Math.min(this.cfg.zoomRatioMax, Math.max(this.cfg.zoomRatioMin, ratio));
+      if (Math.abs(ratio - 1) < this.cfg.zoomRatioDeadzone) ratio = 1;
 
-      this.setMode(this.outVel.pinch > 0 ? 'ZOOM_IN' : 'ZOOM_OUT');
-      return { type: 'orbit', dx: 0, dy: 0, pinchDelta: this.outVel.pinch };
+      this.setMode(ratio >= 1 ? 'ZOOM_IN' : 'ZOOM_OUT');
+      return { type: 'zoomTo', ratio };
     }
 
-    this.outVel.pinch *= 0.65;
+    // Zoom disengaged — next pinch re-anchors at the new span.
+    this.zoomSpanRef = 0;
 
     if (midMove < this.cfg.deadzoneNorm) {
       this.outVel.x *= 0.82;
@@ -177,15 +213,20 @@ export class GestureMapperService {
       return null;
     }
 
-    const g = this.cfg.orbitGain;
     const va = this.cfg.outputAlpha;
-    this.outVel.x = va * (-midDx * g) + (1 - va) * this.outVel.x;
-    this.outVel.y = va * (-midDy * g) + (1 - va) * this.outVel.y;
+    this.outVel.x = va * (-midDx) + (1 - va) * this.outVel.x;
+    this.outVel.y = va * (-midDy) + (1 - va) * this.outVel.y;
 
-    if (Math.hypot(this.outVel.x, this.outVel.y) < this.cfg.deadzoneNorm) return null;
+    const mag = Math.hypot(this.outVel.x, this.outVel.y);
+    if (mag < this.cfg.deadzoneNorm) return null;
+
+    // Precision response: |v|^gamma keeps slow deliberate motion fine-grained
+    // while full sweeps still rotate briskly.
+    const shaped = Math.pow(mag, this.cfg.orbitGamma) * this.cfg.orbitGain;
+    const k = shaped / mag;
 
     this.setMode('ORBIT');
-    return { type: 'orbit', dx: this.outVel.x, dy: this.outVel.y, pinchDelta: 0 };
+    return { type: 'orbit', dx: this.outVel.x * k, dy: this.outVel.y * k };
   }
 
   private setMode(m: GestureControlMode): void {

@@ -71,6 +71,7 @@ export class DfGesture3dViewerComponent implements AfterViewInit, OnDestroy {
   private tween: ViewTween | null = null;
   private gestureAnchor: GestureViewAnchor | null = null;
   private zoomSessionActive = false;
+  private zoomBaseRadius = 0;
 
   // GV-3 dental tools
   private overlay = new THREE.Group();          // measurement lines/labels + annotations
@@ -324,40 +325,56 @@ export class DfGesture3dViewerComponent implements AfterViewInit, OnDestroy {
     controls.update();
   }
 
-  applyGestureOrbit(dx: number, dy: number, pinchDelta: number): void {
+  /**
+   * Absolute anchored zoom — `ratio` is currentFingerSpan / spanAtPinchStart
+   * (hand-scale normalized by the mapper). Camera distance tracks it directly:
+   * radius = anchorRadius / ratio^zoomGamma, eased and clamped to the model's
+   * fit radius. Returning the fingers to their starting span returns the view
+   * to the starting zoom — repeatable like a calibrated instrument.
+   */
+  applyGestureZoom(ratio: number): void {
+    const controls = this.controls as OrbitInternals | undefined;
+    if (!controls || !this.camera) return;
+
+    this.tween = null;
+    controls.enablePan = false;
+    const cal = GESTURE_VIEWER_CALIBRATION;
+
+    if (!this.zoomSessionActive) {
+      // New pinch: zoom FROM the locked cavity anchor when one exists,
+      // otherwise from wherever the camera currently is.
+      if (this.gestureAnchor) this.restoreGestureAnchor();
+      controls.update();
+      this.zoomBaseRadius = controls._spherical.radius;
+      this.zoomSessionActive = true;
+    } else if (this.gestureAnchor) {
+      // Keep the locked angle steady while the pinch drives distance.
+      const a = this.gestureAnchor;
+      controls._spherical.theta = a.theta;
+      controls._spherical.phi = a.phi;
+      controls.target.copy(a.target);
+      this.camera.up.copy(a.up);
+      controls._panOffset.set(0, 0, 0);
+    }
+
+    const minR = this.fitRadius * cal.zoomMinFit;
+    const maxR = this.fitRadius * cal.zoomMaxFit;
+    const target = Math.min(maxR, Math.max(minR, this.zoomBaseRadius / Math.pow(ratio, cal.zoomGamma)));
+
+    const s = controls._spherical;
+    s.radius += (target - s.radius) * cal.zoomLerp;
+
+    controls.update();
+    if (this.gestureAnchor) this.gestureAnchor.radius = controls._spherical.radius;
+  }
+
+  applyGestureOrbit(dx: number, dy: number): void {
     const controls = this.controls as OrbitInternals | undefined;
     if (!controls || !this.renderer) return;
 
     this.tween = null;
     controls.enablePan = false;
-
-    const zooming = Math.abs(pinchDelta) > 0.0006;
     const cal = GESTURE_VIEWER_CALIBRATION;
-
-    if (zooming && this.gestureAnchor) {
-      if (!this.zoomSessionActive) {
-        this.restoreGestureAnchor();
-        this.zoomSessionActive = true;
-      } else {
-        const a = this.gestureAnchor;
-        controls._spherical.theta = a.theta;
-        controls._spherical.phi = a.phi;
-        controls.target.copy(a.target);
-        this.camera!.up.copy(a.up);
-        controls._panOffset.set(0, 0, 0);
-      }
-
-      const scale = Math.pow(
-        cal.zoomPowBase,
-        Math.abs(pinchDelta) * cal.zoomStrength * controls.zoomSpeed,
-      );
-      if (pinchDelta > 0) controls._dollyIn(scale);
-      else controls._dollyOut(scale);
-
-      controls.update();
-      this.gestureAnchor.radius = controls._spherical.radius;
-      return;
-    }
 
     this.zoomSessionActive = false;
     controls.target.set(0, 0, 0);

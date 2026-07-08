@@ -14,7 +14,10 @@ export interface GestureFrame {
 }
 
 export type GestureCommand =
-  | { type: 'orbit'; dx: number; dy: number; pinchDelta: number }
+  | { type: 'orbit'; dx: number; dy: number }
+  // Absolute zoom: ratio of the current finger span to the span captured when
+  // the pinch engaged (hand-scale normalized). ratio 1 = anchor zoom level.
+  | { type: 'zoomTo'; ratio: number }
   | { type: 'lockAnchor' };
 
 export interface GestureProcessResult {

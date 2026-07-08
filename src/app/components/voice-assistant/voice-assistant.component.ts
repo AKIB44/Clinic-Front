@@ -24,20 +24,33 @@ type Status =
   | 'noresult'
   | 'error';
 
+// Voice nav targets → real app routes (must exist in app.routes.ts — anything
+// unknown falls into the ** wildcard and lands on the auth error page).
 const NAV_MAP: Record<string, string> = {
-  schedule:          '/schedule',
-  booking:           '/booking',
-  patients:          '/patients',
-  inventory:         '/inventory',
-  labs:              '/labs',
-  'treatment-plans': '/treatment-plans',
-  rx:                '/rx',
-  specialty:         '/specialty',
-  accounts:          '/org-master/accounts',
-  hr:                '/org-master/hr',
-  'release-notes':   '/org-master/release-notes',
-  'feature-flags':   '/org-master/feature-flags',
-  settings:          '/settings',
+  schedule:                  '/schedule',
+  booking:                   '/booking',
+  patients:                  '/patients',
+  inventory:                 '/master/inventory',
+  rx:                        '/rx/new',
+  'specialty-orthodontic':   '/specialty/orthodontic/cases',
+  'specialty-implantology':  '/specialty/implantology/cases',
+  'specialty-endodontic':    '/specialty/endodontic/cases',
+  'specialty-paediatric':    '/specialty/paediatric/cases',
+  'specialty-tmj':           '/specialty/tmj/cases',
+  billing:                   '/billing',
+  accounts:                  '/org-master/accounts',
+  hr:                        '/org-master/hr',
+  'release-notes':           '/org-master/release-notes',
+  'feature-flags':           '/org-master/feature-flags',
+  settings:                  '/theme-pages/account-setting',
+};
+
+// Targets with no standalone page — Friday explains where the data lives
+// instead of navigating into the wildcard error route.
+const NAV_EXPLAIN: Record<string, string> = {
+  labs:              "Lab orders live inside each patient's clinical session — say \"open patient\" and the name, then check their sessions.",
+  'treatment-plans': "Treatment plans are part of the patient record — say \"open patient\" and the name, then open the Plans tab.",
+  specialty:         'Which specialty — orthodontics, implants, endo, paediatrics, or TMJ?',
 };
 
 @Component({
@@ -142,6 +155,23 @@ const NAV_MAP: Record<string, string> = {
               </div>
               <button class="va-flow-cancel" (click)="cancelFlowFromUi()">Cancel booking</button>
             </div>
+          }
+
+          @if (flowStep() === 'awaiting_service' && serviceOptions().length) {
+            <ul class="va-svc-list">
+              @for (s of serviceOptions(); track s.id) {
+                <li (click)="chooseService(s)">
+                  <div class="va-svc-body">
+                    <div class="va-svc-name">{{ s.name }}</div>
+                    <div class="va-svc-meta">
+                      {{ s.duration_minutes }} min
+                      @if (s.doctor_name) { · {{ s.doctor_name }} }
+                    </div>
+                  </div>
+                  <div class="va-svc-price">₹{{ s.price | number:'1.0-0' }}</div>
+                </li>
+              }
+            </ul>
           }
 
           @if (matches().length > 1) {
@@ -417,6 +447,24 @@ const NAV_MAP: Record<string, string> = {
     .va-result-name { font-size: 13px; font-weight: 600; color: #0f172a; }
     .va-result-meta { font-size: 11px; color: #94a3b8; }
 
+    .va-svc-list {
+      list-style: none; padding: 0; margin: 10px 0 0;
+      max-height: 240px; overflow-y: auto;
+      border: 1px solid #e2e8f0; border-radius: 10px;
+    }
+    .va-svc-list li {
+      display: flex; align-items: center; gap: 10px;
+      padding: 9px 12px; cursor: pointer;
+      border-bottom: 1px solid #f1f5f9;
+      transition: background .12s;
+    }
+    .va-svc-list li:last-child { border-bottom: none; }
+    .va-svc-list li:hover { background: #f0fdf4; }
+    .va-svc-body { flex: 1; min-width: 0; }
+    .va-svc-name { font-size: 13px; font-weight: 600; color: #0f172a; }
+    .va-svc-meta { font-size: 11px; color: #94a3b8; }
+    .va-svc-price { font-size: 13px; font-weight: 700; color: #0d7a5f; white-space: nowrap; }
+
     .va-summary {
       margin-top: 10px; padding: 12px; border-radius: 10px;
       background: linear-gradient(135deg,#eef2ff,#f5f3ff);
@@ -521,6 +569,10 @@ export class VoiceAssistantComponent implements OnInit, OnDestroy {
   private chairsCache: Chair[] = [];
   /** Buffered name when offering to create a new patient. */
   private pendingNewName: string | null = null;
+  /** Digits accumulated across utterances while capturing a phone number. */
+  private phoneBuffer = '';
+  /** Services shown as a tappable list while awaiting the service choice. */
+  readonly serviceOptions = signal<ClinicService[]>([]);
   readonly voiceOutOn       = signal(true);
   readonly speaking         = signal(false);
 
@@ -648,6 +700,38 @@ export class VoiceAssistantComponent implements OnInit, OnDestroy {
   }
 
   // ── Wake-word listener (always-on) ───────────────────────────────────────
+  // ── Wake-word matching ─────────────────────────────────────────────────────
+  // Quiet / distant speech reaches the recognizer as mangled transcripts
+  // ("fry day", "priday", "fridey"). Two nets: a generous regex for known
+  // mishearings, then a per-word edit-distance ≤ 2 fallback against "friday"
+  // so novel garbles still wake it without having to shout.
+
+  private static readonly WAKE_RX =
+    /\b(friday|fryday|fride|frida|fri\s*-?\s*day|fry\s*-?\s*day|free\s*day|freed[ae]y?|frida[ey]|fridey|friyay|freddy|priday|briday|flyday|frid[ao]|hey\s+da?y?)\b/;
+
+  private hasWakeWord(transcript: string): boolean {
+    const t = transcript.toLowerCase();
+    if (VoiceAssistantComponent.WAKE_RX.test(t)) return true;
+    // Fuzzy net: any word within edit distance 2 of "friday".
+    for (const w of t.split(/[^a-z]+/)) {
+      if (w.length < 4 || w.length > 8) continue;
+      if (this.editDistance(w, 'friday') <= 2) return true;
+    }
+    return false;
+  }
+
+  private editDistance(a: string, b: string): number {
+    let prev = Array.from({ length: b.length + 1 }, (_, i) => i);
+    for (let i = 1; i <= a.length; i++) {
+      const cur = [i];
+      for (let j = 1; j <= b.length; j++) {
+        cur[j] = Math.min(prev[j] + 1, cur[j - 1] + 1, prev[j - 1] + (a[i - 1] === b[j - 1] ? 0 : 1));
+      }
+      prev = cur;
+    }
+    return prev[b.length];
+  }
+
   private startWakeListener(): void {
     const SR = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
     if (!SR) return;
@@ -661,11 +745,8 @@ export class VoiceAssistantComponent implements OnInit, OnDestroy {
     // Interim results back ON for low-latency wake detection — we use a
     // debounce + final-transcript handshake to avoid clipping commands.
     rec.interimResults   = true;
-    rec.maxAlternatives  = 3;   // give the recognizer multiple shots at hearing "friday"
+    rec.maxAlternatives  = 5;   // quiet speech garbles — more shots at hearing "friday"
     rec.lang             = 'en-IN';
-
-    // Generous regex covering common ASR mishearings of "Friday".
-    const WAKE_RX = /\b(friday|fryday|fride|frida|fri\s*-?\s*day|free\s*day|freed[ae]y?|frida[ey]|hey\s+da?y?)\b/;
 
     rec.onresult = (e: any) => {
       if (this.listening() || this.awake()) return;
@@ -682,7 +763,7 @@ export class VoiceAssistantComponent implements OnInit, OnDestroy {
           const t = (res[a].transcript || '').toString();
           // Track the highest-quality transcript (first alt) for command extraction.
           if (a === 0) bestText += t;
-          if (WAKE_RX.test(t.toLowerCase())) detected = true;
+          if (this.hasWakeWord(t)) detected = true;
         }
       }
 
@@ -751,7 +832,7 @@ export class VoiceAssistantComponent implements OnInit, OnDestroy {
   private onWakeDetected(text: string): void {
     // Strip the wake word (and the leading noise before it) so the rest is the command.
     const stripped = text
-      .replace(/^.*?\b(friday|fryday|fride|frida|fri\s*-?\s*day|free\s*day|freed[ae]y?|frida[ey]|hey\s+da?y?)\b[\s,.:!]*/i, '')
+      .replace(/^.*?\b(friday|fryday|fride|frida|fri\s*-?\s*day|fry\s*-?\s*day|free\s*day|freed[ae]y?|frida[ey]|fridey|friyay|freddy|priday|briday|flyday|frid[ao]|hey\s+da?y?)\b[\s,.:!]*/i, '')
       .trim();
     this.open.set(true);
     this.reset();
@@ -762,16 +843,37 @@ export class VoiceAssistantComponent implements OnInit, OnDestroy {
       this.awake.set(false);
       this.interpret(stripped);
     } else {
-      // Bare "Friday" — acknowledge audibly with "Yes boss…" then auto-open the
-      // mic for the next command (no second wake word required). The onComplete
+      // Bare "Friday" — acknowledge audibly, addressing the logged-in user
+      // ("Yes doctor" / "Yes Dr. Akib" / first name), then auto-open the mic
+      // for the next command (no second wake word required). The onComplete
       // callback fires after the synthesizer finishes so the mic and TTS never
       // fight for the audio session.
-      this.message.set('Yes boss, what do you want me to do?');
-      this.speak('Yes boss, what do you want me to do?', () => {
+      const ack = this.wakeAcknowledgement();
+      this.message.set(ack);
+      this.speak(ack, () => {
         if (!this.enabled() || this.activeRecognition) return;
         this.startActive(true);
       });
     }
+  }
+
+  /** Wake acknowledgement addressed to the logged-in user — rotates between
+   *  "doctor" and their first name ("Dr. Akib" for doctor roles). */
+  private wakeAcknowledgement(): string {
+    const user  = this.auth.getUser();
+    const first = (user?.first_name ?? '').trim();
+    const isDoc = user?.role === 'doctor';
+    // Doctors: rotate "doctor" / "Dr. <first>". Other roles: their first name.
+    const addressee = isDoc
+      ? (Math.random() < 0.5 || !first ? 'doctor' : `Dr. ${first}`)
+      : (first || 'there');
+    const lines = [
+      `Yes ${addressee}, what do you want me to do?`,
+      `Yes ${addressee}, I'm listening.`,
+      `At your service, ${addressee} — what's next?`,
+      `Go ahead, ${addressee}.`,
+    ];
+    return lines[Math.floor(Math.random() * lines.length)];
   }
 
   // ── Active capture ───────────────────────────────────────────────────────
@@ -919,12 +1021,16 @@ export class VoiceAssistantComponent implements OnInit, OnDestroy {
         const target = String(r.entities['target'] ?? '').toLowerCase();
         const route  = NAV_MAP[target];
         if (!route) {
-          this.status.set('noresult');
-          this.respondAndKeepListening(`I don't know how to open ${target}.`);
+          // Page-less targets get an explanation / follow-up question instead
+          // of a dead-end navigation.
+          const explain = NAV_EXPLAIN[target];
+          this.status.set(explain ? 'success' : 'noresult');
+          this.respondAndKeepListening(explain ?? `I don't know how to open ${target}.`);
           return;
         }
         this.status.set('success');
-        const msg = `Opening ${target}.`;
+        const label = target.startsWith('specialty-') ? target.slice('specialty-'.length) + ' cases' : target;
+        const msg = `Opening ${label}.`;
         this.message.set(msg); this.speak(msg);
         setTimeout(() => { this.router.navigate([route]); this.closePanel(); }, 700);
         return;
@@ -934,8 +1040,11 @@ export class VoiceAssistantComponent implements OnInit, OnDestroy {
         return;
       }
       case 'schedule.summary': {
-        const today = format(new Date(), 'yyyy-MM-dd');
-        this.appts.getSchedule(today).subscribe({
+        // Friday extracts the day being asked about ("what's on tomorrow") —
+        // fall back to today only when none was given.
+        const date  = String(r.entities['date'] ?? '') || format(new Date(), 'yyyy-MM-dd');
+        const label = String(r.entities['day_label'] ?? '') || 'today';
+        this.appts.getSchedule(date).subscribe({
           next: ({ appointments }) => {
             const list = appointments ?? [];
             const done      = list.filter(a => a.status === 'done').length;
@@ -944,13 +1053,54 @@ export class VoiceAssistantComponent implements OnInit, OnDestroy {
             this.summary.set({ total: list.length, upcoming, done, cancelled });
             this.status.set('success');
             const msg = list.length === 0
-              ? 'No appointments today. Anything else?'
-              : `You have ${list.length} appointments today — ${upcoming} upcoming, ${done} done${cancelled ? `, ${cancelled} cancelled` : ''}. Anything else?`;
+              ? `No appointments ${label}. Anything else?`
+              : `You have ${list.length} appointment${list.length !== 1 ? 's' : ''} ${label} — ${upcoming} upcoming, ${done} done${cancelled ? `, ${cancelled} cancelled` : ''}. Anything else?`;
             this.respondAndKeepListening(msg);
           },
           error: () => {
             this.status.set('error');
-            this.respondAndKeepListening("Couldn't fetch today's schedule.");
+            this.respondAndKeepListening(`Couldn't fetch the schedule for ${label}.`);
+          },
+        });
+        return;
+      }
+      case 'schedule.time': {
+        // "who's at 3pm tomorrow" — fetch the day, narrow to the asked slot.
+        const date   = String(r.entities['date'] ?? '') || format(new Date(), 'yyyy-MM-dd');
+        const label  = String(r.entities['day_label'] ?? '') || 'today';
+        const time   = String(r.entities['time'] ?? '');       // "15:00"
+        const period = String(r.entities['period'] ?? '');     // "morning" | "afternoon" | "evening"
+        this.appts.getSchedule(date).subscribe({
+          next: ({ appointments }) => {
+            let list = (appointments ?? []).filter(a => a.status !== 'cancelled' && a.status !== 'no_show');
+            let slotLabel = label;
+            if (time) {
+              const hour = parseInt(time.slice(0, 2), 10);
+              list = list.filter(a => new Date(a.scheduled_at).getHours() === hour);
+              slotLabel = `at ${format(new Date(`${date}T${time}:00`), 'h a').toLowerCase()} ${label}`;
+            } else if (period) {
+              const inPeriod = (h: number) =>
+                period === 'morning' ? h < 12 :
+                period === 'afternoon' ? h >= 12 && h < 17 :
+                period === 'evening' ? h >= 17 :
+                h >= 11 && h < 14; // noon / midday
+              list = list.filter(a => inPeriod(new Date(a.scheduled_at).getHours()));
+              slotLabel = `${label} ${period}`;
+            }
+            this.status.set('success');
+            if (list.length === 0) {
+              this.respondAndKeepListening(`Nothing booked ${slotLabel}. Anything else?`);
+              return;
+            }
+            const names = list.slice(0, 3)
+              .map(a => `${a.patient_name ?? 'a patient'} at ${format(new Date(a.scheduled_at), 'h:mm a')}`)
+              .join(', ');
+            const extra = list.length > 3 ? `, and ${list.length - 3} more` : '';
+            this.respondAndKeepListening(`${list.length === 1 ? 'One booking' : list.length + ' bookings'} ${slotLabel}: ${names}${extra}. Anything else?`);
+          },
+          error: () => {
+            this.status.set('error');
+            this.respondAndKeepListening(`Couldn't fetch the schedule for ${label}.`);
           },
         });
         return;
@@ -1070,7 +1220,16 @@ export class VoiceAssistantComponent implements OnInit, OnDestroy {
   private advanceFlow(): void {
     const d = this.flowData();
     if (!d.patient) return this.ask('awaiting_patient', "Sure — which patient should I book this for?");
-    if (!d.service) return this.ask('awaiting_service', `What service should I book for ${d.patient.name}?`);
+    if (!d.service) {
+      // Show the full catalogue on screen and speak the first few options so
+      // the user knows what they can actually ask for.
+      this.serviceOptions.set(this.servicesCache);
+      const names = this.servicesCache.slice(0, 4).map(s => s.name).join(', ');
+      const more  = this.servicesCache.length > 4 ? `, and ${this.servicesCache.length - 4} more on screen` : '';
+      return this.ask('awaiting_service',
+        `What service should I book for ${d.patient.name}? Options include ${names}${more}. You can also tap one.`);
+    }
+    this.serviceOptions.set([]);
     if (!d.chair) {
       // Auto-pick when only one chair is configured; otherwise ask.
       if (this.chairsCache.length === 1) {
@@ -1170,8 +1329,9 @@ export class VoiceAssistantComponent implements OnInit, OnDestroy {
     const t = text.toLowerCase();
     if (/\b(yes|yeah|yep|sure|please|go ahead|add|create|new|confirm)\b/.test(t)) {
       this.flowStep.set('awaiting_new_patient_phone');
+      this.phoneBuffer = '';
       this.status.set('listening');
-      const prompt = `Great — what's ${this.pendingNewName}'s mobile number?`;
+      const prompt = `Great — what's ${this.pendingNewName}'s mobile number? You can say it in parts.`;
       this.message.set(prompt);
       this.speak(prompt, () => {
         if (this.flowStep() === 'awaiting_new_patient_phone' && !this.activeRecognition) {
@@ -1189,14 +1349,65 @@ export class VoiceAssistantComponent implements OnInit, OnDestroy {
     }
   }
 
+  /**
+   * Phone capture accumulates across utterances — callers dictate numbers in
+   * chunks of 2–5 digits with pauses, and each chunk arrives as its own
+   * speech-recognition result. Digits are buffered until a valid 10-digit
+   * mobile emerges; progress is spoken back so the caller knows where they are.
+   */
   private processNewPatientPhone(text: string): void {
-    const phone = this.normalisePhone(text);
-    if (!phone) {
-      return this.speak("That doesn't look like a ten digit mobile number. Try again or say cancel.", () => {
-        this.flowStep.set('awaiting_new_patient_phone');
-        if (!this.activeRecognition) this.startActive(true);
-      });
+    const t = text.toLowerCase();
+
+    // Corrections: wipe the buffer, not the whole flow.
+    if (/\b(start over|start again|restart|clear|reset|wrong number|galat|say again|from the top)\b/.test(t)) {
+      this.phoneBuffer = '';
+      return this.reprompt('awaiting_new_patient_phone', 'Okay, cleared — tell me the number again.');
     }
+
+    const digits = this.extractSpokenDigits(text);
+    if (!digits) {
+      const have = this.phoneBuffer.length;
+      const msg = have > 0
+        ? `So far I have ${this.speakDigits(this.phoneBuffer)}. Say the remaining ${10 - have} digits, or say start over.`
+        : "I didn't catch any digits. Say the ten digit mobile number — in parts is fine.";
+      return this.reprompt('awaiting_new_patient_phone', msg);
+    }
+
+    this.phoneBuffer = (this.phoneBuffer + digits).slice(0, 13); // 91 + 10 + slack
+    const phone = this.validPhoneFrom(this.phoneBuffer);
+
+    if (!phone) {
+      if (this.phoneBuffer.length < 10) {
+        const remaining = 10 - this.phoneBuffer.length;
+        return this.reprompt(
+          'awaiting_new_patient_phone',
+          `${this.speakDigits(this.phoneBuffer)} — ${remaining} more digit${remaining !== 1 ? 's' : ''}.`,
+        );
+      }
+      // 10+ digits but not a valid mobile — start fresh rather than guessing.
+      const bad = this.speakDigits(this.phoneBuffer);
+      this.phoneBuffer = '';
+      return this.reprompt(
+        'awaiting_new_patient_phone',
+        `I heard ${bad}, which doesn't look like a valid mobile number. Let's start over — say the ten digits.`,
+      );
+    }
+
+    this.phoneBuffer = '';
+    this.completePhoneCapture(phone);
+  }
+
+  /** Speak a prompt and re-arm the mic for the same flow step. */
+  private reprompt(step: 'awaiting_new_patient_phone', prompt: string): void {
+    this.flowStep.set(step);
+    this.status.set('listening');
+    this.message.set(prompt);
+    this.speak(prompt, () => {
+      if (this.flowStep() === step && !this.activeRecognition) this.startActive(true);
+    });
+  }
+
+  private completePhoneCapture(phone: string): void {
     // Sanity: another patient may already share this exact (phone, name).
     this.patients.search(phone).subscribe({
       next: ({ patients }) => {
@@ -1216,7 +1427,8 @@ export class VoiceAssistantComponent implements OnInit, OnDestroy {
         };
         this.pendingNewName = null;
         this.flowData.update(d => ({ ...d, patient: stub }));
-        this.speak(`Adding ${stub.name} with ${phone}.`, () => this.advanceFlow());
+        // Space the digits so TTS reads "9 8 7 6…" instead of "nine billion…".
+        this.speak(`Adding ${stub.name}, number ${this.speakDigits(phone)}.`, () => this.advanceFlow());
       },
       error: () => {
         const stub: Patient = { id: '', name: this.pendingNewName ?? '', phone };
@@ -1227,33 +1439,90 @@ export class VoiceAssistantComponent implements OnInit, OnDestroy {
     });
   }
 
-  private normalisePhone(text: string): string | null {
-    const words: Record<string, string> = {
-      zero:  '0', oh:    '0', o:     '0', nought: '0',
-      one:   '1', two:   '2', three: '3', four:  '4', five: '5',
-      six:   '6', seven: '7', eight: '8', nine:  '9',
-      double: '', triple: '',  // "double seven" -> "77" handled below
-    };
-    let t = text.toLowerCase();
-    // "double 7" / "double seven" -> "77"
-    t = t.replace(/\bdouble\s+(\w+)/g, (_, w) => {
-      const d = words[w] ?? (/^\d$/.test(w) ? w : '');
-      return d ? d + d : '';
-    });
-    t = t.replace(/\btriple\s+(\w+)/g, (_, w) => {
-      const d = words[w] ?? (/^\d$/.test(w) ? w : '');
-      return d ? d + d + d : '';
-    });
-    // Word digits -> numeric
-    for (const [w, d] of Object.entries(words)) {
-      if (!d) continue;
-      t = t.replace(new RegExp(`\\b${w}\\b`, 'g'), d);
+  // Spoken-digit vocabulary. Homophones (won/to/for/ate/tree) are safe here
+  // because these extractors only run in the phone-capture flow step, where
+  // the whole utterance is expected to be a number.
+  private static readonly DIGIT_ONES: Record<string, string> = {
+    zero: '0', oh: '0', o: '0', nought: '0', nil: '0',
+    one: '1', won: '1',
+    two: '2', to: '2', too: '2',
+    three: '3', tree: '3',
+    four: '4', for: '4', fore: '4',
+    five: '5',
+    six: '6',
+    seven: '7',
+    eight: '8', ate: '8',
+    nine: '9', niner: '9',
+  };
+  private static readonly DIGIT_TEENS: Record<string, string> = {
+    ten: '10', eleven: '11', twelve: '12', thirteen: '13', fourteen: '14',
+    fifteen: '15', sixteen: '16', seventeen: '17', eighteen: '18', nineteen: '19',
+  };
+  private static readonly DIGIT_TENS: Record<string, string> = {
+    twenty: '2', thirty: '3', forty: '4', fifty: '5',
+    sixty: '6', seventy: '7', eighty: '8', ninety: '9',
+  };
+
+  /**
+   * Pull every spoken digit out of an utterance, in order. Handles numeric
+   * runs ("98765"), digit words ("nine eight"), pair dictation ("ninety
+   * eight seventy six" → 9876, "double seven" → 77), and mixes of all three.
+   * Returns '' when the utterance carries no digits at all.
+   */
+  private extractSpokenDigits(text: string): string {
+    const ONES  = VoiceAssistantComponent.DIGIT_ONES;
+    const TEENS = VoiceAssistantComponent.DIGIT_TEENS;
+    const TENS  = VoiceAssistantComponent.DIGIT_TENS;
+    const tokens = text.toLowerCase().replace(/[-,.]/g, ' ').split(/\s+/).filter(Boolean);
+
+    let out = '';
+    for (let i = 0; i < tokens.length; i++) {
+      const w = tokens[i];
+
+      if (/^\d+$/.test(w)) { out += w; continue; }
+
+      if (w === 'double' || w === 'triple') {
+        const next = tokens[i + 1] ?? '';
+        const d = /^\d$/.test(next) ? next : ONES[next];
+        if (d !== undefined) {
+          out += d.repeat(w === 'double' ? 2 : 3);
+          i++;
+        }
+        continue;
+      }
+
+      if (TEENS[w] !== undefined) { out += TEENS[w]; continue; }
+
+      if (TENS[w] !== undefined) {
+        // "ninety eight" → 98; bare "ninety" → 90.
+        const next = tokens[i + 1] ?? '';
+        const unit = /^[1-9]$/.test(next) ? next : ONES[next];
+        if (unit !== undefined && unit !== '0') {
+          out += TENS[w] + unit;
+          i++;
+        } else {
+          out += TENS[w] + '0';
+        }
+        continue;
+      }
+
+      if (ONES[w] !== undefined) { out += ONES[w]; continue; }
+      // Anything else (filler words like "it's", "the number is") — skip.
     }
-    const digits = (t.match(/\d/g) || []).join('');
+    return out;
+  }
+
+  /** Valid Indian mobile from a digit buffer, tolerating 0 / +91 prefixes. */
+  private validPhoneFrom(digits: string): string | null {
     if (digits.length === 10 && /^[6-9]/.test(digits)) return digits;
-    // Handle country-prefixed input like "91 98765 43210"
+    if (digits.length === 11 && digits.startsWith('0') && /^[6-9]/.test(digits[1])) return digits.slice(1);
     if (digits.length === 12 && digits.startsWith('91') && /^[6-9]/.test(digits[2])) return digits.slice(2);
     return null;
+  }
+
+  /** Digits spaced out so TTS reads them one at a time ("9 8 7 6 5"). */
+  private speakDigits(digits: string): string {
+    return digits.split('').join(' ');
   }
 
   private titleCase(s: string): string {
@@ -1265,9 +1534,20 @@ export class VoiceAssistantComponent implements OnInit, OnDestroy {
   private processService(text: string): void {
     const svc = this.matchService(text);
     if (!svc) {
-      return this.speak("I don't recognise that service. Try again or say cancel.", () =>
-        this.ask('awaiting_service', "Couldn't match that service. Try again."));
+      // Keep the on-screen list up — the caller can tap instead of retrying.
+      return this.speak("I don't recognise that service — the full list is on screen. Say one, or tap it.", () =>
+        this.ask('awaiting_service', "Couldn't match that service. Say one from the list, or tap it."));
     }
+    this.serviceOptions.set([]);
+    this.flowData.update(d => ({ ...d, service: svc }));
+    this.speak(`Okay — ${svc.name}.`, () => this.advanceFlow());
+  }
+
+  /** Tap-to-choose from the on-screen service list (awaiting_service step). */
+  chooseService(svc: ClinicService): void {
+    if (this.flowStep() !== 'awaiting_service') return;
+    this.stopActive();
+    this.serviceOptions.set([]);
     this.flowData.update(d => ({ ...d, service: svc }));
     this.speak(`Okay — ${svc.name}.`, () => this.advanceFlow());
   }
@@ -1356,19 +1636,23 @@ export class VoiceAssistantComponent implements OnInit, OnDestroy {
     this.status.set('thinking');
     this.message.set('Booking the appointment…');
     this.speak("Booking it now.");
+    // Existing patients come back from the API with null email/age/gender —
+    // the booking schema rejects nulls (Joi string/number, no .allow(null)),
+    // so only include demographics that actually have values.
+    const pat: BookingPayload['patient'] = {
+      name:  d.patient.name,
+      phone: d.patient.phone,
+    };
+    if (d.patient.email)      pat.email   = d.patient.email;
+    if (d.patient.age != null) pat.age    = d.patient.age;
+    if (d.patient.gender)     pat.gender  = d.patient.gender;
+    if (d.patient.address)    pat.address = d.patient.address;
     const payload: BookingPayload = {
       service_id: d.service.id,
       chair_id:   chairId,
       scheduled_at: `${d.date}T${d.time}:00+05:30`,
       booking_source: 'internal',
-      patient: {
-        name:  d.patient.name,
-        phone: d.patient.phone,
-        email: d.patient.email,
-        age:   d.patient.age,
-        gender: d.patient.gender,
-        address: d.patient.address,
-      },
+      patient: pat,
     };
     this.appts.book(payload).subscribe({
       next: () => {
@@ -1402,6 +1686,8 @@ export class VoiceAssistantComponent implements OnInit, OnDestroy {
   private cancelFlow(spoken: string): void {
     this.flowStep.set('idle');
     this.flowData.set({});
+    this.phoneBuffer = '';
+    this.serviceOptions.set([]);
     this.status.set('idle');
     this.message.set(spoken);
     this.speak(spoken);
@@ -1484,6 +1770,9 @@ export class VoiceAssistantComponent implements OnInit, OnDestroy {
     if (mm < 0 || mm > 59) return null;
     if (mer === 'pm' && hh < 12) hh += 12;
     if (mer === 'am' && hh === 12) hh = 0;
+    // Clinic heuristic: an unqualified "4" or "4:30" almost always means
+    // afternoon — nobody books a 4 AM filling.
+    if (!mer && hh >= 1 && hh <= 7) hh += 12;
     return `${String(hh).padStart(2,'0')}:${String(mm).padStart(2,'0')}`;
   }
 

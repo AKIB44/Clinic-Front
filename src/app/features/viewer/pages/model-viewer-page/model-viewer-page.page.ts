@@ -210,8 +210,12 @@ export class ModelViewerPage implements AfterViewInit, OnDestroy {
       this.zone.run(() => this.toast.info('Detail view locked — pinch to zoom from here.'));
       return;
     }
+    if (cmd.type === 'zoomTo') {
+      this.viewer.applyGestureZoom(cmd.ratio);
+      return;
+    }
     if (cmd.type === 'orbit') {
-      this.viewer.applyGestureOrbit(cmd.dx, cmd.dy, cmd.pinchDelta);
+      this.viewer.applyGestureOrbit(cmd.dx, cmd.dy);
     }
   }
 
