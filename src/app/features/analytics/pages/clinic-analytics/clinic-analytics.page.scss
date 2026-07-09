@@ -1,0 +1,154 @@
+.analytics-page {
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 4px;
+}
+
+.an-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+  margin-bottom: 16px;
+}
+
+.an-title { font-size: 22px; font-weight: 700; margin: 0 0 2px; }
+.an-sub   { font-size: 13px; color: #64748b; margin: 0; }
+
+.an-loading,
+.an-error {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 32px;
+  color: #64748b;
+}
+.an-error { background: #fee2e2; color: #b42318; border-radius: 10px; }
+
+// ── KPI cards ────────────────────────────────────────────────────────────────
+.kpi-row {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 16px;
+  margin-bottom: 16px;
+}
+
+.kpi-card {
+  display: flex !important;
+  flex-direction: row;
+  align-items: center;
+  gap: 14px;
+  padding: 18px !important;
+}
+
+.kpi-icon {
+  width: 46px; height: 46px; border-radius: 12px;
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0;
+
+  &--primary   { background: rgba(0,133,219,.12);  color: #0085db; }
+  &--secondary { background: rgba(70,202,235,.14); color: #2098bd; }
+  &--success   { background: rgba(75,208,139,.14); color: #1d9e60; }
+  &--warning   { background: rgba(248,192,118,.2); color: #c07c1c; }
+  &--error     { background: rgba(251,151,125,.16); color: #d95a3d; }
+}
+
+.kpi-body  { min-width: 0; }
+.kpi-value { font-size: 20px; font-weight: 800; line-height: 1.15; }
+.kpi-label { font-size: 12px; color: #64748b; margin-top: 1px; white-space: nowrap; }
+
+.kpi-delta {
+  display: inline-flex; align-items: center; gap: 3px;
+  font-size: 11px; font-weight: 700; margin-top: 3px;
+
+  &.up    { color: #1d9e60; }
+  &.down  { color: #d95a3d; }
+  &.muted { color: #94a3b8; font-weight: 500; }
+}
+
+// ── Chart grid ───────────────────────────────────────────────────────────────
+.an-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+  margin-bottom: 16px;
+
+  &--three { grid-template-columns: repeat(3, 1fr); }
+}
+
+.an-span2 { grid-column: span 2; }
+
+// ── Loss factors total under the donut ───────────────────────────────────────
+.loss-total {
+  margin-top: 8px;
+  padding: 12px;
+  border-radius: 10px;
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+.loss-total-label { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .4px; color: #b42318; }
+.loss-total-value { font-size: 22px; font-weight: 800; color: #b42318; }
+.loss-total-sub   { font-size: 11px; color: #9a5850; }
+
+// ── Declined reasons list ────────────────────────────────────────────────────
+.decline-list { display: flex; flex-direction: column; }
+
+.decline-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 2px;
+  border-bottom: 1px solid #f1f5f9;
+  font-size: 13px;
+
+  &:last-child { border-bottom: none; }
+  &--total { font-weight: 700; border-top: 2px solid #e2e8f0; }
+}
+
+.decline-reason { flex: 1; color: #334155; }
+.decline-count  { color: #94a3b8; font-size: 12px; }
+.decline-value  { font-weight: 700; color: #d95a3d; white-space: nowrap; }
+
+.an-empty-block {
+  display: flex; flex-direction: column; align-items: center; gap: 8px;
+  padding: 40px 16px; color: #94a3b8; text-align: center;
+  p { margin: 0; font-size: 13px; }
+}
+
+// ── Tables ───────────────────────────────────────────────────────────────────
+.an-table-wrap { overflow-x: auto; }
+
+.an-table {
+  width: 100%;
+  border-collapse: collapse;
+
+  th {
+    text-align: left; font-size: 11px; font-weight: 700; color: #94a3b8;
+    text-transform: uppercase; letter-spacing: .4px;
+    padding: 8px 10px; border-bottom: 1px solid #e2e8f0;
+  }
+  td {
+    font-size: 13px; color: #334155;
+    padding: 9px 10px; border-bottom: 1px solid #f8fafc;
+  }
+  tr:last-child td { border-bottom: none; }
+  .num    { text-align: right; white-space: nowrap; }
+  .strong { font-weight: 700; color: #0f172a; }
+}
+
+// ── Responsive ───────────────────────────────────────────────────────────────
+@media (max-width: 1200px) {
+  .kpi-row { grid-template-columns: repeat(3, 1fr); }
+  .an-grid, .an-grid--three { grid-template-columns: 1fr 1fr; }
+  .an-span2 { grid-column: span 2; }
+}
+
+@media (max-width: 760px) {
+  .kpi-row { grid-template-columns: 1fr 1fr; }
+  .an-grid, .an-grid--three { grid-template-columns: 1fr; }
+  .an-span2 { grid-column: span 1; }
+}

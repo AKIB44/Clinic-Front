@@ -1,0 +1,272 @@
+<!-- ── Boot sequence (tech intro + sarcastic welcome) ─────────────────────── -->
+@if (booting()) {
+  <div class="gv-boot">
+    <div class="gv-scanlines"></div>
+    <div class="gv-boot-inner">
+      <div class="gv-glitch" data-text="GOD VIEW">GOD VIEW</div>
+      <div class="gv-boot-lines">
+        @for (line of bootLines; track line; let i = $index) {
+          <div class="gv-boot-line" [style.animation-delay.ms]="300 + i * 420">
+            <span class="gv-boot-caret">&gt;</span> {{ line }}
+            <span class="gv-boot-ok">OK</span>
+          </div>
+        }
+      </div>
+      <div class="gv-welcome">{{ welcomeLine }}</div>
+    </div>
+  </div>
+}
+
+<!-- ── Power-down sequence (sarcastic exit) ───────────────────────────────── -->
+@if (exiting()) {
+  <div class="gv-boot gv-boot--exit">
+    <div class="gv-scanlines"></div>
+    <div class="gv-boot-inner">
+      <div class="gv-glitch gv-glitch--red gv-glitch--calm" data-text="POWERING DOWN">POWERING DOWN</div>
+      <div class="gv-boot-lines">
+        @for (line of exitLogLines; track line; let i = $index) {
+          <div class="gv-boot-line gv-boot-line--exit" [style.animation-delay.ms]="200 + i * 380">
+            <span class="gv-boot-caret">&gt;</span> {{ line }}
+            <span class="gv-boot-ok gv-boot-ok--red">DONE</span>
+          </div>
+        }
+      </div>
+      <div class="gv-welcome">{{ exitLine() }}</div>
+      <div class="gv-powerbar"><span></span></div>
+    </div>
+  </div>
+}
+
+@if (authorised() === null && !booting()) {
+  <div class="gv-gate"><span class="gv-spinner"></span> Verifying access…</div>
+}
+
+@if (authorised() === false) {
+  <div class="gv-denied">
+    <i-tabler name="lock" size="34"></i-tabler>
+    <h2>Not available</h2>
+    <p>This surface is restricted.</p>
+  </div>
+}
+
+@if (authorised() === true) {
+  <div class="gv-page">
+
+    <!-- Header + live stats -->
+    <div class="gv-topbar">
+      <div class="gv-brand">
+        <div class="gv-nav">
+          <button class="gv-nav-btn" (click)="goBack()" title="Back"><i-tabler name="arrow-left" size="18"></i-tabler></button>
+          <button class="gv-nav-btn" (click)="goForward()" title="Forward"><i-tabler name="arrow-right" size="18"></i-tabler></button>
+        </div>
+        <i-tabler name="world-pin" size="22"></i-tabler>
+        <div>
+          <div class="gv-title">God View</div>
+          <div class="gv-sub">Live user monitor — location, IP &amp; activity</div>
+        </div>
+      </div>
+      <div class="gv-stats">
+        <div class="gv-stat"><span class="gv-stat-num gv-online">{{ stats().online }}</span><span class="gv-stat-lbl">Online</span></div>
+        <div class="gv-stat"><span class="gv-stat-num">{{ stats().sessions }}</span><span class="gv-stat-lbl">Sessions</span></div>
+        <div class="gv-stat"><span class="gv-stat-num">{{ stats().users }}</span><span class="gv-stat-lbl">Users</span></div>
+        <div class="gv-stat"><span class="gv-stat-num">{{ stats().located }}</span><span class="gv-stat-lbl">Located</span></div>
+        <div class="gv-live-badge"><span class="gv-live-dot"></span>LIVE</div>
+        <button class="gv-exit-btn" (click)="exitToApp()" title="Exit to app">
+          <i-tabler name="logout" size="15"></i-tabler> Exit
+        </button>
+      </div>
+    </div>
+
+    <!-- ── Map section (its own bounded container) ─────────────────────────── -->
+    <section class="gv-card gv-map-card">
+      <div class="gv-card-head">
+        <i-tabler name="map-2" size="15"></i-tabler> Location map
+        @if (selectedUser()) {
+          <button class="gv-clear" (click)="selectUser(null)">Show all ✕</button>
+        }
+      </div>
+      <div class="gv-map-frame">
+        <div #mapEl class="gv-map"></div>
+        @if (mapUnavailable()) {
+          <div class="gv-map-nokey">
+            <i-tabler name="map-off" size="30"></i-tabler>
+            @switch (mapError()) {
+              @case ('no-key') {
+                <div class="gv-map-nokey-title">Google Maps key not set</div>
+                <div class="gv-map-nokey-sub">
+                  Set <code>GOOGLE_MAPS_API_KEY</code> in the backend <code>.env</code> and restart the server.
+                </div>
+              }
+              @case ('auth-error') {
+                <div class="gv-map-nokey-title">Google rejected the map key</div>
+                <div class="gv-map-nokey-sub">
+                  The key loaded but was refused. Check that <b>Maps JavaScript API</b> is enabled on it,
+                  billing is active, and your domain (incl. <code>localhost:*</code>) is in the key's
+                  HTTP-referrer list. See the browser console for the exact <code>*MapError</code>.
+                </div>
+              }
+              @default {
+                <div class="gv-map-nokey-title">Map failed to load</div>
+                <div class="gv-map-nokey-sub">Couldn't reach Google Maps. Check the network / console and retry.</div>
+              }
+            }
+          </div>
+        }
+      </div>
+    </section>
+
+    <!-- ── Lower: sessions + activity logs, side by side ──────────────────── -->
+    <div class="gv-lower">
+
+      <section class="gv-card gv-panel" [class.gv-expanded]="expanded() === 'sessions'">
+        <div class="gv-card-head">
+          <i-tabler name="users" size="15"></i-tabler> Active sessions
+          <button class="gv-expand-btn" (click)="toggleExpand('sessions')"
+                  [title]="expanded() === 'sessions' ? 'Collapse' : 'Expand'">
+            <i-tabler [name]="expanded() === 'sessions' ? 'arrows-diagonal-minimize-2' : 'arrows-diagonal'" size="15"></i-tabler>
+          </button>
+        </div>
+        <div class="gv-scroll">
+          @if (sessions().length === 0) {
+            <div class="gv-empty">No active sessions. As people use the app they appear here.</div>
+          }
+          @for (s of sessions(); track s.userId + s.ip) {
+            <div class="gv-session" [class.sel]="selectedUser() === s.userId" (click)="focusSession(s)">
+              <span class="gv-session-dot" [class.on]="s.online"></span>
+              <div class="gv-session-body">
+                <div class="gv-session-name">{{ s.name }}
+                  @if (s.role) { <span class="gv-role">{{ s.role }}</span> }
+                </div>
+                <div class="gv-session-meta"><i-tabler name="map-pin" size="11"></i-tabler>{{ locationLabel(s) }}</div>
+                <div class="gv-session-meta"><i-tabler name="device-desktop" size="11"></i-tabler>{{ s.device }}</div>
+                <div class="gv-session-meta gv-mono"><i-tabler name="network" size="11"></i-tabler>{{ s.ip }} · {{ ago(s.lastSeen) }}</div>
+              </div>
+            </div>
+          }
+        </div>
+      </section>
+
+      <section class="gv-card gv-panel gv-panel--logs" [class.gv-expanded]="expanded() === 'logs'">
+        <div class="gv-card-head">
+          <i-tabler name="terminal-2" size="15"></i-tabler> Backend logs
+          <button class="gv-expand-btn" (click)="toggleExpand('logs')"
+                  [title]="expanded() === 'logs' ? 'Collapse' : 'Expand'">
+            <i-tabler [name]="expanded() === 'logs' ? 'arrows-diagonal-minimize-2' : 'arrows-diagonal'" size="15"></i-tabler>
+          </button>
+        </div>
+        <div class="gv-scroll gv-logs" #logsScroll>
+          @if (logs().length === 0) {
+            <div class="gv-empty">Waiting for server output…</div>
+          }
+          @for (l of logs(); track l.id) {
+            <div class="gv-log-row gv-log--{{ l.level }}">
+              <span class="gv-log-time">{{ logTime(l.at) }}</span>
+              <span class="gv-log-lvl">{{ l.level }}</span>
+              <span class="gv-log-msg">{{ l.msg }}</span>
+            </div>
+          }
+        </div>
+      </section>
+
+      <section class="gv-card gv-panel" [class.gv-expanded]="expanded() === 'activity'">
+        <div class="gv-card-head">
+          <i-tabler name="activity" size="15"></i-tabler> Live activity
+          @if (selectedUser()) {
+            <button class="gv-clear" (click)="selectUser(null)">Clear filter ✕</button>
+          }
+          <button class="gv-expand-btn" (click)="toggleExpand('activity')"
+                  [title]="expanded() === 'activity' ? 'Collapse' : 'Expand'">
+            <i-tabler [name]="expanded() === 'activity' ? 'arrows-diagonal-minimize-2' : 'arrows-diagonal'" size="15"></i-tabler>
+          </button>
+        </div>
+        <div class="gv-scroll">
+          @if (activity().length === 0) {
+            <div class="gv-empty">Waiting for activity…</div>
+          }
+          @for (a of activity(); track a.id) {
+            <div class="gv-feed-row" (click)="openActivity(a)" title="Click for details">
+              <span class="gv-method {{ methodClass(a.method) }}">{{ a.method }}</span>
+              <div class="gv-feed-body">
+                <div class="gv-feed-action">{{ a.action }}</div>
+                <div class="gv-feed-meta">
+                  <span class="gv-feed-who">{{ a.name }}</span>
+                  <span class="gv-mono">{{ a.path }}</span>
+                </div>
+              </div>
+              <span class="gv-feed-time">{{ ago(a.at) }}</span>
+              <i-tabler name="chevron-right" size="14" class="gv-feed-arrow"></i-tabler>
+            </div>
+          }
+        </div>
+      </section>
+
+    </div>
+
+    <!-- ── Activity detail drawer ─────────────────────────────────────────── -->
+    @if (detail(); as a) {
+      <div class="gv-overlay" (click)="closeDetail()">
+        <div class="gv-drawer" (click)="$event.stopPropagation()">
+          <div class="gv-drawer-head">
+            <div>
+              <span class="gv-method {{ methodClass(a.method) }}">{{ a.method }}</span>
+              <span class="gv-drawer-title">{{ a.action }}</span>
+            </div>
+            <button class="gv-drawer-close" (click)="closeDetail()"><i-tabler name="x" size="18"></i-tabler></button>
+          </div>
+
+          <div class="gv-drawer-body">
+            <!-- Request -->
+            <div class="gv-dl-group">
+              <div class="gv-dl-title">Request</div>
+              <div class="gv-dl"><span>Endpoint</span><b class="gv-mono">{{ a.method }} {{ a.path }}</b></div>
+              <div class="gv-dl"><span>When</span><b>{{ fullTime(a.at) }} · {{ ago(a.at) }}</b></div>
+            </div>
+
+            <!-- Who -->
+            <div class="gv-dl-group">
+              <div class="gv-dl-title">User</div>
+              <div class="gv-dl"><span>Name</span><b>{{ a.name }}</b></div>
+              @if (detailSession(); as s) {
+                <div class="gv-dl"><span>Email</span><b>{{ s.email || '—' }}</b></div>
+                <div class="gv-dl"><span>Role</span><b>{{ s.role || '—' }}</b></div>
+                <div class="gv-dl"><span>Status</span><b>{{ s.online ? '🟢 Online' : '⚪ Idle' }} · {{ s.hits }} hits</b></div>
+              }
+            </div>
+
+            <!-- Where / device -->
+            <div class="gv-dl-group">
+              <div class="gv-dl-title">Origin</div>
+              <div class="gv-dl"><span>IP</span><b class="gv-mono">{{ a.ip }}</b></div>
+              @if (detailSession(); as s) {
+                <div class="gv-dl"><span>Location</span><b>{{ locationLabel(s) }}</b></div>
+                @if (s.geo) {
+                  <div class="gv-dl"><span>Coordinates</span><b class="gv-mono">{{ s.geo.lat }}, {{ s.geo.lon }}</b></div>
+                  <div class="gv-dl"><span>ISP</span><b>{{ s.geo.isp || '—' }}</b></div>
+                }
+                <div class="gv-dl"><span>Device</span><b>{{ s.device }}</b></div>
+              } @else {
+                <div class="gv-dl"><span>Session</span><b>Ended — user no longer active</b></div>
+              }
+            </div>
+
+            <!-- Recent actions by this user -->
+            <div class="gv-dl-group">
+              <div class="gv-dl-title">Recent activity by {{ a.name }}</div>
+              <div class="gv-timeline">
+                @for (t of detailTimeline(); track t.id) {
+                  <div class="gv-tl-row" [class.cur]="t.id === a.id">
+                    <span class="gv-method gv-method--sm {{ methodClass(t.method) }}">{{ t.method }}</span>
+                    <span class="gv-tl-action">{{ t.action }}</span>
+                    <span class="gv-mono gv-tl-path">{{ t.path }}</span>
+                    <span class="gv-tl-time">{{ ago(t.at) }}</span>
+                  </div>
+                }
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    }
+
+  </div>
+}

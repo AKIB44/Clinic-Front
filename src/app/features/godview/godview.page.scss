@@ -1,0 +1,404 @@
+:host { display: block; }
+
+// Dark operator theme — normal document flow (no fixed/absolute shell), so it
+// simply scrolls like any page and nothing can escape its container.
+.gv-page {
+  min-height: 100vh;
+  width: 100%;                   // full landscape width — never a narrow column
+  background: #0b1020;
+  color: #e2e8f0;
+  padding: 16px;
+  box-sizing: border-box;
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.gv-gate, .gv-denied {
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  gap: 12px; min-height: 100vh; background: #0b1020; color: #64748b;
+  h2 { margin: 4px 0 0; color: #cbd5e1; }
+  p  { margin: 0; font-size: 13px; }
+}
+.gv-gate { flex-direction: row; }
+
+// ── Boot / power-down overlay ────────────────────────────────────────────────
+.gv-boot {
+  position: fixed; inset: 0; z-index: 2000;
+  background: radial-gradient(circle at 50% 40%, #0f1a3a 0%, #070b18 70%, #04060f 100%);
+  display: flex; align-items: center; justify-content: center;
+  overflow: hidden;
+  font-family: 'SFMono-Regular', ui-monospace, monospace;
+  animation: gv-boot-out .5s ease 2.5s forwards;    // fade the whole overlay near the end
+}
+.gv-boot--exit { animation: gv-boot-out .4s ease 2.45s forwards; } // fade right before navigation (2.8s)
+
+@keyframes gv-boot-out { to { opacity: 0; visibility: hidden; } }
+
+.gv-boot-inner { position: relative; z-index: 2; width: min(560px, 88vw); text-align: center; }
+
+// Scanline / CRT texture
+.gv-scanlines {
+  position: absolute; inset: 0; z-index: 1; pointer-events: none;
+  background: repeating-linear-gradient(0deg, rgba(56,189,248,.04) 0 1px, transparent 1px 3px);
+  animation: gv-scan 6s linear infinite;
+}
+@keyframes gv-scan { to { background-position: 0 120px; } }
+
+// Glitch title
+.gv-glitch {
+  position: relative;
+  font-size: clamp(34px, 8vw, 68px); font-weight: 800; letter-spacing: 6px;
+  line-height: 1.2;                                  // wrapped words never collide
+  color: #e2f3ff; text-transform: uppercase;
+  animation: gv-flicker 2.6s infinite;
+  &::before, &::after {
+    content: attr(data-text); position: absolute; inset: 0;
+    clip-path: inset(0 0 0 0);
+  }
+  &::before { left: 2px; text-shadow: -2px 0 #38bdf8; animation: gv-glitch-a 2.2s infinite linear alternate; }
+  &::after  { left: -2px; text-shadow: -2px 0 #f472b6; animation: gv-glitch-b 1.8s infinite linear alternate; }
+  &--red { color: #ffe2e2; &::before { text-shadow: -2px 0 #f87171; } &::after { text-shadow: 2px 0 #fb923c; } }
+  // Calm variant: drop the ghost copies entirely — a single clean title, no
+  // overlapping/doubled text. Used for the power-down screen. Sits lower with
+  // generous spacing so it never collides with the lines below.
+  &--calm {
+    margin: 56px 0 28px;
+    font-size: clamp(28px, 6vw, 52px);
+    letter-spacing: 4px;
+    line-height: 1.25;
+    animation: gv-flicker 2.6s infinite;
+    &::before, &::after { display: none; content: none; }
+  }
+}
+@keyframes gv-glitch-a { 0%{clip-path:inset(0 0 85% 0)} 20%{clip-path:inset(40% 0 40% 0)} 40%{clip-path:inset(80% 0 5% 0)} 60%{clip-path:inset(20% 0 60% 0)} 80%{clip-path:inset(60% 0 20% 0)} 100%{clip-path:inset(10% 0 75% 0)} }
+@keyframes gv-glitch-b { 0%{clip-path:inset(75% 0 10% 0)} 25%{clip-path:inset(10% 0 70% 0)} 50%{clip-path:inset(50% 0 30% 0)} 75%{clip-path:inset(30% 0 55% 0)} 100%{clip-path:inset(85% 0 5% 0)} }
+@keyframes gv-flicker { 0%,19%,21%,80%,100%{opacity:1} 20%,82%{opacity:.65} }
+
+// Terminal boot lines
+.gv-boot-lines { margin: 22px auto 0; max-width: 400px; text-align: left; }
+.gv-boot-line {
+  display: flex; align-items: center; gap: 8px;
+  font-size: 12.5px; color: #7dd3fc; margin: 6px 0;
+  opacity: 0; transform: translateX(-8px);
+  animation: gv-line-in .35s ease forwards;
+}
+@keyframes gv-line-in { to { opacity: 1; transform: none; } }
+.gv-boot-caret { color: #4ade80; }
+.gv-boot-ok { margin-left: auto; color: #4ade80; font-weight: 700; font-size: 10px; letter-spacing: 1px; }
+.gv-boot-line--exit { color: #fca5a5; .gv-boot-caret { color: #f87171; } }
+.gv-boot-ok--red { color: #f87171; }
+
+.gv-welcome {
+  margin-top: 24px; font-size: clamp(13px, 2.4vw, 16px);
+  color: #cbd5e1; font-style: italic; line-height: 1.5;
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  animation: gv-line-in .5s ease 2s both;
+}
+
+// Power-down bar
+.gv-powerbar {
+  margin: 20px auto 0; width: 220px; height: 4px; border-radius: 3px;
+  background: #1e293b; overflow: hidden;
+  span { display: block; height: 100%; width: 100%; background: linear-gradient(90deg,#f87171,#fb923c);
+         transform-origin: left; animation: gv-drain 2.5s ease forwards; }
+}
+@keyframes gv-drain { from { transform: scaleX(1); } to { transform: scaleX(0); } }
+
+@media (prefers-reduced-motion: reduce) {
+  .gv-glitch::before, .gv-glitch::after, .gv-scanlines { animation: none; }
+  .gv-boot-line, .gv-welcome { animation-duration: .01ms; }
+}
+
+// ── Top bar ──────────────────────────────────────────────────────────────────
+.gv-topbar {
+  display: flex; align-items: center; justify-content: space-between; gap: 16px;
+  flex-wrap: wrap;
+  padding: 14px 18px; background: #10162e; border: 1px solid #1e293b; border-radius: 12px;
+}
+.gv-brand { display: flex; align-items: center; gap: 12px; color: #38bdf8; }
+
+.gv-nav { display: flex; gap: 6px; }
+.gv-nav-btn {
+  display: flex; align-items: center; justify-content: center;
+  width: 32px; height: 32px; border-radius: 8px;
+  background: #0d1326; border: 1px solid #1e293b; color: #cbd5e1;
+  cursor: pointer; transition: all .12s;
+  &:hover { background: #1b2544; color: #38bdf8; border-color: #38bdf8; }
+}
+
+.gv-exit-btn {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 7px 14px; border-radius: 8px;
+  background: #1b2544; border: 1px solid #334155; color: #e2e8f0;
+  font-size: 12px; font-weight: 700; cursor: pointer; transition: all .12s;
+  &:hover { background: #24304f; border-color: #38bdf8; color: #38bdf8; }
+}
+.gv-title { font-size: 17px; font-weight: 800; color: #f1f5f9; }
+.gv-sub   { font-size: 11px; color: #64748b; }
+
+.gv-stats { display: flex; align-items: center; gap: 20px; flex-wrap: wrap; }
+.gv-stat  { display: flex; flex-direction: column; align-items: center; }
+.gv-stat-num { font-size: 20px; font-weight: 800; color: #f1f5f9; line-height: 1; }
+.gv-stat-num.gv-online { color: #4ade80; }
+.gv-stat-lbl { font-size: 10px; color: #64748b; text-transform: uppercase; letter-spacing: .5px; }
+
+.gv-live-badge {
+  display: inline-flex; align-items: center; gap: 6px;
+  background: rgba(239,68,68,.15); color: #f87171;
+  font-size: 11px; font-weight: 800; letter-spacing: 1px;
+  padding: 5px 10px; border-radius: 20px; border: 1px solid rgba(239,68,68,.3);
+}
+.gv-live-dot { width: 7px; height: 7px; border-radius: 50%; background: #f87171; animation: gv-pulse 1.4s infinite; }
+@keyframes gv-pulse { 0%,100% { opacity: 1; } 50% { opacity: .25; } }
+
+// ── Cards (shared shell for map / panels) ────────────────────────────────────
+.gv-card {
+  background: #0d1326;
+  border: 1px solid #1e293b;
+  border-radius: 12px;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+.gv-card-head {
+  flex: 0 0 auto;
+  display: flex; align-items: center; gap: 8px;
+  padding: 12px 16px; font-size: 12px; font-weight: 700; letter-spacing: .5px;
+  text-transform: uppercase; color: #94a3b8; border-bottom: 1px solid #1e293b;
+  i-tabler { color: #38bdf8; }
+}
+.gv-clear { margin-left: auto; background: none; border: none; color: #38bdf8; font-size: 11px; cursor: pointer; }
+
+.gv-expand-btn {
+  margin-left: auto;
+  display: flex; align-items: center; justify-content: center;
+  width: 26px; height: 26px; border-radius: 6px;
+  background: none; border: 1px solid #1e293b; color: #64748b;
+  cursor: pointer; transition: all .12s; flex-shrink: 0;
+  &:hover { color: #38bdf8; border-color: #38bdf8; background: #131b30; }
+}
+// When a Clear-filter button is present, the expand button follows it (no extra push).
+.gv-clear + .gv-expand-btn { margin-left: 8px; }
+
+// ── Map: bounded, explicit-height frame → Leaflet can never overflow ─────────
+.gv-map-card { flex: 0 0 auto; }
+.gv-map-frame {
+  position: relative;
+  height: 42vh;                  // compact — leaves room for the panels below
+  min-height: 260px;
+  max-height: 460px;             // never dominate on tall screens
+  width: 100%;
+}
+.gv-map {
+  position: absolute; inset: 0;   // fills the bounded frame exactly
+  width: 100%; height: 100%;
+  background: #0b1020;
+}
+// Google InfoWindow — nudge the default white bubble toward the dark theme.
+:host ::ng-deep .gm-style .gm-style-iw-c { padding: 0 !important; }
+:host ::ng-deep .gv-popup { font-size: 12px; line-height: 1.7; padding: 10px 12px; color: #0f172a; }
+:host ::ng-deep .gv-popup b { color: #475569; font-weight: 600; }
+
+// "No API key" notice shown inside the map frame until the key is configured.
+.gv-map-nokey {
+  position: absolute; inset: 0; z-index: 5;
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  gap: 8px; text-align: center; padding: 20px;
+  background: #0b1020; color: #64748b;
+}
+.gv-map-nokey-title { font-size: 15px; font-weight: 700; color: #cbd5e1; }
+.gv-map-nokey-sub { font-size: 12px; max-width: 380px; line-height: 1.5;
+  code { color: #38bdf8; background: #10162e; padding: 1px 5px; border-radius: 4px; font-size: 11px; } }
+
+// ── Lower: sessions | backend logs | live activity — three columns ───────────
+.gv-lower {
+  display: grid;
+  grid-template-columns: 1fr 1.3fr 1fr;   // logs get a touch more width
+  gap: 16px;
+}
+.gv-panel {
+  height: 340px;                           // bounded so the inner list scrolls
+  transition: height .2s ease;
+}
+.gv-scroll { flex: 1; min-height: 0; overflow-y: auto; }
+
+// Expanded: span the full row width and grow taller for a focused view.
+.gv-panel.gv-expanded {
+  grid-column: 1 / -1;
+  height: 520px;
+}
+
+// Backend log stream — monospace terminal look
+.gv-panel--logs .gv-card-head i-tabler { color: #4ade80; }
+.gv-logs {
+  font-family: 'SFMono-Regular', ui-monospace, monospace;
+  background: #070b16;
+}
+.gv-log-row {
+  display: flex; gap: 8px; align-items: baseline;
+  padding: 4px 12px; font-size: 11px; line-height: 1.45;
+  border-bottom: 1px solid #0e1626;
+  animation: gv-slidein .2s ease;
+}
+.gv-log-time { color: #475569; flex-shrink: 0; }
+.gv-log-lvl  { flex-shrink: 0; width: 34px; font-weight: 700; text-transform: uppercase; font-size: 9px; }
+.gv-log-msg  { color: #94a3b8; word-break: break-word; white-space: pre-wrap; flex: 1; min-width: 0; }
+.gv-log--info  .gv-log-lvl { color: #38bdf8; }
+.gv-log--warn  .gv-log-lvl { color: #fbbf24; }
+.gv-log--warn  .gv-log-msg { color: #cbaa6a; }
+.gv-log--error .gv-log-lvl { color: #f87171; }
+.gv-log--error .gv-log-msg { color: #f0a5a5; }
+
+.gv-empty { padding: 20px 16px; color: #475569; font-size: 12px; line-height: 1.5; }
+
+// Session rows
+.gv-session {
+  display: flex; gap: 10px; padding: 11px 14px; cursor: pointer;
+  border-bottom: 1px solid #151d33; transition: background .12s;
+  &:hover { background: #131b30; }
+  &.sel   { background: #16233f; box-shadow: inset 3px 0 0 #38bdf8; }
+}
+.gv-session-dot {
+  width: 8px; height: 8px; border-radius: 50%; margin-top: 5px; flex-shrink: 0; background: #475569;
+  &.on { background: #4ade80; box-shadow: 0 0 0 3px rgba(74,222,128,.2); }
+}
+.gv-session-body { min-width: 0; flex: 1; }
+.gv-session-name { font-size: 13px; font-weight: 700; color: #f1f5f9; display: flex; align-items: center; gap: 6px; }
+.gv-role {
+  font-size: 9px; text-transform: uppercase; letter-spacing: .4px;
+  background: #1e293b; color: #94a3b8; padding: 1px 6px; border-radius: 8px;
+}
+.gv-session-meta {
+  display: flex; align-items: center; gap: 4px;
+  font-size: 11px; color: #64748b; margin-top: 3px;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.gv-mono { font-family: 'SFMono-Regular', ui-monospace, monospace; }
+
+// Activity feed
+.gv-feed-row {
+  display: flex; align-items: flex-start; gap: 9px;
+  padding: 9px 14px; border-bottom: 1px solid #151d33;
+  animation: gv-slidein .25s ease;
+  cursor: pointer; transition: background .12s;
+  &:hover { background: #131b30; }
+  &:hover .gv-feed-arrow { opacity: 1; color: #38bdf8; }
+}
+.gv-feed-arrow { align-self: center; color: #334155; opacity: .5; flex-shrink: 0; transition: all .12s; }
+@keyframes gv-slidein { from { opacity: 0; transform: translateY(-4px); } to { opacity: 1; transform: none; } }
+.gv-method {
+  font-size: 9px; font-weight: 800; padding: 2px 5px; border-radius: 5px; flex-shrink: 0;
+  &.m-get  { background: rgba(56,189,248,.15); color: #38bdf8; }
+  &.m-post { background: rgba(74,222,128,.15); color: #4ade80; }
+  &.m-put  { background: rgba(251,191,36,.15); color: #fbbf24; }
+  &.m-del  { background: rgba(248,113,113,.15); color: #f87171; }
+}
+.gv-feed-body { flex: 1; min-width: 0; }
+.gv-feed-action { font-size: 12px; font-weight: 600; color: #e2e8f0; }
+.gv-feed-meta {
+  display: flex; gap: 8px; font-size: 10px; color: #64748b; margin-top: 2px;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.gv-feed-who { color: #94a3b8; font-weight: 600; }
+.gv-feed-time { font-size: 10px; color: #475569; flex-shrink: 0; }
+
+.gv-spinner {
+  width: 16px; height: 16px; border-radius: 50%;
+  border: 2px solid #334155; border-top-color: #38bdf8;
+  animation: gv-spin .7s linear infinite; display: inline-block;
+}
+@keyframes gv-spin { to { transform: rotate(360deg); } }
+
+// ── Activity detail drawer ───────────────────────────────────────────────────
+.gv-overlay {
+  position: fixed; inset: 0; z-index: 1000;
+  background: rgba(3,6,16,.6); backdrop-filter: blur(2px);
+  display: flex; justify-content: flex-end;
+  animation: gv-fade .18s ease;
+}
+@keyframes gv-fade { from { opacity: 0; } to { opacity: 1; } }
+
+.gv-drawer {
+  width: 440px; max-width: 92vw; height: 100%;
+  background: #0d1326; border-left: 1px solid #1e293b;
+  display: flex; flex-direction: column;
+  box-shadow: -12px 0 40px rgba(0,0,0,.5);
+  animation: gv-slidein-r .22s ease;
+}
+@keyframes gv-slidein-r { from { transform: translateX(30px); opacity: .4; } to { transform: none; opacity: 1; } }
+
+.gv-drawer-head {
+  flex: 0 0 auto;
+  display: flex; align-items: center; justify-content: space-between; gap: 10px;
+  padding: 14px 16px; border-bottom: 1px solid #1e293b;
+}
+.gv-drawer-title { font-size: 14px; font-weight: 700; color: #f1f5f9; margin-left: 8px; }
+.gv-drawer-close {
+  background: none; border: none; color: #64748b; cursor: pointer;
+  display: flex; padding: 4px; border-radius: 6px;
+  &:hover { color: #f87171; background: #1b2544; }
+}
+
+.gv-drawer-body { flex: 1; min-height: 0; overflow-y: auto; padding: 16px; }
+
+.gv-dl-group {
+  margin-bottom: 18px;
+  &:last-child { margin-bottom: 0; }
+}
+.gv-dl-title {
+  font-size: 11px; font-weight: 700; letter-spacing: .5px; text-transform: uppercase;
+  color: #38bdf8; margin-bottom: 8px;
+}
+.gv-dl {
+  display: flex; justify-content: space-between; gap: 14px;
+  padding: 6px 0; border-bottom: 1px solid #151d33; font-size: 12px;
+  span { color: #64748b; flex-shrink: 0; }
+  b { color: #e2e8f0; font-weight: 600; text-align: right; word-break: break-word; }
+}
+
+// Detail timeline
+.gv-timeline { display: flex; flex-direction: column; gap: 2px; }
+.gv-tl-row {
+  display: flex; align-items: center; gap: 8px;
+  padding: 6px 8px; border-radius: 6px; font-size: 11px;
+  &.cur { background: #16233f; box-shadow: inset 2px 0 0 #38bdf8; }
+}
+.gv-method--sm { font-size: 8px; padding: 1px 4px; }
+.gv-tl-action { color: #cbd5e1; font-weight: 600; flex-shrink: 0; }
+.gv-tl-path { color: #64748b; flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.gv-tl-time { color: #475569; flex-shrink: 0; }
+
+@media (max-width: 480px) {
+  .gv-drawer { width: 100vw; }
+}
+
+// ── Responsive ───────────────────────────────────────────────────────────────
+@media (max-width: 1150px) {
+  .gv-lower { grid-template-columns: 1fr 1fr; } // logs drop to a full-width row
+  .gv-panel--logs { grid-column: 1 / -1; }
+}
+
+@media (max-width: 900px) {
+  .gv-page { gap: 12px; }
+  .gv-lower { grid-template-columns: 1fr; }     // stack all three
+  .gv-panel--logs { grid-column: auto; }
+  .gv-map-frame { height: 40vh; min-height: 240px; }
+  .gv-panel { height: 300px; }
+}
+
+@media (max-width: 640px) {
+  .gv-page { padding: 12px; gap: 10px; }
+  .gv-topbar { flex-direction: column; align-items: flex-start; padding: 12px 14px; }
+  .gv-stats { width: 100%; justify-content: space-between; gap: 8px; }
+  .gv-stat-num { font-size: 17px; }
+  .gv-brand i-tabler { display: none; }         // reclaim width on phones
+  .gv-map-frame { height: 38vh; min-height: 220px; }
+  .gv-panel { height: 280px; }
+}
+
+@media (max-width: 380px) {
+  .gv-stat:nth-child(4) { display: none; }       // drop least-critical stat
+  .gv-map-frame { height: 34vh; }
+}

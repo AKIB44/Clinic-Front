@@ -21,6 +21,13 @@ export const navItems: NavItem[] = [
     route: '/schedule',
     permissions: ['appointment.view'],
   },
+  {
+    displayName: 'Analytics',
+    iconName: 'chart-histogram',
+    bgcolor: 'primary',
+    route: '/analytics',
+    permissions: ['billing.view'],
+  },
 
   // ── Patients ───────────────────────────────────────────────────────────────
   { navCap: 'Patients', permissions: ['patient.view'] },

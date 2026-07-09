@@ -7,6 +7,7 @@ import { permissionGuard, anyPermissionGuard } from './core/rbac/permission.guar
 import { sessionAutoPauseGuard } from './features/treatment-session/guards/session-auto-pause.guard';
 import { featureFlagGuard } from './core/feature-flag.guard';
 import { GESTURE_VIEWER_FLAG } from './services/feature-flags.service';
+import { godviewGuard } from './features/godview/godview.guard';
 
 export const routes: Routes = [
   // Admin — all routes behind authGuard
@@ -123,6 +124,14 @@ export const routes: Routes = [
           ),
       },
       {
+        path: 'analytics',
+        canActivate: [permissionGuard('billing.view')],
+        loadComponent: () =>
+          import('./features/analytics/pages/clinic-analytics/clinic-analytics.page').then(
+            (m) => m.ClinicAnalyticsPage
+          ),
+      },
+      {
         path: 'marketing',
         canActivate: [permissionGuard('marketing.campaign.view')],
         loadChildren: () =>
@@ -187,6 +196,16 @@ export const routes: Routes = [
           import('./pages/theme-pages/theme-pages.routes').then((m) => m.ThemePagesRoutes),
       },
     ],
+  },
+
+  // God view — full-screen operator monitor (no clinic chrome). Auth-gated so a
+  // token exists; the real access control is the backend allowlist (404 to all
+  // but the specific operator email).
+  {
+    path: 'godview',
+    canActivate: [authGuard, godviewGuard],
+    loadComponent: () =>
+      import('./features/godview/godview.page').then((m) => m.GodviewPage),
   },
 
   // Public / unauthenticated pages (blank layout)
