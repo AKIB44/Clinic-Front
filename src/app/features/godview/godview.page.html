@@ -156,6 +156,9 @@
       <section class="gv-card gv-panel gv-panel--logs" [class.gv-expanded]="expanded() === 'logs'">
         <div class="gv-card-head">
           <i-tabler name="terminal-2" size="15"></i-tabler> Backend logs
+          @if (snapshot()?.logSource; as src) {
+            <span class="gv-geo-badge" [class.gv-geo-badge--precise]="src === 'pm2'">{{ src === 'pm2' ? 'PM2' : 'CONSOLE' }}</span>
+          }
           <button class="gv-expand-btn" (click)="toggleExpand('logs')"
                   [title]="expanded() === 'logs' ? 'Collapse' : 'Expand'">
             <i-tabler [name]="expanded() === 'logs' ? 'arrows-diagonal-minimize-2' : 'arrows-diagonal'" size="15"></i-tabler>

@@ -49,6 +49,7 @@ export interface GodSnapshot {
   sessions: GodSession[];
   activity: GodActivity[];
   logs: GodLog[];
+  logSource?: 'pm2' | 'console';
 }
 
 @Injectable({ providedIn: 'root' })
