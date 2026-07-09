@@ -413,7 +413,12 @@ export class BookingComponent implements OnInit, OnDestroy {
   }
 
   private draftKey(): string {
-    return `${BOOKING_DRAFT_PREFIX}${this.auth.getActiveClinicId() ?? 'default'}`;
+    // Scope the draft to BOTH the user and the clinic. sessionStorage survives a
+    // logout→login in the same tab, so without the user id a different user who
+    // logs in would resume the previous user's half-finished booking.
+    const userId   = this.auth.getUser()?.id ?? 'anon';
+    const clinicId = this.auth.getActiveClinicId() ?? 'default';
+    return `${BOOKING_DRAFT_PREFIX}${userId}_${clinicId}`;
   }
 
   private scheduleSaveDraft(): void {

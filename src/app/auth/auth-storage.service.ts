@@ -43,5 +43,11 @@ export class AuthStorageService {
     sessionStorage.removeItem(this.accessTokenKey);
     sessionStorage.removeItem(this.refreshTokenKey);
     sessionStorage.removeItem(this.userKey);
+    // Wipe any in-progress booking drafts so a half-finished booking (with
+    // patient PII) can't carry over to the next user on a shared terminal.
+    for (let i = sessionStorage.length - 1; i >= 0; i--) {
+      const key = sessionStorage.key(i);
+      if (key && key.startsWith('df_booking_draft_')) sessionStorage.removeItem(key);
+    }
   }
 }
