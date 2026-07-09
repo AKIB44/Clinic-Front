@@ -137,7 +137,14 @@
                 <div class="gv-session-name">{{ s.name }}
                   @if (s.role) { <span class="gv-role">{{ s.role }}</span> }
                 </div>
-                <div class="gv-session-meta"><i-tabler name="map-pin" size="11"></i-tabler>{{ locationLabel(s) }}</div>
+                <div class="gv-session-meta">
+                  <i-tabler name="map-pin" size="11"></i-tabler>{{ locationLabel(s) }}
+                  @if (s.geo?.precise) {
+                    <span class="gv-geo-badge gv-geo-badge--precise">GPS</span>
+                  } @else if (s.geo) {
+                    <span class="gv-geo-badge">IP</span>
+                  }
+                </div>
                 <div class="gv-session-meta"><i-tabler name="device-desktop" size="11"></i-tabler>{{ s.device }}</div>
                 <div class="gv-session-meta gv-mono"><i-tabler name="network" size="11"></i-tabler>{{ s.ip }} · {{ ago(s.lastSeen) }}</div>
               </div>

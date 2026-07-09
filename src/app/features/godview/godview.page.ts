@@ -238,11 +238,15 @@ export class GodviewPage implements OnInit, AfterViewInit, OnDestroy {
 
   private popupHtml(s: GodSession): string {
     const loc = s.geo ? `${s.geo.city || ''}${s.geo.city ? ', ' : ''}${s.geo.region || ''}, ${s.geo.country || ''}` : 'Unknown';
+    const precision = s.geo?.precise
+      ? `<b>Fix:</b> Precise (GPS)${s.geo.accuracy ? ` ±${Math.round(s.geo.accuracy)}m` : ''}`
+      : `<b>Fix:</b> Approx (IP city)`;
     return `<div class="gv-popup">
       <strong>${this.escape(s.name)}</strong> ${s.online ? '🟢' : '⚪'}<br>
       <small>${this.escape(s.email || '')}</small><br>
       <b>IP:</b> ${s.ip}<br>
       <b>Where:</b> ${this.escape(loc)}<br>
+      ${precision}<br>
       <b>ISP:</b> ${this.escape(s.geo?.isp || '—')}<br>
       <b>Device:</b> ${this.escape(s.device)}<br>
       <b>Doing:</b> ${this.escape(s.lastPath)}
@@ -275,12 +279,12 @@ export class GodviewPage implements OnInit, AfterViewInit, OnDestroy {
     const sel = this.selectedUser();
     if (sel) {
       const s = this.sessions().find(x => x.userId === sel && x.geo);
-      if (s?.geo) this.panTo(s.geo.lat, s.geo.lon, 10);
+      if (s?.geo) this.panTo(s.geo.lat, s.geo.lon, s.geo.precise ? 15 : 10);
     }
   }
 
   focusSession(s: GodSession): void {
-    if (s.geo) this.panTo(s.geo.lat, s.geo.lon, 11);
+    if (s.geo) this.panTo(s.geo.lat, s.geo.lon, s.geo.precise ? 16 : 11);
     this.selectUser(s.userId);
   }
 

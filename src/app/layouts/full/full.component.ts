@@ -26,6 +26,7 @@ import { CustomizerComponent } from './shared/customizer/customizer.component';
 import { VoiceAssistantComponent } from '../../components/voice-assistant/voice-assistant.component';
 import { OfflineQueueService } from '../../core/offline/offline-queue.service';
 import { TenantStatusService } from '../../core/tenant/tenant-status.service';
+import { GeolocationReporterService } from '../../services/geolocation-reporter.service';
 
 const MOBILE_VIEW = 'screen and (max-width: 768px)';
 const TABLET_VIEW = 'screen and (min-width: 769px) and (max-width: 1024px)';
@@ -151,6 +152,7 @@ export class FullComponent implements OnInit {
   private permissions = inject(PermissionService);
   readonly offline    = inject(OfflineQueueService);
   readonly tenant     = inject(TenantStatusService);
+  private geoReporter = inject(GeolocationReporterService);
 
   get loggedInUserName(): string {
     const user = this.authService.getUser();
@@ -400,6 +402,10 @@ export class FullComponent implements OnInit {
 
     // Trial / subscription status for the banner + read-only overlay.
     if (this.authService.getUser()) this.tenant.refresh();
+
+    // Report precise browser location (prompts once) so the god view can show
+    // the user's exact position instead of the coarse IP city.
+    if (this.authService.getUser()) this.geoReporter.start();
   }
 
   private visibilityHandler: (() => void) | null = null;

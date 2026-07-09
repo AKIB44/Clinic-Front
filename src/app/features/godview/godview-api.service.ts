@@ -6,6 +6,8 @@ import { authApiConfig } from '../../auth/auth.config';
 export interface GeoInfo {
   country: string; region: string; city: string;
   lat: number; lon: number; isp: string;
+  precise?: boolean;      // true = exact browser GPS/WiFi; false = coarse IP city
+  accuracy?: number | null; // metres (precise only)
 }
 
 export interface GodSession {
