@@ -25,7 +25,7 @@
         <mat-label>S — Subjective (Chief Complaint)</mat-label>
         <textarea matInput rows="3" [(ngModel)]="s"
                   [disabled]="store.isSealed()"
-                  (ngModelChange)="onChange()" placeholder="Patient's description of symptoms, pain, concerns…"></textarea>
+                  (ngModelChange)="onSoapFieldChange('s')" placeholder="Patient's description of symptoms, pain, concerns…"></textarea>
       </mat-form-field>
       @if (speechSupported() && !store.isSealed()) {
         <button type="button" class="soap-mic"
@@ -50,7 +50,7 @@
         <mat-label>O — Objective (Clinical Findings)</mat-label>
         <textarea matInput rows="3" [(ngModel)]="o"
                   [disabled]="store.isSealed()"
-                  (ngModelChange)="onChange()" placeholder="Examination findings, vitals, investigations…"></textarea>
+                  (ngModelChange)="onSoapFieldChange('o')" placeholder="Examination findings, vitals, investigations…"></textarea>
       </mat-form-field>
       @if (speechSupported() && !store.isSealed()) {
         <button type="button" class="soap-mic"
@@ -75,7 +75,7 @@
         <mat-label>A — Assessment (Diagnosis)</mat-label>
         <textarea matInput rows="2" [(ngModel)]="a"
                   [disabled]="store.isSealed()"
-                  (ngModelChange)="onChange()" placeholder="Working diagnosis and clinical impression…"></textarea>
+                  (ngModelChange)="onSoapFieldChange('a')" placeholder="Working diagnosis and clinical impression…"></textarea>
       </mat-form-field>
       @if (speechSupported() && !store.isSealed()) {
         <button type="button" class="soap-mic"
@@ -100,7 +100,7 @@
         <mat-label>P — Plan (Treatment)</mat-label>
         <textarea matInput rows="3" [(ngModel)]="p"
                   [disabled]="store.isSealed()"
-                  (ngModelChange)="onChange()" placeholder="Procedures done, medications prescribed, follow-up…"></textarea>
+                  (ngModelChange)="onSoapFieldChange('p')" placeholder="Procedures done, medications prescribed, follow-up…"></textarea>
       </mat-form-field>
       @if (speechSupported() && !store.isSealed()) {
         <button type="button" class="soap-mic"

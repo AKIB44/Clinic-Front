@@ -1,5 +1,5 @@
 import {
-  Component, input, signal, OnInit, ChangeDetectionStrategy,
+  Component, input, signal, OnInit, ChangeDetectionStrategy, ElementRef, inject,
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { TablerIconsModule } from 'angular-tabler-icons';
@@ -27,6 +27,7 @@ export type BlockStatus = 'empty' | 'active' | 'complete' | 'warn';
   ],
   templateUrl: './df-session-block.component.html',
   styleUrl:    './df-session-block.component.scss',
+  host: { class: 'df-session-block-host' },
 })
 export class DfSessionBlockComponent implements OnInit {
   title     = input.required<string>();
@@ -36,11 +37,25 @@ export class DfSessionBlockComponent implements OnInit {
   badge     = input<string | null>(null);
   summary   = input<string | null>(null);
   startOpen = input<boolean>(false);
+  blockKey  = input<string>('');
 
   readonly expanded = signal(false);
+  private readonly host = inject(ElementRef<HTMLElement>);
 
   ngOnInit(): void {
     this.expanded.set(this.startOpen());
+  }
+
+  isExpanded(): boolean {
+    return this.expanded();
+  }
+
+  open(): void {
+    this.expanded.set(true);
+  }
+
+  scrollIntoView(): void {
+    this.host.nativeElement.scrollIntoView({ behavior: 'smooth', block: 'start' });
   }
 
   toggle(): void {

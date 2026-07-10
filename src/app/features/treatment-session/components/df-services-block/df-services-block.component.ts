@@ -180,4 +180,19 @@ export class DfServicesBlockComponent implements OnInit {
         },
       });
   }
+
+  /** Cancel = remove the service from the session entirely (undo the add). */
+  cancelService(svc: ServicePerformed): void {
+    this.updating.set(svc.id);
+    this.api.cancelService(svc.id)
+      .pipe(finalize(() => this.updating.set(null)))
+      .subscribe({
+        next: ({ plan_item }) => {
+          this.store.removeService(svc.id);
+          if (plan_item) this.store.updatePlanItem(plan_item);
+          this.toast.info(`${svc.service_name ?? 'Service'} removed.`);
+        },
+        error: () => this.toast.error('Could not cancel service. Please try again.'),
+      });
+  }
 }

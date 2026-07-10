@@ -127,6 +127,12 @@
                           (click)="startAbandon(svc)">
                     Abandon
                   </button>
+                  <button mat-stroked-button class="btn-sm svc-cancel-btn"
+                          [disabled]="updating() === svc.id"
+                          (click)="cancelService(svc)"
+                          title="Remove this service from the session">
+                    Cancel
+                  </button>
                 </div>
               }
             </div>

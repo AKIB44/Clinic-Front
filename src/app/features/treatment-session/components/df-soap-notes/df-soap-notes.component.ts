@@ -107,6 +107,17 @@ export class DfSoapNotesComponent implements OnInit, OnDestroy {
     this.startDictation(field);
   }
 
+  onSoapFieldChange(field: SoapField): void {
+    if (this.dictating() === field) {
+      const trimmed = (this[field] ?? '').trim();
+      this.baseText = trimmed ? `${trimmed} ` : '';
+      this.interim.set('');
+    } else if (!this.dictating()) {
+      this.baseText = '';
+    }
+    this.onChange();
+  }
+
   private getSpeechRecognitionCtor(): SpeechRecognitionCtor | null {
     const win = window as Window & {
       SpeechRecognition?: SpeechRecognitionCtor;
@@ -147,7 +158,7 @@ export class DfSoapNotesComponent implements OnInit, OnDestroy {
     rec.interimResults = true;
     rec.lang           = 'en-IN';
 
-    this.baseText = this[field] ? `${this[field]} ` : '';
+    this.baseText = this.dictationBaseFor(this[field]);
     this.interim.set('');
 
     rec.onresult = (event: SpeechRecognitionEventLike) => {
@@ -214,9 +225,11 @@ export class DfSoapNotesComponent implements OnInit, OnDestroy {
     this.interim.set('');
     this.dictating.set(null);
     if (persist) {
-      this[field] = this.baseText.trim();
+      const text = (this[field] ?? '').replace(/\s+/g, ' ').trim();
+      this[field] = text;
       this.onChange();
     }
+    this.baseText = '';
     this.speechCoord.release('soap-notes');
   }
 
@@ -228,6 +241,7 @@ export class DfSoapNotesComponent implements OnInit, OnDestroy {
     if (recId) this.activeRecId = 0;
     this.dictating.set(null);
     this.interim.set('');
+    this.baseText = '';
     if (rec) {
       this.recognition = null;
       try { rec.stop(); } catch { /* ignore */ }
@@ -240,6 +254,11 @@ export class DfSoapNotesComponent implements OnInit, OnDestroy {
       clearTimeout(this.startTimer);
       this.startTimer = null;
     }
+  }
+
+  private dictationBaseFor(value: string): string {
+    const trimmed = (value ?? '').trim();
+    return trimmed ? `${trimmed} ` : '';
   }
 
   private speechErrorMessage(code: string): string {

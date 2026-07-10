@@ -263,6 +263,10 @@ export class SessionStore {
     );
   }
 
+  removeService(serviceId: string): void {
+    this.services.update(list => list.filter(s => s.id !== serviceId));
+  }
+
   setExamination(exam: Examination): void {
     this.examination.set(exam);
   }

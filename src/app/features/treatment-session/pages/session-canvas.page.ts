@@ -1,6 +1,6 @@
 import {
   Component, OnInit, OnDestroy, inject, signal, computed, effect,
-  ChangeDetectionStrategy, ChangeDetectorRef,
+  ChangeDetectionStrategy, ChangeDetectorRef, ViewChildren, QueryList,
 } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { CommonModule } from '@angular/common';
@@ -85,6 +85,9 @@ export class SessionCanvasPage implements OnInit, OnDestroy {
   readonly pausing   = signal(false);
   readonly reopening = signal(false);
   readonly autoPausingLeave = signal(false);
+  readonly activeStepKey = signal<string | null>(null);
+
+  @ViewChildren(DfSessionBlockComponent) private sessionBlocks!: QueryList<DfSessionBlockComponent>;
 
   // ── Elapsed time ──────────────────────────────────────────────────────────
   private _tick               = signal(Date.now());
@@ -203,6 +206,26 @@ export class SessionCanvasPage implements OnInit, OnDestroy {
     const name = this.store.patient()?.name ?? '';
     return name.split(' ').slice(0, 2).map(w => w[0]).join('').toUpperCase();
   });
+
+  navigateToStep(key: string): void {
+    this.activeStepKey.set(key);
+    const block = this.sessionBlocks?.find(b => b.blockKey() === key);
+    if (!block) return;
+
+    const wasOpen = block.isExpanded();
+    block.open();
+
+    const scroll = () => {
+      block.scrollIntoView();
+      this.cdr.markForCheck();
+    };
+
+    if (wasOpen) {
+      scroll();
+    } else {
+      setTimeout(scroll, 260);
+    }
+  }
 
   ngOnInit(): void {
     this._timer = setInterval(() => this._tick.set(Date.now()), 1000);

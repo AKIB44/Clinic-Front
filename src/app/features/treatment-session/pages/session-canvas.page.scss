@@ -178,9 +178,15 @@
 .sc-step {
   display: flex; align-items: center; gap: 8px;
   padding: 5px 6px; border-radius: 8px;
-  transition: background .15s; cursor: default;
+  transition: background .15s; cursor: pointer;
 }
 .sc-step:hover { background: #f8fafd; }
+
+.sc-step-selected {
+  background: #eef2ff;
+  box-shadow: inset 0 0 0 1px #c7d2fe;
+}
+.sc-step-selected .sc-step-label { color: #4338ca; font-weight: 700; }
 
 .sc-step-dot {
   width: 7px; height: 7px; border-radius: 50%;

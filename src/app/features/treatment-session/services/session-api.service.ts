@@ -107,6 +107,13 @@ export class SessionApiService {
     );
   }
 
+  /** DELETE /services/:id — cancel (remove) a service from the session. */
+  cancelService(serviceId: string): Observable<{ cancelled: boolean; id: string; plan_item?: TreatmentPlanItem | null }> {
+    return this.http.delete<{ cancelled: boolean; id: string; plan_item?: TreatmentPlanItem | null }>(
+      `${this.base}/services/${serviceId}`
+    );
+  }
+
   /** GET /sessions/:id/examination */
   getExamination(sessionId: string): Observable<{ examination: Examination | null }> {
     return this.http.get<{ examination: Examination | null }>(`${this.base}/sessions/${sessionId}/examination`);

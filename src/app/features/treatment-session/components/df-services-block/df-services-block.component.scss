@@ -87,6 +87,8 @@
 
 .svc-item-actions  { display: flex; gap: 6px; }
 .btn-sm            { font-size: 12px; padding: 0 10px; height: 30px; line-height: 30px; }
+.svc-cancel-btn    { color: #64748b; }
+.svc-cancel-btn:hover { color: #334155; }
 
 // Inline abandon confirmation panel
 .svc-abandon-panel  { display: flex; align-items: center; gap: 10px; flex-wrap: wrap;

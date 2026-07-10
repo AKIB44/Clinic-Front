@@ -160,7 +160,14 @@
         <!-- Vertical progress steps -->
         <div class="sc-steps">
           @for (step of progressSteps(); track step.key) {
-            <div class="sc-step sc-step-{{ step.status }}">
+            <div class="sc-step sc-step-{{ step.status }}"
+                 [class.sc-step-selected]="activeStepKey() === step.key"
+                 role="button"
+                 tabindex="0"
+                 [attr.aria-current]="activeStepKey() === step.key ? 'step' : null"
+                 (click)="navigateToStep(step.key)"
+                 (keydown.enter)="navigateToStep(step.key)"
+                 (keydown.space)="$event.preventDefault(); navigateToStep(step.key)">
               <div class="sc-step-dot" [style.background]="step.status === 'empty' ? '#cbd5e1' : step.accent"></div>
               <div class="sc-step-icon" [style.color]="step.status === 'empty' ? '#94a3b8' : step.accent">
                 <i-tabler [name]="step.icon" size="14"></i-tabler>
@@ -181,7 +188,7 @@
       <!-- ── Main blocks ────────────────────────────────────────────────── -->
       <main class="sc-content">
 
-        <df-session-block title="Examination & Chief Complaint"
+        <df-session-block blockKey="exam" title="Examination & Chief Complaint"
           icon="stethoscope" accent="#6366f1"
           [status]="examStatus()"
           [summary]="examSummary()"
@@ -189,14 +196,14 @@
           <df-examination-block />
         </df-session-block>
 
-        <df-session-block title="Tooth Chart"
+        <df-session-block blockKey="chart" title="Tooth Chart"
           icon="tooth" accent="#06b6d4"
           [status]="chartStatus()"
           [summary]="chartStatus() === 'complete' ? 'Chart annotated' : null">
           <df-tooth-chart />
         </df-session-block>
 
-        <df-session-block title="Diagnosis"
+        <df-session-block blockKey="diagnosis" title="Diagnosis"
           icon="brain" accent="#8b5cf6"
           [status]="diagnosisStatus()"
           [summary]="diagnosisSummary()"
@@ -204,14 +211,14 @@
           <df-diagnosis-block />
         </df-session-block>
 
-        <df-session-block title="Investigations & Lab Orders"
+        <df-session-block blockKey="investigations" title="Investigations & Lab Orders"
           icon="flask" accent="#f59e0b"
           [status]="investigationsStatus()"
           [badge]="store.investigations().length > 0 ? store.investigations().length + '' : null">
           <df-investigations-block />
         </df-session-block>
 
-        <df-session-block title="TPA / Insurance"
+        <df-session-block blockKey="tpa" title="TPA / Insurance"
           icon="shield-check" accent="#10b981"
           [status]="tpaStatus()"
           [badge]="store.tpa().length > 0 ? store.tpa().length + '' : null"
@@ -219,28 +226,28 @@
           <df-tpa-block />
         </df-session-block>
 
-        <df-session-block title="Consent Records"
+        <df-session-block blockKey="consent" title="Consent Records"
           icon="file-certificate" accent="#ef4444"
           [status]="consentStatus()"
           [badge]="store.consents().length > 0 ? store.consents().length + '' : null">
           <df-consent-block />
         </df-session-block>
 
-        <df-session-block title="Pre-op Checklist"
+        <df-session-block blockKey="preop" title="Pre-op Checklist"
           icon="clipboard-check" accent="#f97316"
           [status]="preopStatus()"
           [summary]="preopStatus() === 'complete' ? 'Pre-op vitals recorded' : null">
           <df-preop-checklist />
         </df-session-block>
 
-        <df-session-block title="Treatment Plan"
+        <df-session-block blockKey="plans" title="Treatment Plan"
           icon="layout-list" accent="#3b82f6"
           [status]="plansStatus()"
           [badge]="store.plans().length > 0 ? store.plans().length + '' : null">
           <df-treatment-plan />
         </df-session-block>
 
-        <df-session-block title="Services Performed"
+        <df-session-block blockKey="services" title="Services Performed"
           icon="tool" accent="#22c55e"
           [status]="servicesStatus()"
           [summary]="servicesSummary()"
@@ -249,28 +256,28 @@
           <df-services-block />
         </df-session-block>
 
-        <df-session-block title="Post-op Record"
+        <df-session-block blockKey="postop" title="Post-op Record"
           icon="heart-rate-monitor" accent="#ec4899"
           [status]="postopStatus()"
           [summary]="postopStatus() === 'complete' ? 'Post-op record saved' : null">
           <df-postop-record />
         </df-session-block>
 
-        <df-session-block title="Prescription"
+        <df-session-block blockKey="prescriptions" title="Prescription"
           icon="pill" accent="#14b8a6"
           [status]="prescriptionsStatus()"
           [badge]="store.prescriptions().length > 0 ? store.prescriptions().length + '' : null">
           <df-prescription-block />
         </df-session-block>
 
-        <df-session-block title="Attachments"
+        <df-session-block blockKey="attachments" title="Attachments"
           icon="paperclip" accent="#64748b"
           [status]="attachmentsStatus()"
           [badge]="store.attachments().length > 0 ? store.attachments().length + '' : null">
           <df-attachments-block />
         </df-session-block>
 
-        <df-session-block title="Clinical Notes (SOAP)"
+        <df-session-block blockKey="soap" title="Clinical Notes (SOAP)"
           icon="notes" accent="#a855f7"
           [status]="soapStatus()"
           [summary]="store.notes().subjective ? store.notes().subjective.slice(0,60) + '…' : null">

@@ -68,8 +68,9 @@
 
   <!-- ── Shortcuts dropdown (admin / subscription quick links, permission-gated) ── -->
   @if (hasShortcuts) {
-  <button mat-icon-button [matMenuTriggerFor]="shortcutsMenu" aria-label="Shortcuts" matTooltip="Shortcuts">
-    <i-tabler class="d-flex" name="layout-grid-add"></i-tabler>
+  <button mat-icon-button [matMenuTriggerFor]="shortcutsMenu" aria-label="Shortcuts" matTooltip="Shortcuts"
+          class="d-flex justify-content-center">
+    <i-tabler class="icon-20 d-flex" name="layout-grid-add"></i-tabler>
   </button>
   <mat-menu #shortcutsMenu="matMenu" xPosition="before" class="topbar-dd cardWithShadow">
     <div class="sc-shortcuts">

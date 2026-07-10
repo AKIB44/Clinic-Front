@@ -231,7 +231,10 @@ export class PatientRecordComponent implements OnInit {
   }
 
   sessionBilledLabel(s: PatientSession): string {
-    const total = s.services_performed.reduce((sum, sp) => sum + (sp.final_charge ?? 0), 0);
+    // Abandoned services were not performed — exclude them from billed totals.
+    const total = s.services_performed
+      .filter(sp => sp.status !== 'ABANDONED')
+      .reduce((sum, sp) => sum + (sp.final_charge ?? 0), 0);
     return total > 0 ? `₹${total.toLocaleString('en-IN')}` : '—';
   }
 
