@@ -159,7 +159,7 @@ export class SessionCanvasPage implements OnInit, OnDestroy {
 
   readonly progressSteps = computed<ProgressStep[]>(() => [
     { key: 'exam',           label: 'Examination',     icon: 'stethoscope',     accent: '#6366f1', status: this.examStatus()           },
-    { key: 'chart',          label: 'Tooth Chart',     icon: 'tooth',           accent: '#06b6d4', status: this.chartStatus()          },
+    { key: 'chart',          label: 'Tooth Chart',     icon: 'dental',          accent: '#06b6d4', status: this.chartStatus()          },
     { key: 'diagnosis',      label: 'Diagnosis',       icon: 'brain',           accent: '#8b5cf6', status: this.diagnosisStatus()      },
     { key: 'investigations', label: 'Investigations',  icon: 'flask',           accent: '#f59e0b', status: this.investigationsStatus() },
     { key: 'tpa',            label: 'TPA / Insurance', icon: 'shield-check',    accent: '#10b981', status: this.tpaStatus()            },

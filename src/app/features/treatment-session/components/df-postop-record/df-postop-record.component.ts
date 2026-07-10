@@ -32,7 +32,8 @@ export class DfPostopRecordComponent {
   newCompAction   = '';
 
   // Sutures
-  sutureCount:  number | null = null;
+  sutureCount: number | null = null;
+  readonly sutureCountDisplay = signal('');
   sutureType: 'resorbable' | 'non-resorbable' | '' = '';
   sutureRemovalDate = '';
 
@@ -71,6 +72,7 @@ export class DfPostopRecordComponent {
     if (p) {
       this.complications      = [...(p.complications ?? [])];
       this.sutureCount        = p.suture_count;
+      this.sutureCountDisplay.set(this.formatSutureCount(p.suture_count));
       this.sutureType         = (p.suture_type ?? '') as any;
       this.sutureRemovalDate  = p.suture_removal_date ?? '';
       this.specimenSent       = p.specimen_sent;
@@ -80,13 +82,14 @@ export class DfPostopRecordComponent {
       this.recoveryVitals     = [...(p.recovery_vitals ?? [])];
       this.instructionsGiven  = p.postop_instructions_given;
       this.instructionsText   = p.postop_instructions_text ?? '';
-      this.patientAcknowledgedAt = p.patient_acknowledged_at ?? '';
-      this.followUpDate       = p.follow_up_date ?? '';
+      this.patientAcknowledgedAt = this.sanitizeFutureDateTime(p.patient_acknowledged_at);
+      this.followUpDate       = this.sanitizeFutureDate(p.follow_up_date);
       this.followUpNotes      = p.follow_up_notes ?? '';
       this.notes              = p.notes ?? '';
     } else {
       this.complications  = [];
       this.recoveryVitals = [];
+      this.sutureCountDisplay.set('');
     }
     this.showForm = true;
     this.saveError.set(null);
@@ -112,7 +115,113 @@ export class DfPostopRecordComponent {
     this.complications = this.complications.filter((_, idx) => idx !== i);
   }
 
+  onSutureCountChange(value: string): void {
+    const digits = value.replace(/\D/g, '');
+    if (!digits) {
+      this.sutureCount = null;
+      this.sutureCountDisplay.set('');
+      return;
+    }
+    const parsed = parseInt(digits, 10);
+    if (!Number.isFinite(parsed) || parsed <= 0) {
+      this.sutureCount = null;
+      this.sutureCountDisplay.set('');
+      return;
+    }
+    this.sutureCount = parsed;
+    this.sutureCountDisplay.set(String(parsed));
+  }
+
+  private formatSutureCount(count: number | null | undefined): string {
+    return count && count > 0 ? String(count) : '';
+  }
+
+  get minFollowUpDate(): string {
+    return this.formatDateInput(new Date());
+  }
+
+  get minAcknowledgedAt(): string {
+    return this.nowDatetimeLocal();
+  }
+
+  onPatientAcknowledgedAtChange(value: string): void {
+    if (!value) {
+      this.patientAcknowledgedAt = '';
+      return;
+    }
+    if (this.isPastDateTime(value)) {
+      this.patientAcknowledgedAt = '';
+      this.saveError.set('Patient acknowledgement time must be in the future.');
+      return;
+    }
+    this.patientAcknowledgedAt = value;
+    this.saveError.set(null);
+  }
+
+  onFollowUpDateChange(value: string): void {
+    if (!value) {
+      this.followUpDate = '';
+      return;
+    }
+    if (this.isPastDate(value)) {
+      this.followUpDate = '';
+      this.saveError.set('Follow-up date cannot be in the past.');
+      return;
+    }
+    this.followUpDate = value;
+    this.saveError.set(null);
+  }
+
+  private formatDateInput(date: Date): string {
+    const pad = (n: number) => String(n).padStart(2, '0');
+    return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`;
+  }
+
+  private nowDatetimeLocal(): string {
+    const date = new Date();
+    date.setSeconds(0, 0);
+    const pad = (n: number) => String(n).padStart(2, '0');
+    return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(date.getMinutes())}`;
+  }
+
+  private toDatetimeLocalValue(value: string | null | undefined): string {
+    if (!value) return '';
+    if (/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}/.test(value)) {
+      return value.slice(0, 16);
+    }
+    const parsed = new Date(value);
+    if (Number.isNaN(parsed.getTime())) return '';
+    const pad = (n: number) => String(n).padStart(2, '0');
+    return `${parsed.getFullYear()}-${pad(parsed.getMonth() + 1)}-${pad(parsed.getDate())}T${pad(parsed.getHours())}:${pad(parsed.getMinutes())}`;
+  }
+
+  private sanitizeFutureDate(value: string | null | undefined): string {
+    if (!value) return '';
+    const dateOnly = value.slice(0, 10);
+    return this.isPastDate(dateOnly) ? '' : dateOnly;
+  }
+
+  private sanitizeFutureDateTime(value: string | null | undefined): string {
+    const local = this.toDatetimeLocalValue(value);
+    if (!local) return '';
+    return this.isPastDateTime(local) ? '' : local;
+  }
+
+  private isPastDate(value: string): boolean {
+    return value < this.minFollowUpDate;
+  }
+
+  private isPastDateTime(value: string): boolean {
+    return new Date(value) <= new Date();
+  }
+
   addRecoveryVital(): void {
+    const vals = [this.newVitalBpSys, this.newVitalBpDia, this.newVitalPulse, this.newVitalSpo2];
+    if (vals.some(v => v != null && v < 0)) {
+      this.saveError.set('Vitals cannot be negative.');
+      return;
+    }
+    this.saveError.set(null);
     this.recoveryVitals = [...this.recoveryVitals, {
       time:   new Date().toISOString(),
       bp_sys: this.newVitalBpSys,
@@ -131,12 +240,27 @@ export class DfPostopRecordComponent {
     const sessionId = this.store.sessionId();
     if (!sessionId) return;
 
+    if (this.sutureCount != null && this.sutureCount < 0) {
+      this.saveError.set('Suture count cannot be negative.');
+      return;
+    }
+
+    if (this.patientAcknowledgedAt && this.isPastDateTime(this.patientAcknowledgedAt)) {
+      this.saveError.set('Patient acknowledgement time must be in the future.');
+      return;
+    }
+
+    if (this.followUpDate && this.isPastDate(this.followUpDate)) {
+      this.saveError.set('Follow-up date cannot be in the past.');
+      return;
+    }
+
     this.saving.set(true);
     this.saveError.set(null);
 
     this.api.savePostop(sessionId, {
       complications:                 this.complications,
-      suture_count:                  this.sutureCount ?? undefined,
+      suture_count:                  this.sutureCount && this.sutureCount > 0 ? this.sutureCount : undefined,
       suture_type:                   (this.sutureType || undefined) as any,
       suture_removal_date:           this.sutureRemovalDate || undefined,
       specimen_sent:                 this.specimenSent,
@@ -146,7 +270,9 @@ export class DfPostopRecordComponent {
       recovery_vitals:               this.recoveryVitals,
       postop_instructions_given:     this.instructionsGiven,
       postop_instructions_text:      this.instructionsText || undefined,
-      patient_acknowledged_at:       this.patientAcknowledgedAt || undefined,
+      patient_acknowledged_at:       this.patientAcknowledgedAt
+        ? new Date(this.patientAcknowledgedAt).toISOString()
+        : undefined,
       follow_up_date:                this.followUpDate || undefined,
       follow_up_notes:               this.followUpNotes || undefined,
       notes:                         this.notes || undefined,

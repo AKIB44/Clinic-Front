@@ -94,6 +94,14 @@ export class DfPreopChecklistComponent {
     const sessionId = this.store.sessionId();
     if (!sessionId) return;
 
+    // Vitals can never be negative — hard block (not overridable).
+    const numeric = [this.bpSystolic, this.bpDiastolic, this.pulse, this.spo2,
+                     this.temperature, this.bloodSugar, this.inrValue, this.npoHours];
+    if (numeric.some(v => v != null && v < 0)) {
+      this.saveError.set('Vitals cannot be negative.');
+      return;
+    }
+
     const hasWarnings = this.vitalWarnings().length > 0;
     if (hasWarnings && !this.overrideReason.trim()) {
       this.saveError.set('Out-of-range vitals detected — please provide an override reason.');

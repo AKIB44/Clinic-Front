@@ -47,10 +47,12 @@
         <div class="pof-comp-list">
           @for (c of complications; track $index) {
             <div class="pof-comp-row">
-              <span class="pof-comp-severity s-{{ c.severity }}">{{ c.severity }}</span>
-              <span class="pof-comp-type">{{ c.type }}</span>
+              <div class="pof-comp-main">
+                <span class="pof-comp-severity s-{{ c.severity }}">{{ c.severity }}</span>
+                <span class="pof-comp-type">{{ c.type }}</span>
+              </div>
               @if (c.action_taken) {
-                <span class="pof-comp-action">→ {{ c.action_taken }}</span>
+                <div class="pof-comp-action">Action taken: {{ c.action_taken }}</div>
               }
               <button class="pof-remove-btn" (click)="removeComplication($index)">
                 <i-tabler name="x" size="11"></i-tabler>
@@ -73,9 +75,12 @@
             <option value="severe">Severe</option>
           </select>
         </div>
-        <div class="pof-field">
+      </div>
+      <div class="pof-row pof-row--action">
+        <div class="pof-field pof-field--full">
           <label>Action taken</label>
-          <input [(ngModel)]="newCompAction" placeholder="e.g. Haemostatic gel applied">
+          <textarea [(ngModel)]="newCompAction" rows="2"
+                    placeholder="e.g. Haemostatic gel applied, patient monitored for 30 min…"></textarea>
         </div>
         <button class="pof-add-comp-btn" (click)="addComplication()" [disabled]="!newCompType.trim()">
           Add
@@ -89,7 +94,10 @@
       <div class="pof-row">
         <div class="pof-field pof-field--sm">
           <label>Count</label>
-          <input type="number" [(ngModel)]="sutureCount" placeholder="0">
+          <input type="text" inputmode="numeric" autocomplete="off"
+                 [ngModel]="sutureCountDisplay()"
+                 (ngModelChange)="onSutureCountChange($event)"
+                 placeholder="e.g. 4">
         </div>
         <div class="pof-field">
           <label>Type</label>
@@ -159,19 +167,19 @@
       <div class="pof-row" style="align-items:flex-end">
         <div class="pof-field pof-field--sm">
           <label>BP Sys</label>
-          <input type="number" [(ngModel)]="newVitalBpSys">
+          <input type="number" min="0" [(ngModel)]="newVitalBpSys">
         </div>
         <div class="pof-field pof-field--sm">
           <label>BP Dia</label>
-          <input type="number" [(ngModel)]="newVitalBpDia">
+          <input type="number" min="0" [(ngModel)]="newVitalBpDia">
         </div>
         <div class="pof-field pof-field--sm">
           <label>Pulse</label>
-          <input type="number" [(ngModel)]="newVitalPulse">
+          <input type="number" min="0" [(ngModel)]="newVitalPulse">
         </div>
         <div class="pof-field pof-field--sm">
           <label>SpO₂</label>
-          <input type="number" [(ngModel)]="newVitalSpo2">
+          <input type="number" min="0" [(ngModel)]="newVitalSpo2">
         </div>
         <button class="pof-add-comp-btn" (click)="addRecoveryVital()">Record</button>
       </div>
@@ -192,7 +200,10 @@
         </div>
         <div class="pof-field">
           <label>Patient acknowledged at</label>
-          <input type="datetime-local" [(ngModel)]="patientAcknowledgedAt">
+          <input type="datetime-local"
+                 [ngModel]="patientAcknowledgedAt"
+                 (ngModelChange)="onPatientAcknowledgedAtChange($event)"
+                 [min]="minAcknowledgedAt">
         </div>
       }
 
@@ -203,7 +214,10 @@
       <div class="pof-row">
         <div class="pof-field">
           <label>Follow-up date</label>
-          <input type="date" [(ngModel)]="followUpDate">
+          <input type="date"
+                 [ngModel]="followUpDate"
+                 (ngModelChange)="onFollowUpDateChange($event)"
+                 [min]="minFollowUpDate">
         </div>
         <div class="pof-field">
           <label>Notes</label>

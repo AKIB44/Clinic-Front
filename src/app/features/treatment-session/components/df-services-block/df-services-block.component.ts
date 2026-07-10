@@ -14,6 +14,7 @@ import { DfMaterialsCartComponent } from '../df-materials-cart/df-materials-cart
 import { ClinicServicesService } from '../../../../services/clinic-services.service';
 import { ClinicService } from '../../../../models/clinic.model';
 import { ToastService } from '../../../../services/toast.service';
+import { isOfflineQueued } from '../../../../core/offline/offline-queue.service';
 
 @Component({
   selector: 'df-services-block',
@@ -192,7 +193,18 @@ export class DfServicesBlockComponent implements OnInit {
           if (plan_item) this.store.updatePlanItem(plan_item);
           this.toast.info(`${svc.service_name ?? 'Service'} removed.`);
         },
-        error: () => this.toast.error('Could not cancel service. Please try again.'),
+        error: (e) => {
+          // Surface the real reason so it's diagnosable, not a generic message.
+          const detail = e?.error?.error ?? e?.error?.message ?? e?.message;
+          // Offline: the mutation was queued for replay — treat as a local success.
+          if (isOfflineQueued(e)) {
+            this.store.removeService(svc.id);
+            this.toast.info(`${svc.service_name ?? 'Service'} removed (will sync).`);
+            return;
+          }
+          console.error('[cancelService] failed', e?.status, e);
+          this.toast.error(`Cancel failed (${e?.status ?? '?'})${detail ? ': ' + detail : ''}`);
+        },
       });
   }
 }

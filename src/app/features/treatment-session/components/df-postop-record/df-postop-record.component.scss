@@ -29,8 +29,10 @@
                      letter-spacing: .04em; }
 
 .pof-row       { display: flex; flex-wrap: wrap; gap: 8px; align-items: flex-start; }
+.pof-row--action { align-items: flex-end; }
 .pof-field     { display: flex; flex-direction: column; gap: 3px; flex: 1; min-width: 80px; }
 .pof-field--sm { flex: 0 0 80px; }
+.pof-field--full { flex: 1 1 100%; min-width: 0; }
 
 .pof-field label { font-size: 11px; font-weight: 600; color: #64748b; }
 .pof-field input,
@@ -49,18 +51,22 @@
 .pof-check > span { cursor: default; line-height: 1.35; user-select: none; }
 
 .pof-comp-list { display: flex; flex-direction: column; gap: 4px; }
-.pof-comp-row  { display: flex; align-items: center; gap: 6px; background: #f8fafc;
-                 border: 1px solid #e2e8f0; border-radius: 6px; padding: 5px 8px;
-                 font-size: 12px; }
-.pof-comp-severity { font-size: 10px; font-weight: 700; padding: 1px 6px; border-radius: 4px; }
+.pof-comp-row  { display: flex; flex-wrap: wrap; align-items: flex-start; gap: 6px;
+                 background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 6px;
+                 padding: 8px; font-size: 12px; min-width: 0; }
+.pof-comp-main { display: flex; align-items: center; flex-wrap: wrap; gap: 6px;
+                 flex: 1 1 auto; min-width: 0; }
+.pof-comp-severity { font-size: 10px; font-weight: 700; padding: 1px 6px; border-radius: 4px; flex-shrink: 0; }
 .s-mild     { background: #fef3c7; color: #92400e; }
 .s-moderate { background: #fed7aa; color: #9a3412; }
 .s-severe   { background: #fee2e2; color: #991b1b; }
-.pof-comp-type   { font-weight: 600; color: #0f172a; flex: 1; }
-.pof-comp-action { color: #64748b; font-size: 11px; }
+.pof-comp-type   { font-weight: 600; color: #0f172a; min-width: 0;
+                   white-space: normal; word-break: break-word; overflow-wrap: anywhere; }
+.pof-comp-action { flex: 1 1 100%; min-width: 0; color: #64748b; font-size: 11px; line-height: 1.45;
+                   white-space: normal; word-break: break-word; overflow-wrap: anywhere; }
 .pof-remove-btn  { background: none; border: none; cursor: pointer; color: #94a3b8;
                    padding: 2px; border-radius: 3px; display: flex; align-items: center;
-                   margin-left: auto; transition: color .15s; }
+                   flex-shrink: 0; margin-left: auto; transition: color .15s; }
 .pof-remove-btn:hover { color: #ef4444; }
 
 .pof-add-comp-btn { align-self: flex-end; background: #f1f5f9; border: 1px solid #e2e8f0;

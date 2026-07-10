@@ -158,11 +158,15 @@
             </div>
           }
 
-          <!-- Sub-section: materials cart + lab order (full width, below header) -->
-          <div class="svc-item-sub">
-            <df-materials-cart [service]="svc" />
-            <df-lab-order [service]="svc" />
-          </div>
+          <!-- Sub-section: materials cart + lab order (full width, below header).
+               Hidden for abandoned services — you don't add materials or lab
+               work to a procedure that wasn't performed. -->
+          @if (svc.status !== 'ABANDONED') {
+            <div class="svc-item-sub">
+              <df-materials-cart [service]="svc" />
+              <df-lab-order [service]="svc" />
+            </div>
+          }
 
         </div>
       }

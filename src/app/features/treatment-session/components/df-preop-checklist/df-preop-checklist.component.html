@@ -44,31 +44,31 @@
       <div class="pf-row">
         <div class="pf-field pf-field--sm">
           <label>BP Systolic</label>
-          <input type="number" [(ngModel)]="bpSystolic" placeholder="mmHg">
+          <input type="number" min="0" [(ngModel)]="bpSystolic" placeholder="mmHg">
         </div>
         <div class="pf-field pf-field--sm">
           <label>BP Diastolic</label>
-          <input type="number" [(ngModel)]="bpDiastolic" placeholder="mmHg">
+          <input type="number" min="0" [(ngModel)]="bpDiastolic" placeholder="mmHg">
         </div>
         <div class="pf-field pf-field--sm">
           <label>Pulse</label>
-          <input type="number" [(ngModel)]="pulse" placeholder="bpm">
+          <input type="number" min="0" [(ngModel)]="pulse" placeholder="bpm">
         </div>
         <div class="pf-field pf-field--sm">
           <label>SpO₂ %</label>
-          <input type="number" [(ngModel)]="spo2" placeholder="98">
+          <input type="number" min="0" [(ngModel)]="spo2" placeholder="98">
         </div>
         <div class="pf-field pf-field--sm">
           <label>Temp °C</label>
-          <input type="number" [(ngModel)]="temperature" placeholder="37.0" step="0.1">
+          <input type="number" min="0" [(ngModel)]="temperature" placeholder="37.0" step="0.1">
         </div>
         <div class="pf-field pf-field--sm">
           <label>Blood Sugar</label>
-          <input type="number" [(ngModel)]="bloodSugar" placeholder="mg/dL">
+          <input type="number" min="0" [(ngModel)]="bloodSugar" placeholder="mg/dL">
         </div>
         <div class="pf-field pf-field--sm">
           <label>INR</label>
-          <input type="number" [(ngModel)]="inrValue" placeholder="1.0" step="0.1">
+          <input type="number" min="0" [(ngModel)]="inrValue" placeholder="1.0" step="0.1">
         </div>
       </div>
 
@@ -124,7 +124,7 @@
       <div class="pf-row">
         <div class="pf-field pf-field--sm">
           <label>NPO (hrs)</label>
-          <input type="number" [(ngModel)]="npoHours" placeholder="0" step="0.5">
+          <input type="number" min="0" [(ngModel)]="npoHours" placeholder="0" step="0.5">
         </div>
         <div class="pf-field">
           <label>Plan</label>
