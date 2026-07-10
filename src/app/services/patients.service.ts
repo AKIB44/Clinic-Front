@@ -124,11 +124,19 @@ export class PatientsService {
   private readonly http = inject(HttpClient);
   private readonly base = `${authApiConfig.baseUrl}/patients`;
 
-  list(params: { search?: string; service_id?: string; limit?: number } = {}): Observable<{ patients: Patient[] }> {
-    const p: Record<string, string> = { limit: String(params.limit ?? 50) };
+  list(params: {
+    search?: string;
+    service_id?: string;
+    page?: number;
+    limit?: number;
+  } = {}): Observable<{ patients: Patient[]; total?: number }> {
+    const p: Record<string, string> = {
+      page:  String(params.page ?? 1),
+      limit: String(params.limit ?? 20),
+    };
     if (params.search)     p['search']     = params.search;
     if (params.service_id) p['service_id'] = params.service_id;
-    return this.http.get<{ patients: Patient[] }>(this.base, { params: p });
+    return this.http.get<{ patients: Patient[]; total?: number }>(this.base, { params: p });
   }
 
   search(term: string): Observable<{ patients: Patient[] }> {

@@ -31,6 +31,22 @@ interface ShortcutGroup { label: string; items: Shortcut[]; }
   ],
   templateUrl: './header.component.html',
   styles: [`
+    /* Keep trailing toolbar actions on one horizontal axis. */
+    .topbar {
+      align-items: center;
+
+      .mat-mdc-icon-button,
+      .profile-trigger,
+      app-clinic-switcher {
+        display: inline-flex;
+        align-items: center;
+      }
+
+      .mat-mdc-icon-button {
+        justify-content: center;
+      }
+    }
+
     /* Let the dropdown grow wider than Material's default 280px cap. */
     .mat-mdc-menu-panel.topbar-dd { max-width: min(94vw, 520px); }
 

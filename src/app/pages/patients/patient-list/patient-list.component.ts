@@ -7,6 +7,7 @@ import { Router, RouterModule } from '@angular/router';
 import { MaterialModule } from '../../../material.module';
 import { TablerIconsModule } from 'angular-tabler-icons';
 import { Subject, debounceTime, distinctUntilChanged, takeUntil } from 'rxjs';
+import { PageEvent } from '@angular/material/paginator';
 import { PatientsService, Patient } from '../../../services/patients.service';
 import { ClinicServicesService } from '../../../services/clinic-services.service';
 import { ClinicService } from '../../../models/clinic.model';
@@ -34,6 +35,19 @@ export class PatientListComponent implements OnInit, OnDestroy {
   patients: Patient[]       = [];
   loading       = false;
   searched      = false;
+  page          = 1;
+  pageSize      = 20;
+  total         = 0;
+  readonly pageSizeOptions = [10, 20, 50];
+
+  get rangeStart(): number {
+    if (this.total === 0) return 0;
+    return (this.page - 1) * this.pageSize + 1;
+  }
+
+  get rangeEnd(): number {
+    return Math.min(this.page * this.pageSize, this.total);
+  }
 
   ngOnInit() {
     this.servicesService.list().subscribe({
@@ -45,7 +59,10 @@ export class PatientListComponent implements OnInit, OnDestroy {
       debounceTime(300),
       distinctUntilChanged(),
       takeUntil(this.destroy$),
-    ).subscribe(() => this.load());
+    ).subscribe(() => {
+      this.page = 1;
+      this.load();
+    });
 
     // Load all patients initially
     this.load();
@@ -55,9 +72,22 @@ export class PatientListComponent implements OnInit, OnDestroy {
 
   onSearchInput() { this.search$.next(this.searchTerm); }
 
-  onServiceChange() { this.load(); }
+  onServiceChange() {
+    this.page = 1;
+    this.load();
+  }
 
-  clearSearch() { this.searchTerm = ''; this.load(); }
+  clearSearch() {
+    this.searchTerm = '';
+    this.page = 1;
+    this.load();
+  }
+
+  onPageChange(event: PageEvent): void {
+    this.page = event.pageIndex + 1;
+    this.pageSize = event.pageSize;
+    this.load();
+  }
 
   private load() {
     this.loading = true;
@@ -65,16 +95,32 @@ export class PatientListComponent implements OnInit, OnDestroy {
     this.patientsService.list({
       search:     this.searchTerm.trim() || undefined,
       service_id: this.selectedSvcId || undefined,
-      limit:      100,
+      page:       this.page,
+      limit:      this.pageSize,
     }).subscribe({
       next: r => {
-        this.patients = r.patients ?? [];
+        const patients = r.patients ?? [];
+        if (patients.length === 0 && this.page > 1) {
+          this.page = Math.max(1, this.page - 1);
+          this.load();
+          return;
+        }
+        this.patients = patients;
+        this.total    = this.resolveTotal(r.total, patients.length);
         this.loading  = false;
         this.searched = true;
         this.cdr.markForCheck();
       },
       error: () => { this.loading = false; this.cdr.markForCheck(); },
     });
+  }
+
+  private resolveTotal(apiTotal: number | undefined, pageCount: number): number {
+    if (typeof apiTotal === 'number' && apiTotal >= 0) return apiTotal;
+    if (pageCount < this.pageSize) {
+      return (this.page - 1) * this.pageSize + pageCount;
+    }
+    return this.page * this.pageSize + 1;
   }
 
   openRecord(patient: Patient) {

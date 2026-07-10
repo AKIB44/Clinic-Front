@@ -59,7 +59,9 @@
         <p>No patients found{{ searchTerm ? ' for "' + searchTerm + '"' : '' }}{{ selectedSvcId ? ' in selected service' : '' }}.</p>
       </div>
     } @else {
-      <div class="pl-count">{{ patients.length }} patient{{ patients.length !== 1 ? 's' : '' }} found</div>
+      <div class="pl-count">
+        Showing {{ rangeStart }}–{{ rangeEnd }} of {{ total }} patient{{ total !== 1 ? 's' : '' }}
+      </div>
 
       <div class="pl-grid">
         @for (p of patients; track p.id) {
@@ -109,6 +111,16 @@
           </div>
         }
       </div>
+
+      <mat-paginator
+        class="pl-paginator"
+        [length]="total"
+        [pageSize]="pageSize"
+        [pageIndex]="page - 1"
+        [pageSizeOptions]="pageSizeOptions"
+        [showFirstLastButtons]="true"
+        (page)="onPageChange($event)">
+      </mat-paginator>
     }
   }
 
