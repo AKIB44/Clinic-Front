@@ -107,10 +107,13 @@ export class SessionApiService {
     );
   }
 
-  /** DELETE /services/:id — cancel (remove) a service from the session. */
+  /** POST /services/:id/cancel — cancel (remove) a service from the session.
+   *  A plain DELETE /services/:id collides with the clinic-services catalog
+   *  route, so the cancel action uses an explicit sub-path. */
   cancelService(serviceId: string): Observable<{ cancelled: boolean; id: string; plan_item?: TreatmentPlanItem | null }> {
-    return this.http.delete<{ cancelled: boolean; id: string; plan_item?: TreatmentPlanItem | null }>(
-      `${this.base}/services/${serviceId}`
+    return this.http.post<{ cancelled: boolean; id: string; plan_item?: TreatmentPlanItem | null }>(
+      `${this.base}/services/${serviceId}/cancel`,
+      {}
     );
   }
 

@@ -21,6 +21,18 @@ function addAuthHeaders(req: HttpRequest<unknown>, token: string, clinicId: stri
   return req.clone({ setHeaders: headers });
 }
 
+// A relative URL is always same-origin (our own API). An absolute URL to a
+// different origin (S3 presigned upload, external CDN, etc.) is external and
+// must never receive our auth headers or trigger our error handling.
+function isExternalUrl(url: string): boolean {
+  if (!/^https?:\/\//i.test(url)) return false;
+  try {
+    return new URL(url).origin !== window.location.origin;
+  } catch {
+    return false;
+  }
+}
+
 function isPublicAuthRequest(req: HttpRequest<unknown>): boolean {
   const u = req.url;
   return (
@@ -88,6 +100,14 @@ export const authInterceptor: HttpInterceptorFn = (
   const authService = inject(AuthService);
   const router      = inject(Router);
   const toast       = inject(ToastService);
+
+  // Requests to a DIFFERENT origin (e.g. an S3 presigned-URL upload) must pass
+  // through untouched: attaching our Authorization header makes S3 reject the
+  // request ("only one auth mechanism allowed"), and its CORS/network errors
+  // must not trip the server-outage handling below.
+  if (isExternalUrl(req.url)) {
+    return next(req);
+  }
 
   const token    = storage.getAccessToken();
   const clinicId = authService.getActiveClinicId();
