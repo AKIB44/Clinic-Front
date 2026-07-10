@@ -91,7 +91,7 @@
 
     <!-- ── Row: revenue trend + loss factors ─────────────────────────────── -->
     <div class="an-grid">
-      <mat-card class="cardWithShadow an-span2">
+      <mat-card class="cardWithShadow an-span2 an-chart-card" anResizable="trend">
         <mat-card-header><mat-card-title>Revenue &amp; Sessions — last 12 months</mat-card-title></mat-card-header>
         <mat-card-content>
           <apx-chart
@@ -102,7 +102,7 @@
         </mat-card-content>
       </mat-card>
 
-      <mat-card class="cardWithShadow">
+      <mat-card class="cardWithShadow an-flex-card" anResizable="loss">
         <mat-card-header><mat-card-title>Where revenue is being lost</mat-card-title></mat-card-header>
         <mat-card-content>
           <apx-chart
@@ -120,7 +120,7 @@
 
     <!-- ── Row: revenue by service + declined reasons ────────────────────── -->
     <div class="an-grid">
-      <mat-card class="cardWithShadow an-span2">
+      <mat-card class="cardWithShadow an-span2 an-chart-card" anResizable="service">
         <mat-card-header><mat-card-title>Revenue by service — top 10 (12 months)</mat-card-title></mat-card-header>
         <mat-card-content>
           <apx-chart
@@ -130,7 +130,7 @@
         </mat-card-content>
       </mat-card>
 
-      <mat-card class="cardWithShadow">
+      <mat-card class="cardWithShadow an-flex-card" anResizable="decline">
         <mat-card-header><mat-card-title>Why patients decline treatment</mat-card-title></mat-card-header>
         <mat-card-content>
           @if (d.loss_factors.declined_plans.by_reason.length === 0) {
@@ -160,7 +160,7 @@
 
     <!-- ── Row: time analysis ─────────────────────────────────────────────── -->
     <div class="an-grid an-grid--three">
-      <mat-card class="cardWithShadow">
+      <mat-card class="cardWithShadow an-chart-card" anResizable="weekday">
         <mat-card-header><mat-card-title>Busiest weekdays (90 days)</mat-card-title></mat-card-header>
         <mat-card-content>
           <apx-chart
@@ -170,7 +170,7 @@
         </mat-card-content>
       </mat-card>
 
-      <mat-card class="cardWithShadow">
+      <mat-card class="cardWithShadow an-chart-card" anResizable="hour">
         <mat-card-header><mat-card-title>Busiest hours (90 days)</mat-card-title></mat-card-header>
         <mat-card-content>
           <apx-chart
@@ -180,7 +180,7 @@
         </mat-card-content>
       </mat-card>
 
-      <mat-card class="cardWithShadow">
+      <mat-card class="cardWithShadow an-chart-card" anResizable="chairtime">
         <mat-card-header><mat-card-title>Where chair time goes</mat-card-title></mat-card-header>
         <mat-card-content>
           <apx-chart
@@ -194,7 +194,7 @@
 
     <!-- ── Row: doctor performance + tables ──────────────────────────────── -->
     <div class="an-grid">
-      <mat-card class="cardWithShadow">
+      <mat-card class="cardWithShadow an-chart-card" anResizable="doctor">
         <mat-card-header><mat-card-title>Revenue by doctor (12 months)</mat-card-title></mat-card-header>
         <mat-card-content>
           <apx-chart
@@ -205,7 +205,7 @@
         </mat-card-content>
       </mat-card>
 
-      <mat-card class="cardWithShadow">
+      <mat-card class="cardWithShadow an-flex-card" anResizable="svc-table">
         <mat-card-header><mat-card-title>Service performance (12 months)</mat-card-title></mat-card-header>
         <mat-card-content class="an-table-wrap">
           <table class="an-table">
@@ -224,7 +224,7 @@
         </mat-card-content>
       </mat-card>
 
-      <mat-card class="cardWithShadow">
+      <mat-card class="cardWithShadow an-flex-card" anResizable="top-patients">
         <mat-card-header><mat-card-title>Top patients by value (12 months)</mat-card-title></mat-card-header>
         <mat-card-content class="an-table-wrap">
           <table class="an-table">

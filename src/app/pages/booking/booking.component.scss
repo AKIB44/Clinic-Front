@@ -669,6 +669,23 @@
   transition: border-color .14s;
   &:focus { border-color: #0074ba; }
   &::placeholder { color: #cbd5e1; }
+
+  &--error {
+    border-color: #f87171;
+    background: #fff5f5;
+  }
+}
+
+.intake-field-wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.intake-field-error {
+  font-size: 11px;
+  color: #dc2626;
+  line-height: 1.35;
 }
 
 .intake-inline-row { display: flex; flex-direction: column; gap: 10px; }

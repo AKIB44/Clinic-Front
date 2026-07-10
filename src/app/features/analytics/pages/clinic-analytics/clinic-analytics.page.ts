@@ -4,6 +4,7 @@ import { NgApexchartsModule } from 'ng-apexcharts';
 import { MaterialModule } from '../../../../material.module';
 import { TablerIconsModule } from 'angular-tabler-icons';
 import { AnalyticsApiService, AnalyticsOverview } from '../../services/analytics-api.service';
+import { ResizableCardDirective } from './resizable-card.directive';
 
 // Modernize palette — matches the template dashboards so charts feel native.
 const C = {
@@ -26,7 +27,7 @@ const DECLINE_LABELS: Record<string, string> = {
   selector: 'app-clinic-analytics',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [CommonModule, NgApexchartsModule, MaterialModule, TablerIconsModule],
+  imports: [CommonModule, NgApexchartsModule, MaterialModule, TablerIconsModule, ResizableCardDirective],
   templateUrl: './clinic-analytics.page.html',
   styleUrl: './clinic-analytics.page.scss',
 })
@@ -88,7 +89,7 @@ export class ClinicAnalyticsPage implements OnInit {
         { name: 'Revenue', type: 'area', data: rows.map(r => Math.round(r.revenue)) },
         { name: 'Sessions', type: 'line', data: rows.map(r => r.sessions) },
       ],
-      chart: { height: 300, type: 'line', fontFamily: FONT, toolbar: { show: false }, stacked: false },
+      chart: { height: '100%', type: 'line', fontFamily: FONT, toolbar: { show: false }, stacked: false },
       colors: [C.primary, C.success],
       stroke: { curve: 'smooth', width: [2, 3] },
       fill: { type: ['gradient', 'solid'], gradient: { shadeIntensity: 0, opacityFrom: 0.25, opacityTo: 0.02 } },
@@ -109,7 +110,7 @@ export class ClinicAnalyticsPage implements OnInit {
     const rows = this.data()?.revenue_by_service ?? [];
     return {
       series: [{ name: 'Revenue', data: rows.map(r => Math.round(r.revenue)) }],
-      chart: { type: 'bar', height: 320, fontFamily: FONT, toolbar: { show: false } },
+      chart: { type: 'bar', height: '100%', fontFamily: FONT, toolbar: { show: false } },
       plotOptions: { bar: { horizontal: true, borderRadius: 4, barHeight: '60%' } },
       colors: [C.primary],
       dataLabels: { enabled: true, formatter: (v: number) => `₹${(v / 1000).toFixed(0)}k`, style: { fontFamily: FONT } },
@@ -146,7 +147,7 @@ export class ClinicAnalyticsPage implements OnInit {
     const byDow = new Map(rows.map(r => [r.dow, r.count]));
     return {
       series: [{ name: 'Appointments', data: WEEKDAY_LABELS.map((_, i) => byDow.get(i) ?? 0) }],
-      chart: { type: 'bar', height: 240, fontFamily: FONT, toolbar: { show: false } },
+      chart: { type: 'bar', height: '100%', fontFamily: FONT, toolbar: { show: false } },
       plotOptions: { bar: { columnWidth: '45%', borderRadius: 4 } },
       colors: [C.secondary],
       dataLabels: { enabled: false },
@@ -162,7 +163,7 @@ export class ClinicAnalyticsPage implements OnInit {
     const hours = Array.from({ length: 13 }, (_, i) => i + 8); // 8am–8pm clinic window
     return {
       series: [{ name: 'Appointments', data: hours.map(h => byHour.get(h) ?? 0) }],
-      chart: { type: 'bar', height: 240, fontFamily: FONT, toolbar: { show: false } },
+      chart: { type: 'bar', height: '100%', fontFamily: FONT, toolbar: { show: false } },
       plotOptions: { bar: { columnWidth: '55%', borderRadius: 4 } },
       colors: [C.primary],
       dataLabels: { enabled: false },
@@ -179,7 +180,7 @@ export class ClinicAnalyticsPage implements OnInit {
     const rows = this.data()?.revenue_by_doctor ?? [];
     return {
       series: [{ name: 'Revenue', data: rows.map(r => Math.round(r.revenue)) }],
-      chart: { type: 'bar', height: 260, fontFamily: FONT, toolbar: { show: false } },
+      chart: { type: 'bar', height: '100%', fontFamily: FONT, toolbar: { show: false } },
       plotOptions: { bar: { columnWidth: '40%', borderRadius: 4, distributed: true } },
       colors: [C.primary, C.secondary, C.success, C.warning, C.error, '#8763da', '#0085db', '#46caeb'],
       dataLabels: { enabled: false },
@@ -196,7 +197,7 @@ export class ClinicAnalyticsPage implements OnInit {
     return {
       series: rows.map(r => r.minutes),
       labels: rows.map(r => r.name ?? 'Other'),
-      chart: { type: 'donut', height: 260, fontFamily: FONT },
+      chart: { type: 'donut', height: '100%', fontFamily: FONT },
       colors: [C.primary, C.secondary, C.success, C.warning, C.error, '#8763da', '#5d87ff', C.muted],
       dataLabels: { enabled: false },
       legend: { position: 'bottom', fontFamily: FONT },

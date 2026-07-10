@@ -212,24 +212,26 @@
             <p class="no-flags-msg">No medical alerts flagged.</p>
           } @else {
             <div class="medical-flags-grid">
-              <div class="mf-item" [class.mf-active]="p.is_smoker">
+              <div class="mf-item mf-item--smoker" [class.mf-active]="p.is_smoker">
                 <i-tabler name="smoking" size="18"></i-tabler>
                 <span>Smoker</span>
               </div>
-              <div class="mf-item" [class.mf-active]="p.is_diabetic">
+              <div class="mf-item mf-item--diabetic" [class.mf-active]="p.is_diabetic">
                 <i-tabler name="droplet" size="18"></i-tabler>
                 <span>Diabetic</span>
               </div>
-              <div class="mf-item" [class.mf-active]="p.is_hypertensive">
+              <div class="mf-item mf-item--hypertensive" [class.mf-active]="p.is_hypertensive">
                 <i-tabler name="activity" size="18"></i-tabler>
                 <span>Hypertensive</span>
               </div>
-              <div class="mf-item" [class.mf-active]="p.is_pregnant">
-                <i-tabler name="heart" size="18"></i-tabler>
-                <span>Pregnant</span>
-              </div>
-              <div class="mf-item" [class.mf-active]="p.is_on_blood_thinner">
-                <i-tabler name="tint" size="18"></i-tabler>
+              @if (showPregnancyAlert(p)) {
+                <div class="mf-item mf-item--pregnant" [class.mf-active]="p.is_pregnant">
+                  <i-tabler name="heart" size="18"></i-tabler>
+                  <span>Pregnant</span>
+                </div>
+              }
+              <div class="mf-item mf-item--blood-thinner" [class.mf-active]="p.is_on_blood_thinner">
+                <i-tabler name="pill" size="18"></i-tabler>
                 <span>Blood Thinner</span>
               </div>
             </div>

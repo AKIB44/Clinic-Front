@@ -3,7 +3,7 @@ import {
   ChangeDetectionStrategy, ChangeDetectorRef,
 } from '@angular/core';
 import { CommonModule, TitleCasePipe } from '@angular/common';
-import { ReactiveFormsModule, FormBuilder, Validators, FormGroup } from '@angular/forms';
+import { ReactiveFormsModule, FormBuilder, Validators, FormGroup, AbstractControl, ValidationErrors } from '@angular/forms';
 import { MaterialModule } from '../../material.module';
 import { TablerIconsModule } from 'angular-tabler-icons';
 import { HttpErrorResponse } from '@angular/common/http';
@@ -19,6 +19,17 @@ import { ChairsService } from '../../services/chairs.service';
 import { AuthService } from '../../auth/auth.service';
 import { ClinicService, Chair } from '../../models/clinic.model';
 import { formatSlotTime12h } from '../../utils/appointment-time';
+
+const INDIAN_MOBILE_PATTERN = /^[6-9]\d{9}$/;
+
+function emergencyPhoneValidator(control: AbstractControl): ValidationErrors | null {
+  const raw = String(control.value ?? '').trim();
+  const name = String(control.parent?.get('emergency_contact_name')?.value ?? '').trim();
+  if (!raw) {
+    return name ? { required: true } : null;
+  }
+  return INDIAN_MOBILE_PATTERN.test(raw) ? null : { invalidMobile: true };
+}
 
 // ── Types ────────────────────────────────────────────────────────────────────
 
@@ -351,7 +362,7 @@ export class BookingComponent implements OnInit, OnDestroy {
   ngOnInit() {
     this.patientForm = this.fb.group({
       name:                 ['', [Validators.required, Validators.minLength(2), Validators.pattern(/^[A-Za-z\s]+$/)]],
-      phone:                ['', [Validators.required, Validators.pattern(/^[6-9]\d{9}$/)]],
+      phone:                ['', [Validators.required, Validators.pattern(INDIAN_MOBILE_PATTERN)]],
       age:                  [null, [Validators.required, Validators.min(this.ageMin), Validators.max(this.ageMax)]],
       gender:               ['', Validators.required],
       address:              ['', Validators.required],
@@ -366,9 +377,16 @@ export class BookingComponent implements OnInit, OnDestroy {
       is_on_blood_thinner:  [false],
       known_allergies:      [''],
       emergency_contact_name:  [''],
-      emergency_contact_phone: [''],
+      emergency_contact_phone: ['', [emergencyPhoneValidator]],
       occupation:           [''],
     });
+
+    this.patientForm.get('emergency_contact_name')!.valueChanges
+      .pipe(debounceTime(150), takeUntil(this.destroy$))
+      .subscribe(() => {
+        this.patientForm.get('emergency_contact_phone')!.updateValueAndValidity({ emitEvent: false });
+        this.cdr.markForCheck();
+      });
 
     this.loadServicesAndChairs();
 
@@ -379,7 +397,7 @@ export class BookingComponent implements OnInit, OnDestroy {
       .pipe(
         debounceTime(350),
         distinctUntilChanged(),
-        filter((v: string) => !!v && /^[6-9]\d{9}$/.test(v)),
+        filter((v: string) => !!v && INDIAN_MOBILE_PATTERN.test(v)),
         switchMap((phone: string) => {
           this.lookupBusy.set(true);
           this.cdr.markForCheck();
@@ -397,7 +415,7 @@ export class BookingComponent implements OnInit, OnDestroy {
       .pipe(debounceTime(300), distinctUntilChanged(), takeUntil(this.destroy$))
       .subscribe(() => {
         const phone = this.patientForm.get('phone')?.value;
-        if (phone && /^[6-9]\d{9}$/.test(phone)) {
+        if (phone && INDIAN_MOBILE_PATTERN.test(phone)) {
           this.patientsService.search(phone).subscribe({
             next: r => this.applyLookup(r.patients ?? [], { skipNamePatch: true }),
           });
@@ -683,12 +701,34 @@ export class BookingComponent implements OnInit, OnDestroy {
     return time ? formatSlotTime12h(time) : '';
   }
 
+  onEmergencyPhoneInput(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    const sanitized = input.value.replace(/\D/g, '').slice(0, 10);
+    if (sanitized !== input.value) {
+      input.value = sanitized;
+      this.patientForm.get('emergency_contact_phone')!.setValue(sanitized, { emitEvent: false });
+      this.cdr.markForCheck();
+    }
+  }
+
+  onEmergencyContactBlur(): void {
+    this.patientForm.get('emergency_contact_phone')?.markAsTouched();
+    this.patientForm.get('emergency_contact_phone')?.updateValueAndValidity();
+    this.cdr.markForCheck();
+  }
+
   /** Kept for backward template compat — live lookup is debounced via valueChanges. */
   onPhoneBlur() { /* no-op */ }
 
   proceedToConfirm() {
     this.patientForm.markAllAsTouched();
-    if (this.patientForm.invalid) return;
+    this.patientForm.get('emergency_contact_phone')?.updateValueAndValidity();
+    if (this.patientForm.invalid) {
+      if (this.patientForm.get('emergency_contact_phone')?.invalid) {
+        this.intakeExpanded.set(true);
+      }
+      return;
+    }
     const v = this.patientForm.value;
     this.patientData = {
       name:                   v.name,

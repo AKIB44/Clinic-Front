@@ -8,7 +8,7 @@ import { FormsModule } from '@angular/forms';
 import { MaterialModule } from '../../../material.module';
 import { TablerIconsModule } from 'angular-tabler-icons';
 import {
-  PatientsService, PatientFullRecord, PatientSession,
+  PatientsService, Patient, PatientFullRecord, PatientSession,
   PatientAppointment, PatientLabOrder,
 } from '../../../services/patients.service';
 import { ClinicServicesService } from '../../../services/clinic-services.service';
@@ -90,11 +90,18 @@ export class PatientRecordComponent implements OnInit {
     if (p.is_smoker)           flags.push({ key: 'smoker',     icon: 'smoking',          label: 'Smoker',           color: '#92400e', bg: '#fef3c7' });
     if (p.is_diabetic)         flags.push({ key: 'diabetic',   icon: 'droplet',          label: 'Diabetic',         color: '#1d4ed8', bg: '#dbeafe' });
     if (p.is_hypertensive)     flags.push({ key: 'htn',        icon: 'activity',         label: 'Hypertensive',     color: '#b91c1c', bg: '#fee2e2' });
-    if (p.is_pregnant)         flags.push({ key: 'pregnant',   icon: 'heart',            label: 'Pregnant',         color: '#be185d', bg: '#fce7f3' });
-    if (p.is_on_blood_thinner) flags.push({ key: 'bt',         icon: 'tint',             label: 'Blood Thinner',    color: '#7c3aed', bg: '#ede9fe' });
+    if (p.is_pregnant && p.gender === 'female') {
+      flags.push({ key: 'pregnant', icon: 'heart', label: 'Pregnant', color: '#be185d', bg: '#fce7f3' });
+    }
+    if (p.is_on_blood_thinner) flags.push({ key: 'bt',         icon: 'pill',             label: 'Blood Thinner',    color: '#7c3aed', bg: '#ede9fe' });
     if (p.known_allergies)     flags.push({ key: 'allergy',    icon: 'alert-triangle',   label: 'Allergies',        color: '#b45309', bg: '#fef3c7' });
     return flags;
   });
+
+  /** Pregnancy alert applies only to female patients. */
+  showPregnancyAlert(p: Patient): boolean {
+    return p.gender === 'female';
+  }
 
   readonly allAppts = computed(() => this.record()?.appointments ?? []);
 

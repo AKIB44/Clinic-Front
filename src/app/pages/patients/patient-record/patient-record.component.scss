@@ -400,11 +400,11 @@
     background: #fff1f2;
     color: #b91c1c;
 
-    &:nth-child(1) { border-color: #fcd34d; background: #fffbeb; color: #92400e; } // smoker
-    &:nth-child(2) { border-color: #93c5fd; background: #eff6ff; color: #1d4ed8; } // diabetic
-    &:nth-child(3) { border-color: #fca5a5; background: #fff1f2; color: #b91c1c; } // htn
-    &:nth-child(4) { border-color: #f9a8d4; background: #fdf2f8; color: #be185d; } // pregnant
-    &:nth-child(5) { border-color: #c4b5fd; background: #f5f3ff; color: #7c3aed; } // blood thinner
+    &.mf-item--smoker         { border-color: #fcd34d; background: #fffbeb; color: #92400e; }
+    &.mf-item--diabetic       { border-color: #93c5fd; background: #eff6ff; color: #1d4ed8; }
+    &.mf-item--hypertensive   { border-color: #fca5a5; background: #fff1f2; color: #b91c1c; }
+    &.mf-item--pregnant       { border-color: #f9a8d4; background: #fdf2f8; color: #be185d; }
+    &.mf-item--blood-thinner  { border-color: #c4b5fd; background: #f5f3ff; color: #7c3aed; }
   }
 }
 

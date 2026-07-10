@@ -397,7 +397,7 @@
                           <button type="button" class="mf-toggle"
                                   [class.mf-toggle--on]="patientForm.get('is_on_blood_thinner')?.value"
                                   (click)="patientForm.get('is_on_blood_thinner')!.setValue(!patientForm.get('is_on_blood_thinner')!.value)">
-                            <i-tabler name="tint" size="15"></i-tabler> Blood Thinner
+                            <i-tabler name="pill" size="15"></i-tabler> Blood Thinner
                           </button>
                         </div>
                       </div>
@@ -432,9 +432,23 @@
                         <div class="intake-q-label">Emergency contact</div>
                         <div class="intake-two-col">
                           <input class="intake-text-input" type="text" formControlName="emergency_contact_name"
-                                 placeholder="Name">
-                          <input class="intake-text-input" type="tel" formControlName="emergency_contact_phone"
-                                 placeholder="Phone number">
+                                 placeholder="Name"
+                                 (blur)="onEmergencyContactBlur()">
+                          <div class="intake-field-wrap">
+                            <input class="intake-text-input"
+                                   [class.intake-text-input--error]="patientForm.get('emergency_contact_phone')?.touched && patientForm.get('emergency_contact_phone')?.invalid"
+                                   type="tel" inputmode="numeric" maxlength="10"
+                                   formControlName="emergency_contact_phone"
+                                   placeholder="10-digit mobile"
+                                   (input)="onEmergencyPhoneInput($event)"
+                                   (blur)="onEmergencyContactBlur()">
+                            @if (patientForm.get('emergency_contact_phone')?.touched && patientForm.get('emergency_contact_phone')?.hasError('required')) {
+                              <div class="intake-field-error">Mobile number is required when a contact name is provided</div>
+                            }
+                            @if (patientForm.get('emergency_contact_phone')?.touched && patientForm.get('emergency_contact_phone')?.hasError('invalidMobile')) {
+                              <div class="intake-field-error">Enter a valid 10-digit mobile number</div>
+                            }
+                          </div>
                         </div>
                       </div>
 
