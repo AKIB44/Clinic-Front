@@ -9,7 +9,8 @@ import { ClinicServicesService } from '../../services/clinic-services.service';
 import { ChairsService } from '../../services/chairs.service';
 import { AssistantService, AssistantResult } from '../../services/assistant.service';
 import { AuthService } from '../../auth/auth.service';
-import { FeatureFlagsService, FRIDAY_FLAG } from '../../services/feature-flags.service';
+import { FeatureFlagsService, FRIDAY_FLAG, GESTURE_VIEWER_FLAG } from '../../services/feature-flags.service';
+import { PatientFilesApiService } from '../../features/patient-files/services/patient-files-api.service';
 import { SpeechRecognitionCoordinatorService } from '../../core/speech/speech-recognition-coordinator.service';
 import { ClinicService, Chair } from '../../models/clinic.model';
 import { addDays } from 'date-fns';
@@ -545,6 +546,7 @@ export class VoiceAssistantComponent implements OnInit, OnDestroy {
   private readonly featureFlags = inject(FeatureFlagsService);
   private readonly clinicSvc    = inject(ClinicServicesService);
   private readonly chairsSvc    = inject(ChairsService);
+  private readonly patientFiles = inject(PatientFilesApiService);
   private readonly speechCoord  = inject(SpeechRecognitionCoordinatorService);
 
   /** Mounted-but-hidden when the org has Friday disabled. */
@@ -1009,6 +1011,43 @@ export class VoiceAssistantComponent implements OnInit, OnDestroy {
               this.status.set('success');
               this.respondAndKeepListening(`Found ${list.length} matches. Please say the full name.`);
             }
+          },
+          error: () => {
+            this.status.set('error');
+            this.respondAndKeepListening('Patient search failed.');
+          },
+        });
+        return;
+      }
+      case 'viewer.open': {
+        const q = String(r.entities['query'] ?? '').trim();
+        if (!q) {
+          this.status.set('noresult');
+          this.respondAndKeepListening(r.message || "Whose 3D scan should I open?");
+          return;
+        }
+        if (!this.featureFlags.isOn(GESTURE_VIEWER_FLAG)) {
+          this.status.set('noresult');
+          this.respondAndKeepListening("The 3D gesture viewer isn't enabled for this clinic.");
+          return;
+        }
+        this.message.set(`Finding ${q}'s 3D scan…`);
+        this.speak(`Opening ${q}'s 3D scan`);
+        this.patients.search(q).subscribe({
+          next: ({ patients }) => {
+            const list = patients ?? [];
+            if (list.length === 0) {
+              this.status.set('noresult');
+              this.respondAndKeepListening(`No patient found matching ${q}.`);
+              return;
+            }
+            if (list.length > 1) {
+              this.matches.set(list);
+              this.status.set('success');
+              this.respondAndKeepListening(`Found ${list.length} matches. Please say the full name.`);
+              return;
+            }
+            this.openPatient3dScan(list[0]);
           },
           error: () => {
             this.status.set('error');
@@ -1792,6 +1831,35 @@ export class VoiceAssistantComponent implements OnInit, OnDestroy {
   openPatient(p: Patient): void {
     this.router.navigate(['/patients', p.id]);
     this.closePanel();
+  }
+
+  /** Find the patient's newest 3D scan and open it in the gesture viewer. */
+  private openPatient3dScan(p: Patient): void {
+    this.status.set('thinking');
+    this.message.set(`Looking for ${p.name}'s 3D scan…`);
+    this.patientFiles.list(p.id).subscribe({
+      next: ({ data }) => {
+        const models = (data ?? []).filter(f => f.kind === 'model3d');
+        if (models.length === 0) {
+          this.status.set('noresult');
+          this.respondAndKeepListening(`${p.name} has no 3D scan on file.`);
+          return;
+        }
+        // Most recent scan (list is typically newest-first; guard anyway).
+        const file = models[0];
+        this.status.set('success');
+        const msg = `Opening ${p.name}'s 3D scan.`;
+        this.message.set(msg); this.speak(msg);
+        setTimeout(() => {
+          this.router.navigate(['/viewer', p.id, file.id], { queryParams: { name: file.filename } });
+          this.closePanel();
+        }, 800);
+      },
+      error: () => {
+        this.status.set('error');
+        this.respondAndKeepListening("Couldn't load that patient's files.");
+      },
+    });
   }
 
   goSchedule(): void {

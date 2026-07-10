@@ -6,6 +6,7 @@ import { AuthStorageService } from '../auth/auth-storage.service';
 
 export type AssistantIntent =
   | 'patient.find'
+  | 'viewer.open'
   | 'navigate'
   | 'appointment.book'
   | 'schedule.summary'
