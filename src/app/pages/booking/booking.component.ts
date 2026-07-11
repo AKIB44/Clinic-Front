@@ -49,6 +49,7 @@ interface SlotGroup {
 interface IntakeModel {
   last_dental_visit: string;
   known_allergies: string[];
+  known_allergies_other: string;
   dental_sensitivity: string;
   blood_thinning_medication: string;
   pain_level: string;
@@ -118,7 +119,7 @@ const ORTHO_CONCERN_OPTIONS = ['Crowding', 'Spacing / gaps', 'Overbite', 'Underb
 
 function emptyIntake(): IntakeModel {
   return {
-    last_dental_visit: '', known_allergies: [], dental_sensitivity: '',
+    last_dental_visit: '', known_allergies: [], known_allergies_other: '', dental_sensitivity: '',
     blood_thinning_medication: '', pain_level: '', previous_treatment: '',
     impacted_tooth: '', gum_bleeding: '', ortho_previous: '', ortho_concern: '',
     diabetic: '', restoration_old_filling: '', teeth_grinding: '',
@@ -375,7 +376,6 @@ export class BookingComponent implements OnInit, OnDestroy {
       is_hypertensive:      [false],
       is_pregnant:          [false],
       is_on_blood_thinner:  [false],
-      known_allergies:      [''],
       emergency_contact_name:  [''],
       emergency_contact_phone: ['', [emergencyPhoneValidator]],
       occupation:           [''],
@@ -505,6 +505,10 @@ export class BookingComponent implements OnInit, OnDestroy {
 
       if (d.patientForm) {
         this.patientForm.patchValue(d.patientForm, { emitEvent: false });
+        const legacyAllergies = d.patientForm['known_allergies'];
+        if (legacyAllergies && !this.intake.known_allergies.length && !this.intake.known_allergies_other) {
+          this.applyKnownAllergiesFromPatient(String(legacyAllergies));
+        }
       }
 
       let step = Math.min(4, Math.max(1, d.step ?? 1)) as 1 | 2 | 3 | 4;
@@ -547,13 +551,13 @@ export class BookingComponent implements OnInit, OnDestroy {
         is_hypertensive:        exact.is_hypertensive ?? false,
         is_pregnant:            exact.is_pregnant ?? false,
         is_on_blood_thinner:    exact.is_on_blood_thinner ?? false,
-        known_allergies:        exact.known_allergies ?? '',
         emergency_contact_name:  exact.emergency_contact_name ?? '',
         emergency_contact_phone: exact.emergency_contact_phone ?? '',
         occupation:             exact.occupation ?? '',
       };
       if (!opts.skipNamePatch) patch['name'] = exact.name;
       this.patientForm.patchValue(patch, { emitEvent: false });
+      this.applyKnownAllergiesFromPatient(exact.known_allergies);
       this.welcomeBack.set(`Welcome back, ${exact.name}!`);
     } else if (matches.length > 0 && typedName) {
       this.welcomeBack.set(`New patient — phone shared with ${matches.length} other record${matches.length > 1 ? 's' : ''}`);
@@ -744,7 +748,7 @@ export class BookingComponent implements OnInit, OnDestroy {
       is_hypertensive:        v.is_hypertensive ?? false,
       is_pregnant:            v.is_pregnant ?? false,
       is_on_blood_thinner:    v.is_on_blood_thinner ?? false,
-      known_allergies:        v.known_allergies || undefined,
+      known_allergies:        this.buildKnownAllergiesString(),
       emergency_contact_name:  v.emergency_contact_name || undefined,
       emergency_contact_phone: v.emergency_contact_phone || undefined,
       occupation:             v.occupation || undefined,
@@ -860,9 +864,58 @@ export class BookingComponent implements OnInit, OnDestroy {
   }
 
   toggleAllergy(value: string) {
-    const list = this.intake.known_allergies;
-    this.intake.known_allergies = list.includes(value) ? list.filter(v => v !== value) : [...list, value];
+    let list = [...this.intake.known_allergies];
+    if (value === 'None known') {
+      this.intake.known_allergies = list.includes(value) ? [] : ['None known'];
+      if (this.intake.known_allergies.includes('None known')) {
+        this.intake.known_allergies_other = '';
+      }
+    } else {
+      list = list.filter(v => v !== 'None known');
+      this.intake.known_allergies = list.includes(value) ? list.filter(v => v !== value) : [...list, value];
+    }
     this.scheduleSaveDraft();
+  }
+
+  onKnownAllergiesOtherInput(event: Event): void {
+    const value = (event.target as HTMLInputElement).value;
+    this.intake.known_allergies_other = value;
+    if (value.trim()) {
+      this.intake.known_allergies = this.intake.known_allergies.filter(v => v !== 'None known');
+    }
+    this.scheduleSaveDraft();
+  }
+
+  private buildKnownAllergiesString(): string | undefined {
+    const pills = this.intake.known_allergies.filter(a => a !== 'None known');
+    const other = this.intake.known_allergies_other.trim();
+    if (this.intake.known_allergies.includes('None known') && !other) return 'None known';
+    const parts = [...pills];
+    if (other) parts.push(other);
+    return parts.length ? parts.join(', ') : undefined;
+  }
+
+  private applyKnownAllergiesFromPatient(text: string | null | undefined): void {
+    if (!text?.trim()) {
+      this.intake.known_allergies = [];
+      this.intake.known_allergies_other = '';
+      return;
+    }
+    if (text.trim().toLowerCase() === 'none known') {
+      this.intake.known_allergies = ['None known'];
+      this.intake.known_allergies_other = '';
+      return;
+    }
+    const parts = text.split(',').map(s => s.trim()).filter(Boolean);
+    const matched: string[] = [];
+    const other: string[] = [];
+    for (const part of parts) {
+      const option = ALLERGY_OPTIONS.find(o => o.toLowerCase() === part.toLowerCase());
+      if (option && option !== 'None known') matched.push(option);
+      else other.push(part);
+    }
+    this.intake.known_allergies = matched;
+    this.intake.known_allergies_other = other.join(', ');
   }
 
   isSelected(field: keyof IntakeModel, value: string): boolean { return this.intake[field] === value; }

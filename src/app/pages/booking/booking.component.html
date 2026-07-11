@@ -420,13 +420,6 @@
                         </div>
                       </div>
 
-                      <!-- Known allergies text -->
-                      <div class="intake-q">
-                        <div class="intake-q-label">Known allergies (free text)</div>
-                        <input class="intake-text-input" type="text" formControlName="known_allergies"
-                               placeholder="e.g. Penicillin, Latex, Ibuprofen…">
-                      </div>
-
                       <!-- Emergency contact -->
                       <div class="intake-q">
                         <div class="intake-q-label">Emergency contact</div>
@@ -454,7 +447,7 @@
 
                       <!-- Occupation -->
                       <div class="intake-q">
-                        <div class="intake-q-label">Occupation <span class="intake-q-sub">(helps understand risk exposure)</span></div>
+                        <div class="intake-q-label">Occupation <span class="intake-q-sub"></span></div>
                         <input class="intake-text-input" type="text" formControlName="occupation"
                                placeholder="e.g. Teacher, Software Engineer, Farmer…">
                       </div>
@@ -483,6 +476,10 @@
                             </button>
                           }
                         </div>
+                        <input class="intake-text-input intake-allergy-other" type="text"
+                               [value]="intake.known_allergies_other"
+                               (input)="onKnownAllergiesOtherInput($event)"
+                               placeholder="Other allergies — e.g. Ibuprofen, Peanuts…">
                       </div>
 
                       <div class="intake-q">

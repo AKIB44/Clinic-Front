@@ -103,6 +103,42 @@ export class PatientRecordComponent implements OnInit {
     return p.gender === 'female';
   }
 
+  // ── Family grouping (same phone) ───────────────────────────────────────────
+  readonly family = computed(() => this.record()?.family ?? []);
+  readonly isPrimary = computed(() => this.patient()?.is_primary ?? true);
+  /** Other members of the phone group (excluding this patient). */
+  readonly relatives = computed(() =>
+    this.family().filter(m => m.id !== this.patient()?.id)
+  );
+  readonly makingPrimary = signal<string | null>(null);
+
+  makePrimary(memberId: string): void {
+    if (this.makingPrimary()) return;
+    this.makingPrimary.set(memberId);
+    this.patSvc.makePrimary(memberId).subscribe({
+      next: (res) => {
+        // Merge the refreshed group + this patient's new primary flag into record.
+        const rec = this.record();
+        if (rec) {
+          const meNowPrimary = memberId === rec.patient.id;
+          this.record.set({
+            ...rec,
+            patient: { ...rec.patient, is_primary: meNowPrimary },
+            family: res.family,
+          });
+        }
+        this.makingPrimary.set(null);
+        this.cdr.markForCheck();
+      },
+      error: () => { this.makingPrimary.set(null); this.cdr.markForCheck(); },
+    });
+  }
+
+  openMember(id: string): void {
+    if (id === this.patient()?.id) return;
+    void this.router.navigate(['/patients', id]);
+  }
+
   readonly allAppts = computed(() => this.record()?.appointments ?? []);
 
   readonly filteredAppts = computed(() => {

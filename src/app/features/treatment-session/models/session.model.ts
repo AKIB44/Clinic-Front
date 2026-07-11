@@ -125,6 +125,8 @@ export interface ServicePerformed {
   notes: string | null;
   requiresConsent?: boolean;
   service_name?: string;
+  /** Auto-populated from the appointment booking — abandonable but never removable. */
+  is_booked_service?: boolean;
 }
 
 // ── Treatment Plan (T2.4) ─────────────────────────────────────────────────────

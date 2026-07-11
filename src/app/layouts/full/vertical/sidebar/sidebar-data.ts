@@ -46,13 +46,6 @@ export const navItems: NavItem[] = [
   // ── Operations ─────────────────────────────────────────────────────────────
   { navCap: 'Operations' },
   {
-    displayName: 'Prescriptions',
-    iconName: 'pill',
-    bgcolor: 'success',
-    route: '/rx/new',
-    permissions: ['prescription.create'],
-  },
-  {
     displayName: 'My Services',
     iconName: 'stethoscope',
     bgcolor: 'primary',

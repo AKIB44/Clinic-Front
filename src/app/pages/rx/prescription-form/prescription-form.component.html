@@ -12,7 +12,7 @@
         New Prescription
         <span class="rx-label">{{ context.patient_name }}</span>
         <span class="rx-sep">·</span>
-        <span class="rx-label">{{ context.appointment_label }}</span>
+        <span class="rx-label">{{ procedureLabel() || '—' }}</span>
       </div>
       @if (savedRxNo()) {
         <div class="rx-no">{{ savedRxNo() }}</div>
@@ -45,7 +45,7 @@
 
       <div class="rx-field">
         <label>Procedure</label>
-        <input [value]="context.appointment_label" disabled>
+        <input [value]="procedureLabel()" disabled placeholder="No service selected">
       </div>
 
       <div class="rx-field full">

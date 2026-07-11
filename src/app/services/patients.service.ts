@@ -27,6 +27,17 @@ export interface Patient {
   emergency_contact_phone?: string | null;
   preferred_language?: string | null;
   occupation?: string | null;
+  // family grouping by phone (migration 085)
+  is_primary?: boolean;
+}
+
+/** A member of the same-phone family group. */
+export interface FamilyMember {
+  id: string;
+  name: string;
+  age: number | null;
+  gender: string | null;
+  is_primary: boolean;
 }
 
 export interface PatientAppointment {
@@ -117,6 +128,7 @@ export interface PatientFullRecord {
   treatment_plans: PatientTreatmentPlan[];
   lab_orders: PatientLabOrder[];
   billing: BillingSummary;
+  family: FamilyMember[];
 }
 
 @Injectable({ providedIn: 'root' })
@@ -164,5 +176,10 @@ export class PatientsService {
 
   update(id: string, payload: Partial<Patient>): Observable<{ patient: Patient }> {
     return this.http.put<{ patient: Patient }>(`${this.base}/${id}`, payload);
+  }
+
+  /** Make this patient the primary of its phone group (demotes the others). */
+  makePrimary(id: string): Observable<{ patient: Patient; family: FamilyMember[] }> {
+    return this.http.patch<{ patient: Patient; family: FamilyMember[] }>(`${this.base}/${id}/primary`, {});
   }
 }

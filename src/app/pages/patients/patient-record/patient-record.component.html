@@ -44,6 +44,12 @@
           <div class="patient-title">
             <div class="patient-name-row">
               <h1>{{ p.name }}</h1>
+              @if (family().length > 1) {
+                <span class="grp-badge" [class.grp-badge--primary]="isPrimary()">
+                  <i-tabler [name]="isPrimary() ? 'crown' : 'users'" size="11"></i-tabler>
+                  {{ isPrimary() ? 'Primary' : 'Secondary' }}
+                </span>
+              }
               @if (p.blood_group) {
                 <span class="blood-group-badge">
                   <i-tabler name="droplet" size="11"></i-tabler>{{ p.blood_group }}
@@ -121,6 +127,38 @@
           @if (p.emergency_contact_phone) {
             <a class="emergency-phone" href="tel:{{ p.emergency_contact_phone }}">{{ p.emergency_contact_phone }}</a>
           }
+        </div>
+      }
+
+      <!-- Family group (patients sharing this phone number) -->
+      @if (relatives().length > 0) {
+        <div class="family-strip">
+          <div class="family-head">
+            <i-tabler name="users-group" size="13"></i-tabler>
+            <span>Same number ({{ p.phone }})</span>
+          </div>
+          <div class="family-members">
+            @for (m of family(); track m.id) {
+              <div class="family-chip"
+                   [class.family-chip--me]="m.id === p.id"
+                   [class.family-chip--primary]="m.is_primary">
+                <button class="family-name" (click)="openMember(m.id)"
+                        [disabled]="m.id === p.id">
+                  {{ m.name }}
+                  @if (m.age) { <span class="family-age">{{ m.age }}y</span> }
+                </button>
+                @if (m.is_primary) {
+                  <span class="family-tag"><i-tabler name="crown" size="10"></i-tabler> Primary</span>
+                } @else {
+                  <button class="family-make-primary"
+                          [disabled]="makingPrimary()"
+                          (click)="makePrimary(m.id)">
+                    @if (makingPrimary() === m.id) { Setting… } @else { Make primary }
+                  </button>
+                }
+              </div>
+            }
+          </div>
         </div>
       }
 

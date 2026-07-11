@@ -524,17 +524,6 @@
   color: #cbd5e1;
 }
 
-.col-overflow-note {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 4px;
-  font-size: .72rem;
-  color: #94a3b8;
-  font-weight: 600;
-  padding: 4px 0;
-}
-
 // ─── Appointment card ─────────────────────────────────────────────────────────
 
 .appt-card {
@@ -882,7 +871,7 @@
   .col-body { background: #0d1821 !important; }
 
   .col-empty-icon { background: #152236 !important; color: #465670 !important; }
-  .col-empty, .col-overflow-note { color: #465670 !important; }
+  .col-empty { color: #465670 !important; }
 
   .appt-card {
     background: #111c2d !important;

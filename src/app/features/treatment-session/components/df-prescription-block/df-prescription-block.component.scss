@@ -183,6 +183,7 @@
                      outline: none; transition: border-color .15s; resize: vertical; }
 .rx-field input:focus,
 .rx-field textarea:focus { border-color: #6366f1; box-shadow: 0 0 0 3px rgba(99,102,241,.1); }
+.rx-field input:disabled  { background: #f8fafc; color: #334155; cursor: default; }
 .req               { color: #ef4444; }
 .field-error       { font-size: 11px; color: #ef4444; }
 

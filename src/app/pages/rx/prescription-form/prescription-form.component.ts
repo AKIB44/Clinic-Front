@@ -5,8 +5,10 @@ import {
 import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { ActivatedRoute } from '@angular/router';
+import { firstValueFrom } from 'rxjs';
 import { RxMasterService } from '../../../services/rx-master.service';
 import { PrescriptionService } from '../../../services/prescription.service';
+import { ClinicServicesService } from '../../../services/clinic-services.service';
 import {
   MedFormItem, ProcFormItem, RxMedicine, RxProcedure,
   LineItemPayload, PrescriptionContext,
@@ -35,6 +37,7 @@ export class PrescriptionFormComponent implements OnInit {
   private route  = inject(ActivatedRoute);
   private master = inject(RxMasterService);
   private rxSvc  = inject(PrescriptionService);
+  private clinicSvc = inject(ClinicServicesService);
   private fb     = inject(FormBuilder);
 
   context!: PrescriptionContext;
@@ -53,6 +56,7 @@ export class PrescriptionFormComponent implements OnInit {
 
   medicines  = signal<MedFormItem[]>([]);
   procedures = signal<ProcFormItem[]>([]);
+  readonly procedureLabel = signal('');
 
   form!: FormGroup;
 
@@ -86,9 +90,10 @@ export class PrescriptionFormComponent implements OnInit {
       appointment_id:    qp['appointment_id'],
       patient_id:        qp['patient_id'],
       svc_id:            qp['svc_id'],
-      patient_name:      qp['patient_name'],
-      appointment_label: qp['label'],
+      patient_name:      qp['patient_name'] ?? '',
+      appointment_label: qp['label'] ?? qp['service_name'] ?? '',
     };
+    this.procedureLabel.set(this.context.appointment_label);
 
     this.form = this.fb.group({
       diagnosis:     ['', [Validators.maxLength(500)]],
@@ -115,6 +120,7 @@ export class PrescriptionFormComponent implements OnInit {
 
       // Procedures start empty — doctor selects which ones were performed today.
       // Pre-filling all svc_id procedures would leave nothing available in the picker.
+      await this.resolveProcedureLabel();
     } catch {
       this.errorMsg.set('Failed to load prescription defaults. Please refresh.');
     } finally {
@@ -224,6 +230,18 @@ export class PrescriptionFormComponent implements OnInit {
 
   togglePreview(): void {
     this.showPreview.update(v => !v);
+  }
+
+  private async resolveProcedureLabel(): Promise<void> {
+    if (this.procedureLabel().trim() || !this.context.svc_id) return;
+    try {
+      const { services } = await firstValueFrom(this.clinicSvc.list());
+      const match = services.find(s => String(s.id) === String(this.context.svc_id));
+      if (match?.name) {
+        this.procedureLabel.set(match.name);
+        this.context.appointment_label = match.name;
+      }
+    } catch { /* optional fallback */ }
   }
 
   trackMedById(_: number, m: MedFormItem): number { return m.id; }

@@ -1053,10 +1053,6 @@ export class ScheduleComponent implements OnInit, OnDestroy {
     return this.displayedForBoard.filter(a => a.service_id === serviceId);
   }
 
-  overflowCount(serviceId: string): number {
-    return Math.max(0, this.columnCards(serviceId).length - 4);
-  }
-
   get totalCount():   number { return this.filtered.length; }
   get activeCount():  number { return this.filtered.filter(a => isActiveScheduleStatus(a.status)).length; }
   get doneCount():    number { return this.filtered.filter(a => a.status === 'done').length; }

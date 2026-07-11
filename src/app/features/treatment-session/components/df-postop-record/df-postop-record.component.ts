@@ -8,6 +8,7 @@ import { SessionStore } from '../../store/session.store';
 import { SessionApiService } from '../../services/session-api.service';
 import { PostopComplication, RecoveryVital } from '../../models/session.model';
 import { ToastService } from '../../../../services/toast.service';
+import { formatApiError } from '../../../../utils/api-error';
 
 @Component({
   selector: 'df-postop-record',
@@ -285,7 +286,7 @@ export class DfPostopRecordComponent {
       },
       error: (err) => {
         this.saving.set(false);
-        const msg = err?.error?.error ?? 'Failed to save post-op record.';
+        const msg = formatApiError(err, 'Failed to save post-op record.');
         this.saveError.set(msg);
         this.toast.error(msg);
       },

@@ -72,6 +72,19 @@
 
 .svc-item-left     { flex: 1; min-width: 140px; }
 .svc-item-name     { font-size: 14px; font-weight: 600; color: #0f172a; }
+.svc-booked-badge {
+  display: inline-block;
+  margin-left: 8px;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: .04em;
+  text-transform: uppercase;
+  padding: 2px 8px;
+  border-radius: 999px;
+  color: #1e40af;
+  background: #dbeafe;
+  vertical-align: middle;
+}
 .svc-item-meta     { font-size: 12px; color: #64748b; margin-top: 2px; }
 
 .svc-item-right    { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }

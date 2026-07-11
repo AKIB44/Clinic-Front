@@ -198,15 +198,27 @@ export class ServiceFormDialog {
   }
 
   save() {
-    if (this.form.invalid) return;
+    if (this.form.invalid) {
+      this.form.markAllAsTouched();
+      this.toast.error('Please fill in the required fields.');
+      return;
+    }
     this.saving = true;
     const payload = this.form.value as Partial<ClinicService>;
     const req = this.data.service?.id
       ? this.svc.update(this.data.service.id, payload)
       : this.svc.create(payload);
     req.subscribe({
-      next:  (r) => { this.saving = false; this.dialogRef.close(r.service); },
-      error: ()  => { this.saving = false; },
+      next:  (r) => {
+        this.saving = false;
+        this.toast.success(this.data.service?.id ? 'Service updated.' : 'Service added.');
+        this.dialogRef.close(r.service);
+      },
+      error: (e) => {
+        this.saving = false;
+        const msg = e?.error?.error ?? e?.error?.message ?? 'Could not save the service. Please try again.';
+        this.toast.error(msg);
+      },
     });
   }
 }

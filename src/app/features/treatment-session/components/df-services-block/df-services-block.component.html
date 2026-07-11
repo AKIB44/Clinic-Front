@@ -101,7 +101,12 @@
           <!-- Header row: name · charge · status · actions -->
           <div class="svc-item-header">
             <div class="svc-item-left">
-              <div class="svc-item-name">{{ svc.service_name || 'Service' }}</div>
+              <div class="svc-item-name">
+                {{ svc.service_name || 'Service' }}
+                @if (svc.is_booked_service) {
+                  <span class="svc-booked-badge" title="Booked in the appointment — can be abandoned but not removed">Booked</span>
+                }
+              </div>
               <div class="svc-item-meta">
                 Qty {{ svc.quantity }} · Base ₹{{ svc.base_price | number:'1.2-2' }}
                 @if (svc.discount_pct > 0) { · {{ svc.discount_pct }}% off }
@@ -127,12 +132,14 @@
                           (click)="startAbandon(svc)">
                     Abandon
                   </button>
-                  <button mat-stroked-button class="btn-sm svc-cancel-btn"
-                          [disabled]="updating() === svc.id"
-                          (click)="cancelService(svc)"
-                          title="Remove this service from the session">
-                    Cancel
-                  </button>
+                  @if (!svc.is_booked_service) {
+                    <button mat-stroked-button class="btn-sm svc-cancel-btn"
+                            [disabled]="updating() === svc.id"
+                            (click)="cancelService(svc)"
+                            title="Remove this service from the session">
+                      Cancel
+                    </button>
+                  }
                 </div>
               }
             </div>

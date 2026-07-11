@@ -1,5 +1,5 @@
 import {
-  Component, OnInit, inject, signal, ChangeDetectionStrategy, ChangeDetectorRef,
+  Component, OnInit, inject, signal, computed, ChangeDetectionStrategy, ChangeDetectorRef,
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
@@ -14,7 +14,9 @@ import { PrescriptionService } from '../../../../services/prescription.service';
 import { MedicineSearchComponent } from '../../.././../pages/rx/medicine-search/medicine-search.component';
 import { MedicineLineItemComponent, FieldChangeEvent } from '../../../../pages/rx/medicine-line-item/medicine-line-item.component';
 import { MedFormItem, RxMedicine } from '../../../../pages/rx/rx.interfaces';
-import { Prescription } from '../../models/session.model';
+import { Prescription, ServicePerformed } from '../../models/session.model';
+import { ClinicServicesService } from '../../../../services/clinic-services.service';
+import { firstValueFrom } from 'rxjs';
 
 interface PdfState {
   generating: boolean;
@@ -41,6 +43,7 @@ export class DfPrescriptionBlockComponent implements OnInit {
   private toast   = inject(ToastService);
   private master  = inject(RxMasterService);
   private rxSvc   = inject(PrescriptionService);
+  private clinicSvc = inject(ClinicServicesService);
   private fb      = inject(FormBuilder);
   private cdr     = inject(ChangeDetectorRef);
 
@@ -49,6 +52,12 @@ export class DfPrescriptionBlockComponent implements OnInit {
   readonly loading   = signal(false);
   readonly formError = signal<string | null>(null);
   readonly medicines = signal<MedFormItem[]>([]);
+  readonly procedureLabel = signal('');
+
+  readonly activeService = computed(() =>
+    this.store.services().find(s => s.status === 'IN_PROGRESS' || s.status === 'COMPLETED')
+    ?? this.store.services()[0]
+  );
 
   // Per-prescription PDF state: key = prescription UUID
   readonly pdfStates = signal<Record<string, PdfState>>({});
@@ -136,9 +145,10 @@ export class DfPrescriptionBlockComponent implements OnInit {
     this.medicines.set([]);
     this.formError.set(null);
 
-    const firstService = this.store.services().find(
-      s => s.status === 'IN_PROGRESS' || s.status === 'COMPLETED'
-    );
+    const firstService = this.activeService();
+    this.procedureLabel.set(this.serviceDisplayName(firstService));
+    void this.resolveProcedureLabel(firstService);
+
     if (firstService?.catalog_item_id) {
       this.loading.set(true);
       this.master.getDefaults(firstService.catalog_item_id).then(defaults => {
@@ -221,5 +231,24 @@ export class DfPrescriptionBlockComponent implements OnInit {
       quantity:     '',
       instructions: '',
     };
+  }
+
+  private serviceDisplayName(service?: ServicePerformed): string {
+    if (!service) return '';
+    return service.service_name?.trim() || service.catalogItemName?.trim() || '';
+  }
+
+  private async resolveProcedureLabel(service?: ServicePerformed): Promise<void> {
+    if (this.procedureLabel() || !service) return;
+    const svcId = service.catalog_item_id || service.service_id;
+    if (!svcId) return;
+    try {
+      const { services } = await firstValueFrom(this.clinicSvc.list());
+      const match = services.find(s => String(s.id) === String(svcId));
+      if (match?.name) {
+        this.procedureLabel.set(match.name);
+        this.cdr.markForCheck();
+      }
+    } catch { /* keep empty — no blocking error */ }
   }
 }

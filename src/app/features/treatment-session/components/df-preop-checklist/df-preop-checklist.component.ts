@@ -8,6 +8,7 @@ import { SessionStore } from '../../store/session.store';
 import { SessionApiService } from '../../services/session-api.service';
 import { PreopRecord } from '../../models/session.model';
 import { ToastService } from '../../../../services/toast.service';
+import { formatApiError } from '../../../../utils/api-error';
 
 @Component({
   selector: 'df-preop-checklist',
@@ -43,7 +44,6 @@ export class DfPreopChecklistComponent {
   anaesthesiaDose  = '';
   surgicalSiteMarked = false;
   overrideReason     = '';
-  isComplete         = false;
   notes              = '';
 
   readonly preop = computed(() => this.store.preop());
@@ -79,7 +79,6 @@ export class DfPreopChecklistComponent {
       this.anaesthesiaDose   = p.anaesthesia_dose ?? '';
       this.surgicalSiteMarked = p.surgical_site_marked;
       this.overrideReason    = p.override_reason ?? '';
-      this.isComplete        = p.is_complete;
       this.notes             = p.notes ?? '';
     }
     this.showForm = true;
@@ -129,18 +128,18 @@ export class DfPreopChecklistComponent {
       anaesthesia_dose:             this.anaesthesiaDose || undefined,
       surgical_site_marked:         this.surgicalSiteMarked,
       override_reason:              this.overrideReason || undefined,
-      is_complete:                  this.isComplete,
+      is_complete:                  true,
       notes:                        this.notes || undefined,
     } as Partial<PreopRecord>).pipe(finalize(() => this.saving.set(false))).subscribe({
       next: ({ preop }) => {
         this.saving.set(false);
         this.store.setPreop(preop);
         this.closeForm();
-        this.toast.success(preop.is_complete ? 'Pre-op checklist completed.' : 'Pre-op record saved.');
+        this.toast.success('Pre-op list saved.');
       },
       error: (err) => {
         this.saving.set(false);
-        const msg = err?.error?.error ?? 'Failed to save pre-op record.';
+        const msg = formatApiError(err, 'Failed to save pre-op record.');
         this.saveError.set(msg);
         this.toast.error(msg);
       },
