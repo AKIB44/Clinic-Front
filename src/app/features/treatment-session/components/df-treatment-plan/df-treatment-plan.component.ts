@@ -8,6 +8,7 @@ import { TablerIconsModule } from 'angular-tabler-icons';
 import { SessionStore } from '../../store/session.store';
 import { SessionApiService } from '../../services/session-api.service';
 import { ToastService } from '../../../../services/toast.service';
+import { formatApiError } from '../../../../utils/api-error';
 import { ClinicServicesService } from '../../../../services/clinic-services.service';
 import { ClinicService } from '../../../../models/clinic.model';
 import { isOfflineQueued } from '../../../../core/offline/offline-queue.service';
@@ -187,7 +188,7 @@ export class DfTreatmentPlanComponent implements OnInit {
           this.cancelAdd();
           this.toast.success(`${svc.name} added offline — will sync when you’re back online.`);
         } else {
-          const msg = err?.error?.error ?? 'Failed to add plan item.';
+          const msg = formatApiError(err, 'Failed to add plan item.');
           this.addError.set(msg);
           this.toast.error(msg);
         }

@@ -8,6 +8,7 @@ import { SessionStore } from '../../store/session.store';
 import { SessionApiService } from '../../services/session-api.service';
 import { Examination } from '../../models/session.model';
 import { ToastService } from '../../../../services/toast.service';
+import { formatApiError } from '../../../../utils/api-error';
 
 const PAIN_TRIGGERS = [
   { value: 'cold',        label: 'Cold' },
@@ -94,9 +95,9 @@ export class DfExaminationBlockComponent implements OnInit, OnDestroy {
         this.store.setExamination(examination);
         setTimeout(() => this.saved.set(false), 2000);
       },
-      error: () => {
+      error: (err) => {
         this.saving.set(false);
-        this.toast.error('Examination could not be saved. Please try again.');
+        this.toast.error(formatApiError(err, 'Examination could not be saved. Please try again.'));
       },
     });
   }

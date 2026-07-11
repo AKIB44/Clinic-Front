@@ -8,6 +8,7 @@ import { SessionStore } from '../../store/session.store';
 import { SessionApiService } from '../../services/session-api.service';
 import { TpaStatus } from '../../models/session.model';
 import { ToastService } from '../../../../services/toast.service';
+import { formatApiError } from '../../../../utils/api-error';
 
 @Component({
   selector: 'df-tpa-block',
@@ -83,7 +84,7 @@ export class DfTpaBlockComponent {
       },
       error: (err) => {
         this.saving.set(false);
-        const msg = err?.error?.error ?? 'Failed to save TPA record.';
+        const msg = formatApiError(err, 'Failed to save TPA record.');
         this.saveError.set(msg);
         this.toast.error(msg);
       },

@@ -107,7 +107,6 @@ const STATUS_ACTIONS: Record<AppointmentStatus, Array<{ label: string; next: App
     { label: 'Cancel',   next: 'cancelled',   color: 'warn'    },
   ],
   confirmed:   [
-    { label: 'Start',    next: 'in_progress', color: 'primary' },
     { label: 'Cancel',   next: 'cancelled',   color: 'warn'    },
   ],
   in_progress: [
@@ -480,7 +479,11 @@ export class AppointmentDetailDialog {
   get canCancel()  { return this.allActions.some(a => a.next === 'cancelled'); }
   get canReschedule() { return this.data.status === 'booked' || this.data.status === 'confirmed'; }
   get canRescheduleOrCancel() { return this.canReschedule || this.canCancel; }
-  get canStartTreatment() { return this.data.status === 'in_progress' || this.data.status === 'in_treatment'; }
+  get canStartTreatment() {
+    return this.data.status === 'confirmed'
+      || this.data.status === 'in_progress'
+      || this.data.status === 'in_treatment';
+  }
 
   get scheduled(): string {
     return formatAppointmentDateTime12h(this.data.scheduled_at);

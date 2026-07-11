@@ -7,6 +7,7 @@ import { TablerIconsModule } from 'angular-tabler-icons';
 import { SessionStore } from '../../store/session.store';
 import { SessionApiService } from '../../services/session-api.service';
 import { ToastService } from '../../../../services/toast.service';
+import { formatApiError } from '../../../../utils/api-error';
 import {
   ToothData, ToothCondition, ToothSurface, ToothChart, emptyToothData
 } from '../../models/session.model';
@@ -279,9 +280,9 @@ export class DfToothChartComponent implements OnInit {
         this.toast.success('Tooth chart saved.');
         setTimeout(() => this.saved.set(false), 2000);
       },
-      error: () => {
+      error: (err) => {
         this.saving.set(false);
-        this.toast.error('Tooth chart could not be saved. Please try again.');
+        this.toast.error(formatApiError(err, 'Tooth chart could not be saved. Please try again.'));
       },
     });
   }

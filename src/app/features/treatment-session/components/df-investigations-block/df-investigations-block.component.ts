@@ -8,6 +8,7 @@ import { finalize } from 'rxjs/operators';
 import { SessionStore } from '../../store/session.store';
 import { SessionApiService } from '../../services/session-api.service';
 import { ToastService } from '../../../../services/toast.service';
+import { formatApiError } from '../../../../utils/api-error';
 import { InvestigationKind } from '../../models/session.model';
 
 export const INV_KINDS: { value: InvestigationKind; label: string; group: 'Imaging' | 'Laboratory' }[] = [
@@ -124,7 +125,7 @@ export class DfInvestigationsBlockComponent {
         this.toast.success(`${this.kindLabel(investigation.kind)} ordered.`);
       },
       error: (err) => {
-        const msg = err?.error?.error ?? 'Failed to place investigation order.';
+        const msg = formatApiError(err, 'Failed to place investigation order.');
         this.addError.set(msg);
         this.toast.error(msg);
       },
@@ -189,7 +190,7 @@ export class DfInvestigationsBlockComponent {
         this.toast.success('Investigation marked as read.');
       },
       error: (err) => {
-        this.toast.error(err?.error?.error ?? 'Could not save result.');
+        this.toast.error(formatApiError(err, 'Could not save result.'));
       },
     });
   }

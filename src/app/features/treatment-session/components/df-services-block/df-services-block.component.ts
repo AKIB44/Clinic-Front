@@ -14,6 +14,7 @@ import { DfMaterialsCartComponent } from '../df-materials-cart/df-materials-cart
 import { ClinicServicesService } from '../../../../services/clinic-services.service';
 import { ClinicService } from '../../../../models/clinic.model';
 import { ToastService } from '../../../../services/toast.service';
+import { formatApiError } from '../../../../utils/api-error';
 import { isOfflineQueued } from '../../../../core/offline/offline-queue.service';
 
 @Component({
@@ -125,7 +126,7 @@ export class DfServicesBlockComponent implements OnInit {
       },
       error: (err) => {
         this.adding.set(false);
-        const msg = err?.error?.error ?? 'Failed to add service.';
+        const msg = formatApiError(err, 'Failed to add service.');
         this.addError.set(msg);
         this.toast.error(msg);
       },
@@ -195,7 +196,7 @@ export class DfServicesBlockComponent implements OnInit {
         },
         error: (e) => {
           // Surface the real reason so it's diagnosable, not a generic message.
-          const detail = e?.error?.error ?? e?.error?.message ?? e?.message;
+          const detail = formatApiError(e, '');
           // Offline: the mutation was queued for replay — treat as a local success.
           if (isOfflineQueued(e)) {
             this.store.removeService(svc.id);

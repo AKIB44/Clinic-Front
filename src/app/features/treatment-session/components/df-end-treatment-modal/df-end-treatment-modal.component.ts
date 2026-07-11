@@ -10,6 +10,7 @@ import { of } from 'rxjs';
 import { SessionStore } from '../../store/session.store';
 import { SessionApiService } from '../../services/session-api.service';
 import { ToastService } from '../../../../services/toast.service';
+import { formatApiError } from '../../../../utils/api-error';
 import { VarianceInfo } from '../../models/session.model';
 
 @Component({
@@ -77,7 +78,7 @@ export class DfEndTreatmentModalComponent implements OnInit {
       },
       error: (err) => {
         this.sealing.set(false);
-        const msg = err?.error?.error ?? 'Failed to seal session. Please try again.';
+        const msg = formatApiError(err, 'Failed to seal session. Please try again.');
         this.error.set(msg);
         this.toast.error(msg);
       },

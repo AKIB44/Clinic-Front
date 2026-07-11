@@ -267,9 +267,11 @@ export class PatientRecordComponent implements OnInit {
   }
 
   sessionBilledLabel(s: PatientSession): string {
-    // Abandoned services were not performed — exclude them from billed totals.
+    // Only bill for treatment actually performed — COMPLETED (fully done) and
+    // PARTIAL (partly done). IN_PROGRESS services aren't finished and ABANDONED
+    // ones were never performed, so neither counts toward the billed total.
     const total = s.services_performed
-      .filter(sp => sp.status !== 'ABANDONED')
+      .filter(sp => sp.status === 'COMPLETED' || sp.status === 'PARTIAL')
       .reduce((sum, sp) => sum + (sp.final_charge ?? 0), 0);
     return total > 0 ? `₹${total.toLocaleString('en-IN')}` : '—';
   }

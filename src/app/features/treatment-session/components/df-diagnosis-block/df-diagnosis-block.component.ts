@@ -6,6 +6,7 @@ import { TablerIconsModule } from 'angular-tabler-icons';
 import { SessionStore } from '../../store/session.store';
 import { SessionApiService } from '../../services/session-api.service';
 import { ToastService } from '../../../../services/toast.service';
+import { formatApiError } from '../../../../utils/api-error';
 
 const COMMON_DIAGNOSES = [
   'Dental caries',
@@ -106,7 +107,7 @@ export class DfDiagnosisBlockComponent {
       },
       error: (err) => {
         this.adding.set(false);
-        const msg = err?.error?.error ?? 'Failed to add diagnosis.';
+        const msg = formatApiError(err, 'Failed to add diagnosis.');
         this.addError.set(msg);
         this.toast.error(msg);
       },

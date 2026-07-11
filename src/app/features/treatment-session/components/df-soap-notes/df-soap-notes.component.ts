@@ -9,6 +9,7 @@ import { Subject, debounceTime, takeUntil } from 'rxjs';
 import { SessionStore } from '../../store/session.store';
 import { SessionApiService } from '../../services/session-api.service';
 import { ToastService } from '../../../../services/toast.service';
+import { formatApiError } from '../../../../utils/api-error';
 import { SpeechRecognitionCoordinatorService } from '../../../../core/speech/speech-recognition-coordinator.service';
 
 type SoapField = 's' | 'o' | 'a' | 'p';
@@ -297,9 +298,9 @@ export class DfSoapNotesComponent implements OnInit, OnDestroy {
         this.store.updateNote(note);
         setTimeout(() => this.saved.set(false), 2000);
       },
-      error: () => {
+      error: (err) => {
         this.saving.set(false);
-        this.toast.error('Notes could not be saved. Please try again.');
+        this.toast.error(formatApiError(err, 'Notes could not be saved. Please try again.'));
       },
     });
   }

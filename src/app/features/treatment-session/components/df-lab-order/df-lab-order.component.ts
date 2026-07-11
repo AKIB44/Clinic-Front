@@ -11,6 +11,7 @@ import { TablerIconsModule } from 'angular-tabler-icons';
 import { SessionStore } from '../../store/session.store';
 import { SessionApiService } from '../../services/session-api.service';
 import { ToastService } from '../../../../services/toast.service';
+import { formatApiError } from '../../../../utils/api-error';
 import { ServicePerformed, LabOrderStatus } from '../../models/session.model';
 
 export const LAB_STATUS_LABELS: Record<LabOrderStatus, string> = {
@@ -92,7 +93,7 @@ export class DfLabOrderComponent {
         this.toast.success('Lab order created.');
       },
       error: (err) => {
-        const msg = err?.error?.error ?? 'Failed to create lab order.';
+        const msg = formatApiError(err, 'Failed to create lab order.');
         this.createError.set(msg);
         this.toast.error(msg);
       },

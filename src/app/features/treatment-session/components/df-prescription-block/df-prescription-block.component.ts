@@ -9,6 +9,7 @@ import { TablerIconsModule } from 'angular-tabler-icons';
 import { SessionStore } from '../../store/session.store';
 import { SessionApiService } from '../../services/session-api.service';
 import { ToastService } from '../../../../services/toast.service';
+import { formatApiError } from '../../../../utils/api-error';
 import { RxMasterService } from '../../../../services/rx-master.service';
 import { PrescriptionService } from '../../../../services/prescription.service';
 import { MedicineSearchComponent } from '../../.././../pages/rx/medicine-search/medicine-search.component';
@@ -215,7 +216,7 @@ export class DfPrescriptionBlockComponent implements OnInit {
         this.toast.success(`Prescription ${prescription.prescription_no} saved.`);
       },
       error: (err) => {
-        const msg = err?.error?.error ?? 'Failed to save prescription.';
+        const msg = formatApiError(err, 'Failed to save prescription.');
         this.formError.set(msg);
         this.toast.error(msg);
       },

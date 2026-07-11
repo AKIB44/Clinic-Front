@@ -10,6 +10,7 @@ import { TablerIconsModule } from 'angular-tabler-icons';
 import { SessionStore } from '../../store/session.store';
 import { SessionApiService } from '../../services/session-api.service';
 import { ToastService } from '../../../../services/toast.service';
+import { formatApiError } from '../../../../utils/api-error';
 import {
   ServicePerformed, InventoryItem, InventoryBatch,
 } from '../../models/session.model';
@@ -144,7 +145,7 @@ export class DfMaterialsCartComponent {
         this.toast.success(`${item.name} added to cart.`);
       },
       error: (err) => {
-        const msg = err?.error?.error ?? 'Failed to add item.';
+        const msg = formatApiError(err, 'Failed to add item.');
         this.addError.set(msg);
         this.toast.error(msg);
       },

@@ -9,6 +9,7 @@ import { finalize } from 'rxjs/operators';
 import { SessionStore } from '../../store/session.store';
 import { SessionApiService } from '../../services/session-api.service';
 import { ToastService } from '../../../../services/toast.service';
+import { formatApiError } from '../../../../utils/api-error';
 
 const REASONS: { value: string; label: string }[] = [
   { value: 'patient_request',    label: 'Patient request' },
@@ -64,7 +65,7 @@ export class DfAbandonModalComponent {
       },
       error: (err) => {
         this.abandoning.set(false);
-        const msg = err?.error?.error ?? err?.error?.message ?? 'Failed to abandon session.';
+        const msg = formatApiError(err, 'Failed to abandon session.');
         this.error.set(msg);
       },
     });

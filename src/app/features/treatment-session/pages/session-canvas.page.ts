@@ -29,6 +29,7 @@ import { DfReferSpecialtyComponent } from '../../specialty/shared/components/df-
 import { forkJoin, of, switchMap, Observable } from 'rxjs';
 import { catchError, finalize, map } from 'rxjs/operators';
 import { ToastService } from '../../../services/toast.service';
+import { formatApiError } from '../../../utils/api-error';
 import { OfflineQueueService } from '../../../core/offline/offline-queue.service';
 import type { BlockStatus } from '../components/df-session-block/df-session-block.component';
 import type { SessionStatus } from '../models/session.model';
@@ -288,7 +289,7 @@ export class SessionCanvasPage implements OnInit, OnDestroy {
       },
       error: (err) => {
         this.store.loading.set(false);
-        this.store.error.set(err?.error?.error ?? 'Failed to load session.');
+        this.store.error.set(formatApiError(err, 'Failed to load session.'));
       },
     });
   }
@@ -345,7 +346,7 @@ export class SessionCanvasPage implements OnInit, OnDestroy {
           return;
         }
         this.store.revertPauseClock();
-        this.toast.error(err?.error?.error ?? 'Could not pause session.');
+        this.toast.error(formatApiError(err, 'Could not pause session.'));
         this.cdr.markForCheck();
       },
     });
@@ -363,7 +364,7 @@ export class SessionCanvasPage implements OnInit, OnDestroy {
       },
       error: (err) => {
         this.pausing.set(false);
-        this.toast.error(err?.error?.error ?? 'Could not resume session.');
+        this.toast.error(formatApiError(err, 'Could not resume session.'));
         this.cdr.markForCheck();
       },
     });
@@ -382,7 +383,7 @@ export class SessionCanvasPage implements OnInit, OnDestroy {
       },
       error: (err) => {
         this.reopening.set(false);
-        this.toast.error(err?.error?.error ?? 'Could not reopen session.');
+        this.toast.error(formatApiError(err, 'Could not reopen session.'));
       },
     });
   }
@@ -418,7 +419,7 @@ export class SessionCanvasPage implements OnInit, OnDestroy {
           return of(true);
         }
         this.store.revertPauseClock();
-        this.toast.error(err?.error?.error ?? 'Could not auto-pause session. Please pause manually before leaving.');
+        this.toast.error(formatApiError(err, 'Could not auto-pause session. Please pause manually before leaving.'));
         return of(false);
       }),
       finalize(() => {
