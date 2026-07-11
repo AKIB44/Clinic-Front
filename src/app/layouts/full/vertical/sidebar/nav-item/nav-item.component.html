@@ -14,12 +14,16 @@
       disabled: item.disabled
     }"
     class="menu-list-item {{ item.bgcolor }}"
+    [class.nav-depth-1]="depth === 1"
+    [class.nav-depth-2]="depth >= 2"
   >
+    @if (item.iconName) {
     <i-tabler
-      class="routeIcon"
-      name="{{ item.iconName }}"
+      class="routeIcon icon-18 d-flex"
+      [name]="item.iconName"
       matListItemIcon
     ></i-tabler>
+    }
     <span class="hide-menu">{{ item.displayName | translate }}</span>
     @if(item.children && item.children.length) {
     <span class="arrow-icon" fxFlex>
@@ -47,8 +51,8 @@
     target="_blank"
   >
     <i-tabler
-      class="routeIcon"
-      name="{{ item.iconName }}"
+      class="routeIcon icon-18 d-flex"
+      [name]="item.iconName"
       matListItemIcon
     ></i-tabler>
     <span class="hide-menu">{{ item.displayName | translate }}</span>
@@ -57,7 +61,7 @@
   
   <!-- children -->
   @if(expanded) {
-  <div>
+  <div class="expanded-items">
     @for(child of item.children; track (child.displayName || child.route)) {
     <app-nav-item
       [item]="child"

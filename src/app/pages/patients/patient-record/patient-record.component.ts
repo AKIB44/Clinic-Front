@@ -98,6 +98,11 @@ export class PatientRecordComponent implements OnInit {
     return flags;
   });
 
+  /** Header pills — excludes alerts shown in the Medical Alerts overview panel. */
+  readonly headerMedicalFlags = computed(() =>
+    this.medicalFlags().filter(f => !['smoker', 'bt', 'allergy'].includes(f.key))
+  );
+
   /** Pregnancy alert applies only to female patients. */
   showPregnancyAlert(p: Patient): boolean {
     return p.gender === 'female';

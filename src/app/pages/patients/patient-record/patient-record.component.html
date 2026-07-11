@@ -76,19 +76,16 @@
               }
             </div>
 
-            <!-- Medical flag pills -->
-            @if (medicalFlags().length > 0) {
+            <!-- Medical flag pills (diabetic / hypertensive / pregnant only) -->
+            @if (headerMedicalFlags().length > 0) {
               <div class="medical-flags">
-                @for (flag of medicalFlags(); track flag.key) {
+                @for (flag of headerMedicalFlags(); track flag.key) {
                   <span class="medical-flag"
                         [style.color]="flag.color"
                         [style.background]="flag.bg"
-                        [title]="flag.key === 'allergy' ? 'Allergies: ' + (p.known_allergies ?? '') : flag.label">
+                        [title]="flag.label">
                     <i-tabler [name]="flag.icon" size="12"></i-tabler>
                     {{ flag.label }}
-                    @if (flag.key === 'allergy' && p.known_allergies) {
-                      <span class="flag-detail">: {{ p.known_allergies }}</span>
-                    }
                   </span>
                 }
               </div>
@@ -218,31 +215,6 @@
     @if (activeTab() === 'overview') {
       <section class="overview-grid">
 
-        <!-- Demographics -->
-        <div class="info-panel">
-          <h2><i-tabler name="id" size="16"></i-tabler> Demographics</h2>
-          <dl>
-            @if (p.age) { <div><dt>Age</dt><dd>{{ p.age }} yrs</dd></div> }
-            @if (p.gender) { <div><dt>Sex</dt><dd>{{ p.gender | titlecase }}</dd></div> }
-            @if (p.dob) { <div><dt>Date of Birth</dt><dd>{{ p.dob | date:'dd MMM yyyy' }}</dd></div> }
-            @if (p.blood_group) { <div><dt>Blood Group</dt><dd class="dd--blood">{{ p.blood_group }}</dd></div> }
-            @if (p.occupation) { <div><dt>Occupation</dt><dd>{{ p.occupation }}</dd></div> }
-            @if (p.preferred_language) { <div><dt>Language</dt><dd>{{ p.preferred_language }}</dd></div> }
-            @if (p.address) { <div><dt>Address</dt><dd>{{ p.address }}</dd></div> }
-            @if (p.emergency_contact_name || p.emergency_contact_phone) {
-              <div>
-                <dt>Emergency Contact</dt>
-                <dd>{{ p.emergency_contact_name }}
-                  @if (p.emergency_contact_phone) { · {{ p.emergency_contact_phone }} }
-                </dd>
-              </div>
-            }
-            @if (!p.age && !p.gender && !p.dob && !p.address && !p.blood_group) {
-              <div><dt>—</dt><dd>No demographics recorded</dd></div>
-            }
-          </dl>
-        </div>
-
         <!-- Medical Flags & Allergies -->
         <div class="info-panel">
           <h2><i-tabler name="shield-heart" size="16"></i-tabler> Medical Alerts</h2>
@@ -287,7 +259,7 @@
 
         <!-- Clinical History -->
         <div class="info-panel">
-          <h2><i-tabler name="notes-medical" size="16"></i-tabler> Clinical History</h2>
+          <h2><i-tabler name="clipboard-text" size="16"></i-tabler> Clinical History</h2>
           <p>{{ p.clinical_history || 'No clinical history recorded.' }}</p>
         </div>
 

@@ -141,7 +141,7 @@ export const navItems: NavItem[] = [
     children: [
       {
         displayName: 'Orthodontics',
-        iconName: 'teeth',
+        iconName: 'align-center',
         bgcolor: 'primary',
         children: [
           { displayName: 'All Cases', route: '/specialty/orthodontic/cases',     iconName: 'list',  bgcolor: 'primary' },
@@ -150,7 +150,7 @@ export const navItems: NavItem[] = [
       },
       {
         displayName: 'Implantology',
-        iconName: 'screw',
+        iconName: 'bolt',
         bgcolor: 'accent',
         children: [
           { displayName: 'All Cases',     route: '/specialty/implantology/cases',         iconName: 'list',   bgcolor: 'accent' },
@@ -169,7 +169,7 @@ export const navItems: NavItem[] = [
       },
       {
         displayName: 'Endodontics',
-        iconName: 'tooth',
+        iconName: 'dental',
         bgcolor: 'warning',
         children: [
           { displayName: 'All Cases', route: '/specialty/endodontic/cases',     iconName: 'list', bgcolor: 'warning' },

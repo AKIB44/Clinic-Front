@@ -27,7 +27,18 @@ import { CommonModule } from '@angular/common';
   standalone: true,
   imports: [TranslateModule, TablerIconsModule, MaterialModule, CommonModule],
   templateUrl: './nav-item.component.html',
-  styleUrls: [],
+  styles: [`
+    .expanded-items .routeIcon {
+      display: inline-flex !important;
+      align-items: center;
+      justify-content: center;
+      width: 18px;
+      height: 18px;
+      flex-shrink: 0;
+    }
+    .menu-list-item.nav-depth-1 { padding-left: 38px !important; }
+    .menu-list-item.nav-depth-2 { padding-left: 52px !important; }
+  `],
   animations: [
     trigger('indicatorRotate', [
       state('collapsed', style({ transform: 'rotate(0deg)' })),

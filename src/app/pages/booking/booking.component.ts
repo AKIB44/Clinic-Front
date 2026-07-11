@@ -50,7 +50,7 @@ interface IntakeModel {
   last_dental_visit: string;
   known_allergies: string[];
   known_allergies_other: string;
-  dental_sensitivity: string;
+  dental_sensitivity: string[];
   blood_thinning_medication: string;
   pain_level: string;
   previous_treatment: string;
@@ -62,7 +62,6 @@ interface IntakeModel {
   restoration_old_filling: string;
   teeth_grinding: string;
   previous_whitening: string;
-  child_age: string;
   anxiety_previous: string;
 }
 
@@ -119,11 +118,11 @@ const ORTHO_CONCERN_OPTIONS = ['Crowding', 'Spacing / gaps', 'Overbite', 'Underb
 
 function emptyIntake(): IntakeModel {
   return {
-    last_dental_visit: '', known_allergies: [], known_allergies_other: '', dental_sensitivity: '',
+    last_dental_visit: '', known_allergies: [], known_allergies_other: '', dental_sensitivity: [],
     blood_thinning_medication: '', pain_level: '', previous_treatment: '',
     impacted_tooth: '', gum_bleeding: '', ortho_previous: '', ortho_concern: '',
     diabetic: '', restoration_old_filling: '', teeth_grinding: '',
-    previous_whitening: '', child_age: '', anxiety_previous: '',
+    previous_whitening: '', anxiety_previous: '',
   };
 }
 
@@ -497,6 +496,11 @@ export class BookingComponent implements OnInit, OnDestroy {
       if (d.intake) {
         this.intake = { ...emptyIntake(), ...d.intake };
         if (!Array.isArray(this.intake.known_allergies)) this.intake.known_allergies = [];
+        // Legacy drafts stored dental_sensitivity as a single string — normalize to array.
+        if (!Array.isArray(this.intake.dental_sensitivity)) {
+          const legacy = this.intake.dental_sensitivity as unknown as string;
+          this.intake.dental_sensitivity = legacy ? [legacy] : [];
+        }
       }
       if (d.intakeExpanded) this.intakeExpanded.set(d.intakeExpanded);
       if (d.welcomeBack) this.welcomeBack.set(d.welcomeBack);
@@ -918,8 +922,21 @@ export class BookingComponent implements OnInit, OnDestroy {
     this.intake.known_allergies_other = other.join(', ');
   }
 
+  toggleSensitivity(value: string) {
+    let list = [...this.intake.dental_sensitivity];
+    // "No sensitivity" is exclusive — it clears every other selection and vice versa.
+    if (value === 'No sensitivity') {
+      this.intake.dental_sensitivity = list.includes(value) ? [] : ['No sensitivity'];
+    } else {
+      list = list.filter(v => v !== 'No sensitivity');
+      this.intake.dental_sensitivity = list.includes(value) ? list.filter(v => v !== value) : [...list, value];
+    }
+    this.scheduleSaveDraft();
+  }
+
   isSelected(field: keyof IntakeModel, value: string): boolean { return this.intake[field] === value; }
   isAllergySelected(value: string): boolean { return this.intake.known_allergies.includes(value); }
+  isSensitivitySelected(value: string): boolean { return this.intake.dental_sensitivity.includes(value); }
 
   // ── Booking submission ────────────────────────────────────────────────────
 

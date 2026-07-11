@@ -486,8 +486,8 @@
                         <div class="intake-q-label">Dental sensitivity or pain</div>
                         <div class="pill-group">
                           @for (opt of sensitivityOptions; track opt) {
-                            <button type="button" class="intake-pill" [class.selected]="isSelected('dental_sensitivity', opt)"
-                                    (click)="selectPill('dental_sensitivity', opt)">
+                            <button type="button" class="intake-pill" [class.selected]="isSensitivitySelected(opt)"
+                                    (click)="toggleSensitivity(opt)">
                               <span class="pill-check">✓</span>{{ opt }}
                             </button>
                           }
@@ -635,12 +635,6 @@
                         </div>
                       }
                       @if (showPedoQuestions) {
-                        <div class="intake-q">
-                          <div class="intake-q-label">Child's age (years)</div>
-                          <input class="age-input" type="number" min="1" max="18" placeholder="e.g. 7"
-                                 [value]="intake.child_age"
-                                 (input)="intake.child_age = $any($event.target).value">
-                        </div>
                         <div class="intake-q">
                           <div class="intake-q-label">Previous dental anxiety?</div>
                           <div class="pill-group">
