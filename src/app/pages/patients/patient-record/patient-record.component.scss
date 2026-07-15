@@ -931,6 +931,27 @@
 .billing-amount { color: #0f172a; font-weight: 700; }
 .text-right     { text-align: right; }
 
+.invoice-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 12px;
+  border: 1px solid #0D7A5F;
+  border-radius: 8px;
+  background: #ffffff;
+  color: #0D7A5F;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background .15s ease, color .15s ease;
+
+  &:hover:not(:disabled) { background: #0D7A5F; color: #ffffff; }
+  &:disabled { opacity: .6; cursor: default; }
+
+  i-tabler { display: inline-flex; }
+  ::ng-deep .mat-mdc-progress-spinner circle { stroke: #0D7A5F; }
+}
+
 // ── Specialty Cases ─────────────────────────────────────────────────────────────
 
 .specialty-section {

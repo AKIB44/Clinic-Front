@@ -149,7 +149,7 @@
                 } @else {
                   <button class="family-make-primary"
                           [disabled]="makingPrimary()"
-                          (click)="makePrimary(m.id)">
+                          (click)="makePrimary(m)">
                     @if (makingPrimary() === m.id) { Setting… } @else { Make primary }
                   </button>
                 }
@@ -602,6 +602,7 @@
                   <th>Procedures</th>
                   <th>Status</th>
                   <th class="text-right">Amount</th>
+                  <th class="text-right">Invoice</th>
                 </tr>
               </thead>
               <tbody>
@@ -620,6 +621,21 @@
                       </span>
                     </td>
                     <td class="text-right billing-amount">₹{{ +sess.session_charge | number:'1.0-0' }}</td>
+                    <td class="text-right">
+                      @if (canInvoice(sess)) {
+                        <button type="button" class="invoice-btn"
+                                [disabled]="invoiceLoadingId() === sess.id"
+                                (click)="downloadInvoice(sess)"
+                                title="Generate / view the invoice PDF">
+                          @if (invoiceLoadingId() === sess.id) {
+                            <mat-spinner diameter="14"></mat-spinner>
+                          } @else {
+                            <i-tabler name="file-invoice" size="15"></i-tabler>
+                          }
+                          <span>Invoice</span>
+                        </button>
+                      } @else { — }
+                    </td>
                   </tr>
                 }
               </tbody>
@@ -627,6 +643,7 @@
                 <tr class="billing-total-row">
                   <td colspan="4"><strong>Total</strong></td>
                   <td class="text-right billing-amount"><strong>₹{{ (record()?.billing?.total_billed ?? 0) | number:'1.0-0' }}</strong></td>
+                  <td></td>
                 </tr>
               </tfoot>
             </table>

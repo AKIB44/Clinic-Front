@@ -135,6 +135,7 @@ export interface PatientFullRecord {
 export class PatientsService {
   private readonly http = inject(HttpClient);
   private readonly base = `${authApiConfig.baseUrl}/patients`;
+  private readonly root = authApiConfig.baseUrl;
 
   list(params: {
     search?: string;
@@ -181,5 +182,13 @@ export class PatientsService {
   /** Make this patient the primary of its phone group (demotes the others). */
   makePrimary(id: string): Observable<{ patient: Patient; family: FamilyMember[] }> {
     return this.http.patch<{ patient: Patient; family: FamilyMember[] }>(`${this.base}/${id}/primary`, {});
+  }
+
+  /**
+   * Generate (or fetch) the patient-facing invoice PDF for a clinical session and
+   * return a short-lived presigned URL to view/download it.
+   */
+  getSessionInvoice(sessionId: string): Observable<{ url: string; invoice_no: string | null }> {
+    return this.http.get<{ url: string; invoice_no: string | null }>(`${this.root}/sessions/${sessionId}/invoice`);
   }
 }

@@ -3,6 +3,11 @@ export interface AppSettings {
   theme: string;
   sidenavOpened: boolean;
   sidenavCollapsed: boolean;
+  /**
+   * Pins the sidebar open. While locked the sidebar ignores hover, so it stays
+   * in the expanded view instead of shrinking when the pointer leaves.
+   */
+  sidenavLocked: boolean;
   boxed: boolean;
   horizontal: boolean;
   activeTheme: string;
@@ -15,7 +20,10 @@ export const defaults: AppSettings = {
   dir: 'ltr',
   theme: 'light',
   sidenavOpened: false,
-  sidenavCollapsed: false,
+  // Start mini so the sidebar is hover-driven: expands on hover, shrinks on
+  // leave. The lock button pins it open.
+  sidenavCollapsed: true,
+  sidenavLocked: false,
   boxed: true,
   horizontal: false,
   cardBorder: false,

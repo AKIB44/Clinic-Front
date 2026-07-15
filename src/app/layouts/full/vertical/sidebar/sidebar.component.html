@@ -1,5 +1,16 @@
-<div class="d-flex align-items-center justify-content-between">
+<div class="d-flex align-items-center justify-content-between sidebar-head">
     <app-branding></app-branding>
+
+    @if(showLock) {
+    <button type="button" class="sidenav-lock-btn" [class.sidenav-lock-btn--on]="locked"
+        (click)="toggleLock.emit()"
+        [attr.aria-pressed]="locked"
+        [attr.aria-label]="locked ? 'Unlock sidebar (expand on hover)' : 'Lock sidebar open'"
+        [matTooltip]="locked ? 'Unlock — expand on hover' : 'Lock sidebar open'"
+        matTooltipPosition="right">
+        <i-tabler [name]="locked ? 'lock' : 'lock-open'" class="icon-18 d-flex"></i-tabler>
+    </button>
+    }
 
     @if(showToggle) {
     <a href="javascript:void(0)" (click)="toggleMobileNav.emit()"

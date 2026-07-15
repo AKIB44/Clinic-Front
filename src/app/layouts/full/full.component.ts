@@ -356,6 +356,9 @@ export class FullComponent implements OnInit {
     private navService: NavService
   ) {
     this.htmlElement = document.querySelector('html')!;
+    // Apply the saved lock preference before the breakpoint observer runs, so it
+    // doesn't get overwritten by the responsive defaults.
+    this.restoreLock();
     this.layoutChangesSubscription = this.breakpointObserver
       .observe([MOBILE_VIEW, TABLET_VIEW, MONITOR_VIEW, BELOWMONITOR])
       .subscribe((state) => {
@@ -418,10 +421,46 @@ export class FullComponent implements OnInit {
     }
   }
 
+  /**
+   * The sidebar has two modes, and the header button and the sidebar's lock
+   * button are two ways of switching between them:
+   *   - hover mode  (collapsed + unlocked) — mini, expands on hover
+   *   - pinned mode (expanded + locked)    — full width, hover does nothing
+   * Keeping the two flags mirrored means the lock icon always reflects reality.
+   */
   toggleCollapsed() {
     this.isContentWidthFixed = false;
     this.options.sidenavCollapsed = !this.options.sidenavCollapsed;
+    this.options.sidenavLocked = !this.options.sidenavCollapsed;
+    this.persistLock();
     this.resetCollapsedState();
+  }
+
+  /** Pin the sidebar open, or release it back to hover-driven expansion. */
+  toggleSidenavLock() {
+    const locked = !this.options.sidenavLocked;
+    this.isContentWidthFixed = false;
+    this.options.sidenavLocked = locked;
+    this.options.sidenavCollapsed = !locked;
+    this.persistLock();
+    this.resetCollapsedState();
+  }
+
+  private static readonly LOCK_KEY = 'df_sidenav_locked';
+
+  private persistLock(): void {
+    try {
+      localStorage.setItem(FullComponent.LOCK_KEY, String(!!this.options.sidenavLocked));
+    } catch { /* storage unavailable (private mode) — lock just won't persist */ }
+  }
+
+  private restoreLock(): void {
+    let saved: string | null = null;
+    try { saved = localStorage.getItem(FullComponent.LOCK_KEY); } catch { return; }
+    if (saved === null) return;
+    const locked = saved === 'true';
+    this.options.sidenavLocked = locked;
+    this.options.sidenavCollapsed = !locked;
   }
 
   resetCollapsedState(timer = 400) {
@@ -440,6 +479,11 @@ export class FullComponent implements OnInit {
 
   receiveOptions(options: AppSettings): void {
     this.options = options;
+    // The customizer's "Sidebar type" toggle writes sidenavCollapsed directly, so
+    // re-mirror the lock here to keep the two flags from drifting apart:
+    // expanded = pinned, mini = hover-driven.
+    this.options.sidenavLocked = !this.options.sidenavCollapsed;
+    this.persistLock();
     this.toggleDarkTheme(options);
   }
 

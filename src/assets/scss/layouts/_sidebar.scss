@@ -35,6 +35,84 @@
   }
 }
 
+// ── Sidebar lock (pin) button ───────────────────────────────────────────────
+// Sits beside the logo. Unlocked = the sidebar expands on hover and shrinks
+// again on leave; locked = pinned open, hover does nothing.
+.sidebar-head {
+  position: relative;
+}
+
+.sidenav-lock-btn {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  margin-right: 16px;
+  padding: 0;
+  border: 1px solid transparent;
+  border-radius: 9px;
+  background: transparent;
+  color: rgba(100, 116, 139, 0.9);
+  cursor: pointer;
+  transition:
+    opacity 220ms ease,
+    background-color 180ms ease,
+    color 180ms ease,
+    border-color 180ms ease,
+    transform 180ms ease;
+
+  &:hover {
+    background: rgba(13, 122, 95, 0.1);
+    color: #0d7a5f;
+    transform: translateY(-1px);
+  }
+
+  &:focus-visible {
+    outline: none;
+    border-color: rgba(13, 122, 95, 0.6);
+  }
+
+  // Locked — reads as an active/engaged toggle.
+  &--on {
+    background: rgba(13, 122, 95, 0.12);
+    border-color: rgba(13, 122, 95, 0.35);
+    color: #0d7a5f;
+  }
+}
+
+.dark-theme .sidenav-lock-btn {
+  color: rgba(203, 213, 225, 0.85);
+
+  &:hover {
+    background: rgba(96, 165, 250, 0.16);
+    color: #93c5fd;
+  }
+
+  &--on {
+    background: rgba(96, 165, 250, 0.18);
+    border-color: rgba(96, 165, 250, 0.45);
+    color: #93c5fd;
+  }
+}
+
+// While the sidebar is mini the header has no room for the button — reveal it
+// only once hover has expanded the sidebar.
+@media (min-width: 1024px) {
+  .sidebarNav-mini .sidebarNav {
+    .sidenav-lock-btn {
+      opacity: 0;
+      pointer-events: none;
+    }
+
+    &:hover .sidenav-lock-btn {
+      opacity: 1;
+      pointer-events: auto;
+    }
+  }
+}
+
 @keyframes sidebarMiniShimmer {
   0% {
     transform: translateX(-130%);
@@ -105,6 +183,14 @@
   .sidebarNav-mini {
     .contentWrapper {
       margin-left: calc(#{$sidenav-mini} + #{$layout-padding}) !important;
+    }
+
+    // Boxed layouts cap the page at $boxedWidth and centre it, so shrinking the
+    // sidebar would just widen the empty gutters instead of the content. While
+    // the sidebar is mini, release the cap so the reclaimed space goes to the
+    // page. Expanding (or locking) the sidebar restores the boxed width.
+    .pageWrapper.maxWidth {
+      max-width: none;
     }
   }
 
@@ -304,6 +390,14 @@
     .contentWrapper {
       transition: margin-left $sidebar-mini-expand-duration $sidebar-mini-expand-easing;
     }
+  }
+
+  // Hovering the mini sidebar expands it over the page. Move the content across
+  // with it — same duration/easing as the sidebar width, so the two travel as
+  // one — keeping the usual $layout-padding gap between them. On hover-out the
+  // margin animates straight back and the content reclaims its full width.
+  .sidebarNav-mini .sidebarNav:hover ~ .contentWrapper {
+    margin-left: calc(#{$sidenav-desktop} + #{$layout-padding}) !important;
   }
 }
 

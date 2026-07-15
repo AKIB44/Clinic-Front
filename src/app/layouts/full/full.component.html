@@ -61,6 +61,7 @@
     options.sidenavCollapsed &&
     options.navPos !== 'top' &&
     !options.horizontal &&  !resView,
+  'sidebarNav-locked': options.sidenavLocked,
   'sidebarNav-horizontal': options.horizontal,
   cardBorder: options.cardBorder,
   orange_theme: options.activeTheme == 'orange_theme',
@@ -78,7 +79,9 @@
     [opened]="options.navPos === 'side' && options.sidenavOpened && !isOver &&  !resView"
     (openedChange)="onSidenavOpenedChange($event)" (closedStart)="onSidenavClosedStart()" class="sidebarNav">
     <div class="flex-layout">
-      <app-sidebar (toggleMobileNav)="sidenav.toggle()" [showToggle]="isOver"></app-sidebar>
+      <app-sidebar (toggleMobileNav)="sidenav.toggle()" [showToggle]="isOver"
+        [showLock]="!isOver" [locked]="!!options.sidenavLocked"
+        (toggleLock)="toggleSidenavLock()"></app-sidebar>
       <ng-scrollbar class="position-relative" style="height: 100%">
         <mat-nav-list class="sidebar-list">
           @for(item of navItems; track (item.displayName || item.navCap || item.route)) {

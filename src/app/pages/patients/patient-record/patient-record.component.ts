@@ -9,9 +9,11 @@ import { MaterialModule } from '../../../material.module';
 import { TablerIconsModule } from 'angular-tabler-icons';
 import {
   PatientsService, Patient, PatientFullRecord, PatientSession,
-  PatientAppointment, PatientLabOrder,
+  PatientAppointment, PatientLabOrder, FamilyMember,
 } from '../../../services/patients.service';
 import { ClinicServicesService } from '../../../services/clinic-services.service';
+import { ToastService } from '../../../services/toast.service';
+import { ConfirmService } from '../../../core/ui/confirm.service';
 import { ClinicService } from '../../../models/clinic.model';
 import { RxHistoryTabComponent } from '../../rx/rx-history-tab/rx-history-tab.component';
 import { SpecialtyApiService } from '../../../features/specialty/shared/services/specialty-api.service';
@@ -61,7 +63,12 @@ export class PatientRecordComponent implements OnInit {
   private readonly patSvc       = inject(PatientsService);
   private readonly svcSvc       = inject(ClinicServicesService);
   private readonly specialtyApi = inject(SpecialtyApiService);
+  private readonly toast        = inject(ToastService);
+  private readonly confirm      = inject(ConfirmService);
   private readonly cdr          = inject(ChangeDetectorRef);
+
+  /** Session id whose invoice PDF is currently being generated/fetched. */
+  invoiceLoadingId = signal<string | null>(null);
 
   loading  = signal(true);
   errorMsg = signal<string | null>(null);
@@ -117,8 +124,21 @@ export class PatientRecordComponent implements OnInit {
   );
   readonly makingPrimary = signal<string | null>(null);
 
-  makePrimary(memberId: string): void {
+  makePrimary(member: FamilyMember): void {
     if (this.makingPrimary()) return;
+    const current = this.family().find(m => m.is_primary);
+    this.confirm.ask({
+      title: 'Make primary contact?',
+      body: current && current.id !== member.id
+        ? `${member.name} will become the primary contact for this number, and ${current.name} will become secondary.`
+        : `${member.name} will become the primary contact for this number.`,
+      confirmLabel: 'Make primary',
+      confirmColor: 'primary',
+      icon: 'crown',
+    }).subscribe(ok => { if (ok) this.doMakePrimary(member.id); });
+  }
+
+  private doMakePrimary(memberId: string): void {
     this.makingPrimary.set(memberId);
     this.patSvc.makePrimary(memberId).subscribe({
       next: (res) => {
@@ -133,9 +153,14 @@ export class PatientRecordComponent implements OnInit {
           });
         }
         this.makingPrimary.set(null);
+        this.toast.success('Primary contact updated.');
         this.cdr.markForCheck();
       },
-      error: () => { this.makingPrimary.set(null); this.cdr.markForCheck(); },
+      error: (err) => {
+        this.makingPrimary.set(null);
+        this.toast.error(err?.error?.error ?? 'Could not update the primary contact.');
+        this.cdr.markForCheck();
+      },
     });
   }
 
@@ -279,6 +304,33 @@ export class PatientRecordComponent implements OnInit {
       .filter(sp => sp.status === 'COMPLETED' || sp.status === 'PARTIAL')
       .reduce((sum, sp) => sum + (sp.final_charge ?? 0), 0);
     return total > 0 ? `₹${total.toLocaleString('en-IN')}` : '—';
+  }
+
+  /** Only sessions with performed (billable) services can be invoiced. */
+  canInvoice(s: PatientSession): boolean {
+    return s.services_performed.some(sp => sp.status === 'COMPLETED' || sp.status === 'PARTIAL');
+  }
+
+  /**
+   * Generate (or fetch) the invoice PDF for a session and open it in a new tab.
+   * The soft copy is stored in the patient's records server-side for later reuse.
+   */
+  downloadInvoice(s: PatientSession): void {
+    if (this.invoiceLoadingId()) return;
+    this.invoiceLoadingId.set(s.id);
+    this.patSvc.getSessionInvoice(s.id).subscribe({
+      next: ({ url }) => {
+        this.invoiceLoadingId.set(null);
+        window.open(url, '_blank', 'noopener');
+        this.cdr.markForCheck();
+      },
+      error: (err) => {
+        this.invoiceLoadingId.set(null);
+        const msg = err?.error?.error ?? 'Could not generate the invoice. Please try again.';
+        this.toast.error(msg);
+        this.cdr.markForCheck();
+      },
+    });
   }
 
   planCostMin(items: { cost_min: number | null }[]): number {
