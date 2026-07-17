@@ -184,6 +184,11 @@ export class PatientsService {
     return this.http.patch<{ patient: Patient; family: FamilyMember[] }>(`${this.base}/${id}/primary`, {});
   }
 
+  /** Soft-delete (archive) a patient. History is preserved server-side. */
+  delete(id: string): Observable<{ ok: boolean; id: string }> {
+    return this.http.delete<{ ok: boolean; id: string }>(`${this.base}/${id}`);
+  }
+
   /**
    * Generate (or fetch) the patient-facing invoice PDF for a clinical session and
    * return a short-lived presigned URL to view/download it.

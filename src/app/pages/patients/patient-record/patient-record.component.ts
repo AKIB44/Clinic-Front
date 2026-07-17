@@ -14,6 +14,7 @@ import {
 import { ClinicServicesService } from '../../../services/clinic-services.service';
 import { ToastService } from '../../../services/toast.service';
 import { ConfirmService } from '../../../core/ui/confirm.service';
+import { HasPermissionDirective } from '../../../core/rbac/has-permission.directive';
 import { ClinicService } from '../../../models/clinic.model';
 import { RxHistoryTabComponent } from '../../rx/rx-history-tab/rx-history-tab.component';
 import { SpecialtyApiService } from '../../../features/specialty/shared/services/specialty-api.service';
@@ -50,7 +51,7 @@ const LAB_STATUS_LABEL: Record<string, string> = {
   imports: [
     CommonModule, DatePipe, TitleCasePipe, FormsModule,
     RouterLink, MaterialModule, TablerIconsModule, RxHistoryTabComponent,
-    DfSpecialtyCaseSummaryComponent, DfReferSpecialtyComponent,
+    DfSpecialtyCaseSummaryComponent, DfReferSpecialtyComponent, HasPermissionDirective,
   ],
   templateUrl: './patient-record.component.html',
   styleUrls: ['./patient-record.component.scss'],
@@ -123,6 +124,35 @@ export class PatientRecordComponent implements OnInit {
     this.family().filter(m => m.id !== this.patient()?.id)
   );
   readonly makingPrimary = signal<string | null>(null);
+  readonly deleting      = signal(false);
+
+  /** Confirm, then soft-delete this patient and return to the search list. */
+  deletePatient(p: Patient): void {
+    if (this.deleting()) return;
+    this.confirm.ask({
+      title: 'Delete this patient?',
+      body: `${p.name} will be removed from search and records. Their clinical and billing history is preserved and an admin can restore them.`,
+      confirmLabel: 'Delete patient',
+      confirmColor: 'warn',
+      icon: 'archive',
+      danger: true,
+    }).subscribe(ok => {
+      if (!ok) return;
+      this.deleting.set(true);
+      this.cdr.markForCheck();
+      this.patSvc.delete(p.id).subscribe({
+        next: () => {
+          this.toast.success(`${p.name} Deleted.`);
+          this.router.navigate(['/patients']);
+        },
+        error: (err) => {
+          this.deleting.set(false);
+          this.toast.error(err?.error?.error ?? 'Could not delete the patient. Please try again.');
+          this.cdr.markForCheck();
+        },
+      });
+    });
+  }
 
   makePrimary(member: FamilyMember): void {
     if (this.makingPrimary()) return;

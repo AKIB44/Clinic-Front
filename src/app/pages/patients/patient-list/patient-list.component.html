@@ -65,7 +65,8 @@
 
       <div class="pl-grid">
         @for (p of patients; track p.id) {
-          <div class="patient-card" (click)="openRecord(p)" tabindex="0" (keydown.enter)="openRecord(p)">
+          <div class="patient-card" [class.pc-removing]="removingId() === p.id"
+               (click)="openRecord(p)" tabindex="0" (keydown.enter)="openRecord(p)">
 
             <div class="pc-avatar">{{ initials(p.name) }}</div>
 
@@ -105,6 +106,13 @@
                 <div class="pc-no-visit">No visits yet</div>
               }
             </div>
+
+            <button *hasPermission="'patient.delete'" type="button" class="pc-delete"
+                    [disabled]="removingId() === p.id"
+                    (click)="confirmDelete(p, $event)"
+                    aria-label="Delete patient" title="Delete patient">
+              <i-tabler name="trash" size="16"></i-tabler>
+            </button>
 
             <i-tabler name="chevron-right" size="16" class="pc-arrow"></i-tabler>
 

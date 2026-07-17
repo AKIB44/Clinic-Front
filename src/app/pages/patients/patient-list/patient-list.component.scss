@@ -246,6 +246,78 @@
   flex-shrink: 0;
 }
 
+// ── Delete (archive) button ─────────────────────────────────────────────────
+.pc-delete {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  border: none;
+  border-radius: 9px;
+  background: transparent;
+  color: #cbd5e1;
+  cursor: pointer;
+  // Hidden until the card is hovered/focused, so the list stays clean.
+  opacity: 0;
+  transform: scale(.85);
+  transition: opacity .18s ease, transform .18s ease, background-color .18s ease, color .18s ease;
+
+  &:hover {
+    background: #fef2f2;
+    color: #dc2626;
+    transform: scale(1);
+  }
+  &:disabled { cursor: default; opacity: .4; }
+  &:focus-visible { outline: 2px solid #dc2626; outline-offset: 2px; opacity: 1; transform: scale(1); }
+}
+
+.patient-card:hover .pc-delete,
+.patient-card:focus-within .pc-delete { opacity: 1; transform: scale(1); }
+
+// Touch devices have no hover — keep the action reachable.
+@media (hover: none) {
+  .pc-delete { opacity: 1; transform: scale(1); }
+}
+
+// ── Delete collapse animation ───────────────────────────────────────────────
+// The card fades, slides and collapses its height before it's removed from the
+// list, so deletions feel intentional rather than a sudden pop-out.
+.patient-card.pc-removing {
+  pointer-events: none;
+  animation: pcCollapse .34s cubic-bezier(.4, 0, .2, 1) forwards;
+}
+
+@keyframes pcCollapse {
+  0% {
+    opacity: 1;
+    transform: translateX(0);
+    max-height: 120px;
+    margin-bottom: 0;
+    padding-top: 14px;
+    padding-bottom: 14px;
+  }
+  45% {
+    opacity: 0;
+    transform: translateX(28px) scale(.97);
+    max-height: 120px;
+  }
+  100% {
+    opacity: 0;
+    transform: translateX(28px) scale(.97);
+    max-height: 0;
+    margin-bottom: -8px;    // absorb the 8px flex gap as it collapses
+    padding-top: 0;
+    padding-bottom: 0;
+    border-width: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .patient-card.pc-removing { animation-duration: .01s; }
+}
+
 // ── Responsive ────────────────────────────────────────────────────────────────
 
 @media (max-width: 600px) {

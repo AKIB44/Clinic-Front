@@ -4,13 +4,20 @@
   padding: 18px;
 }
 
+.pr-topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
 .back-link {
   align-items: center;
   color: #52606d;
   display: inline-flex;
   font-size: 13px;
   gap: 6px;
-  margin-bottom: 12px;
   text-decoration: none;
   background: none;
   border: none;
@@ -18,6 +25,32 @@
   padding: 0;
 
   &:hover { color: #0d7a5f; }
+}
+
+.pr-archive-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 7px 14px;
+  font-size: 13px;
+  font-weight: 600;
+  color: #b42318;
+  background: #fff;
+  border: 1px solid #fecaca;
+  border-radius: 9px;
+  cursor: pointer;
+  transition: background-color .18s ease, border-color .18s ease, color .18s ease, transform .12s ease;
+
+  i-tabler { display: inline-flex; }
+
+  &:hover:not(:disabled) {
+    background: #fef2f2;
+    border-color: #f87171;
+    transform: translateY(-1px);
+  }
+  &:active:not(:disabled) { transform: translateY(0); }
+  &:disabled { opacity: .6; cursor: default; }
+  ::ng-deep .mat-mdc-progress-spinner circle { stroke: #b42318; }
 }
 
 .patient-loading,

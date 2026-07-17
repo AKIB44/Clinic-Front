@@ -1,10 +1,22 @@
 <div class="patient-record-page">
 
-  <!-- Back -->
-  <button type="button" class="back-link" (click)="goBack()">
-    <i-tabler name="arrow-left" size="16"></i-tabler>
-    Back
-  </button>
+  <!-- Top bar: back + destructive action -->
+  <div class="pr-topbar">
+    <button type="button" class="back-link" (click)="goBack()">
+      <i-tabler name="arrow-left" size="16"></i-tabler>
+      Back
+    </button>
+
+    @if (!loading() && patient(); as p) {
+      <button *hasPermission="'patient.delete'" type="button" class="pr-archive-btn"
+              [disabled]="deleting()" (click)="deletePatient(p)"
+              title="Delete patient — keeps history, removes from search">
+        @if (deleting()) { <mat-spinner diameter="15"></mat-spinner> }
+        @else { <i-tabler name="trash" size="15"></i-tabler> }
+        <span>Delete patient</span>
+      </button>
+    }
+  </div>
 
   @if (loading()) {
     <div class="patient-loading">
