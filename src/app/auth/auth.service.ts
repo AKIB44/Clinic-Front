@@ -7,7 +7,7 @@ import {
   LoginRequest, LoginResponse, AuthUser, StepUpResponse,
   OtpRequestResponse, OtpVerifyRequest,
   LoginOrMfaResponse, MfaStatusResponse, MfaSetupResponse,
-  MfaEnableRequest, MfaDisableRequest,
+  MfaEnableRequest, MfaDisableRequest, AuthConfig,
 } from './auth.models';
 import { AuthStorageService } from './auth-storage.service';
 import { PermissionService } from '../core/rbac/permission.service';
@@ -29,6 +29,11 @@ export class AuthService {
   login(payload: LoginRequest): Observable<LoginOrMfaResponse> {
     return this.http
       .post<LoginOrMfaResponse>(`${authApiConfig.baseUrl}${authApiConfig.loginEndpoint}`, payload);
+  }
+
+  /** Public login-page config (captcha provider + site key). No auth required. */
+  authConfig(): Observable<AuthConfig> {
+    return this.http.get<AuthConfig>(`${authApiConfig.baseUrl}/auth/config`);
   }
 
   /** Called after a successful MFA TOTP challenge. */

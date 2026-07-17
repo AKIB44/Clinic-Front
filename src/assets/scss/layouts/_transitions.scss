@@ -2,13 +2,13 @@ $swift-ease-out-duration: 400ms;
 $swift-ease-out-timing-function: cubic-bezier(.25, .8, .25, 1);
 
 // Mini sidebar hover choreography
-$sidebar-mini-expand-duration: 360ms;
+$sidebar-mini-expand-duration: 220ms;
 $sidebar-mini-expand-easing: cubic-bezier(0.22, 1, 0.36, 1);
-$sidebar-mini-reveal-delay: 240ms;
-$sidebar-mini-reveal-duration: 260ms;
+$sidebar-mini-reveal-delay: 40ms;
+$sidebar-mini-reveal-duration: 150ms;
 $sidebar-mini-reveal-easing: cubic-bezier(0.22, 1, 0.36, 1);
-$sidebar-mini-stagger-step: 18ms;
-$sidebar-mini-collapse-duration: 120ms;
+$sidebar-mini-stagger-step: 6ms;
+$sidebar-mini-collapse-duration: 100ms;
 
 @function swift-ease-out($property) {
     // The Material default animation curves.

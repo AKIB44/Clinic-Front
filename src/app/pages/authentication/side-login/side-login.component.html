@@ -153,6 +153,17 @@
             </mat-form-field>
           </div>
 
+          <!-- Cloudflare Turnstile captcha (rendered only when enabled) -->
+          <div class="df-captcha" [class.df-captcha--on]="captchaEnabled">
+            <div #turnstileHost></div>
+            @if (captchaError) {
+              <div class="df-captcha-error">
+                <mat-icon style="font-size:15px;width:15px;height:15px;line-height:15px">warning_amber</mat-icon>
+                {{ captchaError }}
+              </div>
+            }
+          </div>
+
           @if (loginError) {
             <div class="df-error-alert">
               <mat-icon style="font-size:16px;width:16px;height:16px;line-height:16px">error_outline</mat-icon>
@@ -161,7 +172,7 @@
           }
 
           <button mat-flat-button color="primary" class="w-100 df-signin-btn" type="submit"
-            [disabled]="isSubmitting">
+            [disabled]="isSubmitting || (captchaEnabled && !captchaToken)">
             <span class="btn-spinner-row">
               @if (isSubmitting) { <mat-spinner diameter="16"></mat-spinner> }
               {{ isSubmitting ? 'Signing in…' : 'Sign In' }}

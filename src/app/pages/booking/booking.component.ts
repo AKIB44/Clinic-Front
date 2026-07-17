@@ -457,7 +457,11 @@ export class BookingComponent implements OnInit, OnDestroy {
       selectedChairId: this.selectedChairId(),
       serviceSearch: this.serviceSearch(),
       patientForm: this.patientForm.getRawValue(),
-      intake: { ...this.intake, known_allergies: [...this.intake.known_allergies] },
+      intake: {
+        ...this.intake,
+        known_allergies: [...this.intake.known_allergies],
+        dental_sensitivity: [...this.intake.dental_sensitivity],
+      },
       intakeExpanded: this.intakeExpanded(),
       welcomeBack: this.welcomeBack(),
       patientSaved: this.patientSaved(),
@@ -931,6 +935,7 @@ export class BookingComponent implements OnInit, OnDestroy {
       list = list.filter(v => v !== 'No sensitivity');
       this.intake.dental_sensitivity = list.includes(value) ? list.filter(v => v !== value) : [...list, value];
     }
+    this.cdr.markForCheck();
     this.scheduleSaveDraft();
   }
 

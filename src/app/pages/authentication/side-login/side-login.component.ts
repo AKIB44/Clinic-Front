@@ -1,6 +1,7 @@
 import { HttpErrorResponse } from '@angular/common/http';
 import {
-  Component, OnInit, inject, ViewChildren, QueryList, ElementRef,
+  Component, OnInit, AfterViewInit, inject, ViewChildren, ViewChild,
+  QueryList, ElementRef, NgZone, ChangeDetectorRef,
 } from '@angular/core';
 import { CoreService } from 'src/app/services/core.service';
 import {
@@ -13,6 +14,7 @@ import { finalize } from 'rxjs';
 import { AuthService } from 'src/app/auth/auth.service';
 import { isMfaChallenge, LoginResponse } from 'src/app/auth/auth.models';
 import { AuroraBgComponent } from '../aurora-bg/aurora-bg.component';
+import { loadTurnstile } from 'src/app/auth/turnstile.loader';
 
 @Component({
   selector: 'app-side-login',
@@ -71,20 +73,39 @@ import { AuroraBgComponent } from '../aurora-bg/aurora-bg.component';
     }
 
     .btn-spinner-row { display: inline-flex; align-items: center; gap: 8px; }
+
+    /* ── Captcha ── */
+    .df-captcha { display: none; }
+    .df-captcha--on { display: block; margin: 4px 0 16px; min-height: 65px; }
+    .df-captcha-error {
+      display: flex; align-items: flex-start; gap: 6px;
+      margin-top: 8px; font-size: 12.5px; line-height: 1.4; color: #b3261e;
+    }
   `],
 })
-export class AppSideLoginComponent implements OnInit {
+export class AppSideLoginComponent implements OnInit, AfterViewInit {
   options = this.settings.getOptions();
   private readonly authService    = inject(AuthService);
   private readonly route          = inject(ActivatedRoute);
+  private readonly zone           = inject(NgZone);
+  private readonly cdr            = inject(ChangeDetectorRef);
 
   @ViewChildren('otpInput') otpInputs!: QueryList<ElementRef<HTMLInputElement>>;
+  @ViewChild('turnstileHost') turnstileHost?: ElementRef<HTMLDivElement>;
 
   isSubmitting   = false;
   loginError     = '';
   clinicInactive = false;
   sessionExpired = false;
   hidePassword   = true;
+
+  // ── Captcha (Cloudflare Turnstile) ──────────────────────────────────────────
+  captchaEnabled = false;
+  captchaSiteKey = '';
+  captchaToken   = '';
+  captchaError   = '';   // shown to the user when the widget can't load/verify
+  private captchaWidgetId: string | null = null;
+  private captchaViewReady = false;
 
   // MFA step
   mfaStep       = false;
@@ -102,6 +123,77 @@ export class AppSideLoginComponent implements OnInit {
       this.clinicInactive = reason === 'clinic_inactive';
       this.sessionExpired = reason === 'session_expired';
     });
+
+    // Load public captcha config; render the widget when enabled + view is ready.
+    this.authService.authConfig().subscribe({
+      next: (cfg) => {
+        if (cfg.captchaEnabled && cfg.turnstileSiteKey) {
+          this.captchaEnabled = true;
+          this.captchaSiteKey = cfg.turnstileSiteKey;
+          this.cdr.markForCheck();
+          this.renderCaptcha();
+        }
+      },
+      // No config endpoint / network error → leave captcha off so login still works.
+      error: () => { /* captcha stays disabled */ },
+    });
+  }
+
+  ngAfterViewInit() {
+    this.captchaViewReady = true;
+    this.renderCaptcha();
+  }
+
+  /** Inject Turnstile and render the widget once both the config and host exist. */
+  private renderCaptcha(): void {
+    if (!this.captchaEnabled || !this.captchaSiteKey) return;
+    if (!this.captchaViewReady || this.captchaWidgetId) return;
+
+    loadTurnstile().then((api) => {
+      const host = this.turnstileHost?.nativeElement;
+      if (this.captchaWidgetId) return;
+      // Script blocked/offline — say so instead of leaving a silent dead button.
+      if (!api || !host) {
+        this.zone.run(() => {
+          this.captchaError = 'Security check could not load. Check your connection or ad-blocker and reload.';
+          this.cdr.markForCheck();
+        });
+        return;
+      }
+      try {
+        this.captchaWidgetId = api.render(host, {
+          sitekey: this.captchaSiteKey,
+          theme: 'light',
+          callback: (token: string) => this.zone.run(() => {
+            this.captchaToken = token;
+            this.captchaError = '';
+            this.loginError = '';
+            this.cdr.markForCheck();
+          }),
+          'expired-callback': () => this.zone.run(() => { this.captchaToken = ''; this.cdr.markForCheck(); }),
+          // error-callback fires on a hostname mismatch, bad site key, or network
+          // trouble. Surface it so a misconfigured widget is diagnosable, not silent.
+          'error-callback':   () => this.zone.run(() => {
+            this.captchaToken = '';
+            this.captchaError = 'Security check failed to verify. Confirm this domain is allow-listed on the Turnstile widget, then reload.';
+            this.cdr.markForCheck();
+          }),
+          'timeout-callback': () => this.zone.run(() => { this.captchaToken = ''; this.cdr.markForCheck(); }),
+        });
+      } catch {
+        this.zone.run(() => {
+          this.captchaError = 'Security check could not start. Please reload the page.';
+          this.cdr.markForCheck();
+        });
+      }
+    });
+  }
+
+  private resetCaptcha(): void {
+    this.captchaToken = '';
+    if (this.captchaWidgetId && window.turnstile) {
+      try { window.turnstile.reset(this.captchaWidgetId); } catch { /* ignore */ }
+    }
   }
 
   form = new FormGroup({
@@ -118,12 +210,20 @@ export class AppSideLoginComponent implements OnInit {
       this.form.markAllAsTouched();
       return;
     }
+    if (this.captchaEnabled && !this.captchaToken) {
+      this.loginError = 'Please complete the captcha to continue.';
+      return;
+    }
     this.loginError     = '';
     this.clinicInactive = false;
     this.isSubmitting   = true;
 
     this.authService
-      .login({ email: this.f['email'].value ?? '', password: this.f['password'].value ?? '' })
+      .login({
+        email: this.f['email'].value ?? '',
+        password: this.f['password'].value ?? '',
+        ...(this.captchaEnabled ? { captcha_token: this.captchaToken } : {}),
+      })
       .pipe(finalize(() => (this.isSubmitting = false)))
       .subscribe({
         next: (res) => {
@@ -143,6 +243,8 @@ export class AppSideLoginComponent implements OnInit {
         error: (err: HttpErrorResponse) => {
           if (err.error?.error === 'clinic_inactive') {
             this.clinicInactive = true;
+          } else if (err.error?.error === 'captcha_failed') {
+            this.loginError = 'Captcha verification failed. Please try again.';
           } else if (err.status === 401) {
             this.loginError = 'Invalid email or password.';
           } else if (err.status === 0) {
@@ -150,6 +252,8 @@ export class AppSideLoginComponent implements OnInit {
           } else {
             this.loginError = err.error?.message || 'Login failed. Please try again.';
           }
+          // Turnstile tokens are single-use — force a fresh challenge for the retry.
+          if (this.captchaEnabled) this.resetCaptcha();
         },
       });
   }

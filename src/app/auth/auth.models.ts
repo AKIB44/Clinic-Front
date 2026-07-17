@@ -42,6 +42,14 @@ export interface AuthUser {
 export interface LoginRequest {
   email: string;
   password: string;
+  /** Cloudflare Turnstile widget token — required only when captcha is enabled. */
+  captcha_token?: string;
+}
+
+export interface AuthConfig {
+  captchaProvider: string;
+  captchaEnabled: boolean;
+  turnstileSiteKey: string | null;
 }
 
 export interface LoginResponse {
