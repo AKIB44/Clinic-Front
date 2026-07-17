@@ -16,6 +16,16 @@ const DB_NAME    = 'dentaflow_offline';
 const STORE_NAME = 'request_queue';
 const DB_VERSION = 1;
 
+// URL fragments for requests that should never have been queued (fire-and-forget
+// telemetry). Any such entry left over from before the interceptor excluded them
+// is purged on startup so it doesn't show as a phantom "unsynced change".
+const NON_REPLAYABLE_URL_FRAGMENTS = ['/presence/', '/auth/'];
+
+// A queued mutation that can't be replayed within this window is almost certainly
+// stuck (endpoint gone, permanent 5xx). Drop it so the sync banner can clear
+// instead of showing a count that never drains.
+const MAX_QUEUE_AGE_MS = 24 * 60 * 60 * 1000;
+
 /**
  * True when an HttpErrorResponse is the "queued for offline replay" signal the
  * offline interceptor emits (status 0 + `offline_queued`). Callers use it to
@@ -139,9 +149,12 @@ export class OfflineQueueService {
       };
       req.onsuccess = (e) => {
         this.db = (e.target as IDBOpenDBRequest).result;
-        this.syncDepth();
-        if (this.online()) this.flush(); // drain anything left from a previous session
         resolve(this.db);
+        // Drop phantom/stuck entries first, then drain what genuinely remains.
+        this.purgeUnreplayable().then(() => {
+          this.syncDepth();
+          if (this.online()) this.flush(); // drain anything left from a previous session
+        });
       };
       req.onerror = () => reject(req.error);
     });
@@ -181,6 +194,23 @@ export class OfflineQueueService {
 
   private syncDepth(): void {
     this.getAll().then(items => this.queueDepth.set(items.length)).catch(() => {});
+  }
+
+  /**
+   * Remove queue entries that can never legitimately drain: fire-and-forget
+   * telemetry that slipped in before it was excluded, and any mutation stuck
+   * longer than MAX_QUEUE_AGE_MS. Keeps the "unsynced changes" count honest.
+   */
+  private async purgeUnreplayable(): Promise<void> {
+    try {
+      const now   = Date.now();
+      const items = await this.getAll();
+      const doomed = items.filter(it =>
+        NON_REPLAYABLE_URL_FRAGMENTS.some(f => it.url.includes(f)) ||
+        (now - it.queuedAt) > MAX_QUEUE_AGE_MS
+      );
+      for (const it of doomed) await this.dequeue(it.id);
+    } catch { /* best-effort cleanup */ }
   }
 
   // ── Replay / flush ──────────────────────────────────────────────────────────

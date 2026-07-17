@@ -10,6 +10,12 @@ import { OfflineQueueService } from './offline-queue.service';
 
 const MUTATING = ['POST', 'PUT', 'PATCH', 'DELETE'];
 
+// Fire-and-forget / ephemeral endpoints that must never be queued for offline
+// replay. Auth can't be replayed with a stale token; presence is live telemetry
+// (precise location for the god view) where a replayed, minutes-old ping is
+// worthless — and queuing it leaves a phantom "1 change to sync" that never drains.
+const NON_QUEUEABLE = ['/auth/', '/presence/'];
+
 /**
  * Queues mutating API requests when the device is offline (or a request fails
  * with a network error) and lets the OfflineQueueService replay them on
@@ -25,7 +31,7 @@ export const offlineInterceptor: HttpInterceptorFn = (req, next) => {
   const eligible =
     MUTATING.includes(req.method) &&
     req.url.includes(authApiConfig.baseUrl) &&
-    !req.url.includes('/auth/') &&
+    !NON_QUEUEABLE.some(p => req.url.includes(p)) &&
     !req.headers.has('X-Offline-Replay');
 
   if (!eligible) return next(req);
