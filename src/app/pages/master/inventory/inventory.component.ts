@@ -1,6 +1,6 @@
 import {
   Component, OnInit, AfterViewInit, ChangeDetectionStrategy, ChangeDetectorRef,
-  inject, signal, Inject, ViewChild,
+  inject, signal, computed, Inject, ViewChild, ElementRef,
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import {
@@ -336,6 +336,7 @@ export class InventoryComponent implements OnInit, AfterViewInit {
   @ViewChild('movementsPaginator') movementsPaginator!: MatPaginator;
   @ViewChild('posSort') posSort!: MatSort;
   @ViewChild('posPaginator') posPaginator!: MatPaginator;
+  @ViewChild('receiveItemSearchInput') receiveItemSearchInput?: ElementRef<HTMLInputElement>;
 
   // ── Dashboard / catalog state ─────────────────────────────────────────────
   stock    = signal<StockLevel[]>([]);
@@ -373,6 +374,21 @@ export class InventoryComponent implements OnInit, AfterViewInit {
     unit_cost:        new FormControl<number | null>(null),
     supplier:         new FormControl(''),
     received_at:      new FormControl<Date | null>(null),
+  });
+
+  /** Search filter for the Log Incoming Stock item dropdown. */
+  receiveItemSearch = signal('');
+
+  filteredReceiveItems = computed(() => {
+    const q = this.receiveItemSearch().toLowerCase().trim();
+    const list = this.items();
+    if (!q) return list;
+    return list.filter(item => {
+      const categoryLabel = (this.categories[item.category] ?? item.category).toLowerCase();
+      return item.name.toLowerCase().includes(q)
+        || (item.generic_name ?? '').toLowerCase().includes(q)
+        || categoryLabel.includes(q);
+    });
   });
 
   // ── Reports state ─────────────────────────────────────────────────────────
@@ -612,6 +628,14 @@ export class InventoryComponent implements OnInit, AfterViewInit {
   }
 
   // ── Receive Stock ─────────────────────────────────────────────────────────
+  onReceiveItemSelectOpened(open: boolean): void {
+    if (!open) {
+      this.receiveItemSearch.set('');
+      return;
+    }
+    setTimeout(() => this.receiveItemSearchInput?.nativeElement?.focus(), 0);
+  }
+
   onItemSelected(itemId: string): void {
     const item = this.items().find(i => i.id === itemId);
     if (item) this.receiveForm.patchValue({ unit: item.unit });

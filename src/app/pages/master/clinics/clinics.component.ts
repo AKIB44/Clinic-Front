@@ -11,6 +11,7 @@ import { ToastService } from '../../../services/toast.service';
 import { ClinicsService } from '../../../services/clinics.service';
 import { RbacAdminService, Role, RbacUser } from '../../../core/rbac/rbac-admin.service';
 import { Clinic } from '../../../models/clinic.model';
+import { clinicEmailValidators, clinicPhoneValidators, normalizeIndianMobile } from '../../../utils/form-validators';
 
 // ── Confirm dialog ────────────────────────────────────────────────────────────
 
@@ -64,11 +65,24 @@ export class ConfirmDialog {
         <div class="two-col">
           <mat-form-field appearance="outline">
             <mat-label>Phone</mat-label>
-            <input matInput formControlName="phone">
+            <input matInput formControlName="phone" type="tel" inputmode="numeric" maxlength="10"
+                   placeholder="9876543210" (input)="onPhoneInput($event)">
+            @if (form.get('phone')?.touched && form.get('phone')?.hasError('required')) {
+              <mat-error>Mobile number is required</mat-error>
+            }
+            @if (form.get('phone')?.touched && form.get('phone')?.hasError('pattern')) {
+              <mat-error>Enter a valid 10-digit mobile number</mat-error>
+            }
           </mat-form-field>
           <mat-form-field appearance="outline">
             <mat-label>Email</mat-label>
-            <input matInput formControlName="email" type="email">
+            <input matInput formControlName="email" type="email" placeholder="clinic@example.com">
+            @if (form.get('email')?.touched && form.get('email')?.hasError('required')) {
+              <mat-error>Email is required</mat-error>
+            }
+            @if (form.get('email')?.touched && form.get('email')?.hasError('email')) {
+              <mat-error>Enter a valid email address</mat-error>
+            }
           </mat-form-field>
         </div>
         <mat-form-field appearance="outline" class="full-width">
@@ -109,14 +123,24 @@ export class ClinicFormDialog {
   saving = false;
   form = new FormGroup({
     name:    new FormControl(this.data?.name    ?? '', [Validators.required]),
-    phone:   new FormControl(this.data?.phone   ?? '', [Validators.required]),
-    email:   new FormControl(this.data?.email   ?? '', [Validators.required, Validators.email]),
+    phone:   new FormControl(normalizeIndianMobile(this.data?.phone), clinicPhoneValidators),
+    email:   new FormControl(this.data?.email   ?? '', clinicEmailValidators),
     address: new FormControl(this.data?.address ?? '', [Validators.required]),
     city:    new FormControl(this.data?.city    ?? '', [Validators.required]),
     state:   new FormControl(this.data?.state   ?? ''),
   });
 
+  onPhoneInput(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    const digits = normalizeIndianMobile(input.value);
+    if (input.value !== digits) {
+      this.form.get('phone')!.setValue(digits, { emitEvent: false });
+      input.value = digits;
+    }
+  }
+
   save() {
+    this.form.markAllAsTouched();
     if (this.form.invalid) return;
     this.saving = true;
     const payload = this.form.value as any;

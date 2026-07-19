@@ -249,6 +249,51 @@
   display: flex;
   gap: 12px;
 }
+
+// Searchable mat-select (Log Incoming Stock item picker)
+.select-search-option {
+  &.mdc-list-item--disabled,
+  &.mat-mdc-option-disabled {
+    opacity: 1;
+    pointer-events: auto;
+  }
+}
+
+.select-search-inner {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  padding: 4px 0;
+
+  mat-icon {
+    font-size: 18px;
+    width: 18px;
+    height: 18px;
+    color: #94a3b8;
+    flex-shrink: 0;
+  }
+}
+
+.select-search-input {
+  flex: 1;
+  min-width: 0;
+  border: none;
+  outline: none;
+  background: transparent;
+  font: inherit;
+  color: inherit;
+
+  &::placeholder {
+    color: #94a3b8;
+  }
+}
+
+.select-option-sub {
+  color: #94a3b8;
+  font-size: 12px;
+}
+
 .btn-spinner {
   display: inline-block;
   margin-right: 8px;

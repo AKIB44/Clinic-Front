@@ -61,11 +61,24 @@
         <div class="two-col">
           <mat-form-field appearance="outline">
             <mat-label>Phone</mat-label>
-            <input matInput formControlName="phone">
+            <input matInput formControlName="phone" type="tel" inputmode="numeric" maxlength="10"
+                   placeholder="9876543210" (input)="onPhoneInput($event)">
+            @if (form.get('phone')?.touched && form.get('phone')?.hasError('required')) {
+              <mat-error>Mobile number is required</mat-error>
+            }
+            @if (form.get('phone')?.touched && form.get('phone')?.hasError('pattern')) {
+              <mat-error>Enter a valid 10-digit mobile number</mat-error>
+            }
           </mat-form-field>
           <mat-form-field appearance="outline">
             <mat-label>Email</mat-label>
-            <input matInput formControlName="email" type="email">
+            <input matInput formControlName="email" type="email" placeholder="clinic@example.com">
+            @if (form.get('email')?.touched && form.get('email')?.hasError('required')) {
+              <mat-error>Email is required</mat-error>
+            }
+            @if (form.get('email')?.touched && form.get('email')?.hasError('email')) {
+              <mat-error>Enter a valid email address</mat-error>
+            }
           </mat-form-field>
         </div>
 

@@ -2,14 +2,23 @@ import {
   Component, OnInit, ChangeDetectionStrategy, ChangeDetectorRef, inject, Inject, signal, computed
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { ReactiveFormsModule, FormGroup, FormControl, Validators, FormsModule } from '@angular/forms';
+import { ReactiveFormsModule, FormGroup, FormControl, Validators, FormsModule, AbstractControl, ValidationErrors } from '@angular/forms';
 import { MaterialModule } from '../../../material.module';
 import { TablerIconsModule } from 'angular-tabler-icons';
 import { MatDialog, MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
 import { MatSnackBar } from '@angular/material/snack-bar';
+import { switchMap } from 'rxjs/operators';
 import { StaffService, OrgClinic } from '../../../services/staff.service';
 import { RbacAdminService, RbacUser, Role, UserPermissionsResult, PermissionDef, PermissionOverride } from '../../../core/rbac/rbac-admin.service';
 import { AuthStorageService } from '../../../auth/auth-storage.service';
+
+function optionalMinLength(min: number) {
+  return (control: AbstractControl): ValidationErrors | null => {
+    const value = String(control.value ?? '').trim();
+    if (!value) return null;
+    return value.length >= min ? null : { minlength: { requiredLength: min, actualLength: value.length } };
+  };
+}
 
 // ─── Confirmation Dialog ───────────────────────────────────────────────────────
 
@@ -65,7 +74,7 @@ export class UserConfirmDialog {
 
         <mat-form-field appearance="outline" class="full-width">
           <mat-label>Role</mat-label>
-          <mat-select formControlName="role_id">
+          <mat-select formControlName="role_id" [compareWith]="compareRoleIds">
             <mat-option *ngFor="let r of roles" [value]="r.id">{{ r.name }}</mat-option>
           </mat-select>
           <mat-error *ngIf="form.get('role_id')?.hasError('required')">Required</mat-error>
@@ -77,14 +86,23 @@ export class UserConfirmDialog {
           <mat-hint>Printed below the doctor's name on prescriptions</mat-hint>
         </mat-form-field>
 
-        @if (!data?.id) {
-          <mat-form-field appearance="outline" class="full-width">
-            <mat-label>Temporary Password</mat-label>
-            <input matInput formControlName="password" type="password">
+        <mat-form-field appearance="outline" class="full-width">
+          <mat-label>{{ data?.id ? 'New Password' : 'Temporary Password' }}</mat-label>
+          <input matInput formControlName="password" [type]="hidePassword ? 'password' : 'text'"
+                 [placeholder]="data?.id ? 'Leave blank to keep current password' : ''">
+          <button mat-icon-button matSuffix type="button"
+                  (click)="hidePassword = !hidePassword"
+                  [attr.aria-label]="hidePassword ? 'Show password' : 'Hide password'">
+            <mat-icon>{{ hidePassword ? 'visibility_off' : 'visibility' }}</mat-icon>
+          </button>
+          @if (!data?.id) {
             <mat-error *ngIf="form.get('password')?.hasError('required')">Required</mat-error>
-            <mat-error *ngIf="form.get('password')?.hasError('minlength')">Minimum 8 characters</mat-error>
-          </mat-form-field>
-        }
+          }
+          <mat-error *ngIf="form.get('password')?.hasError('minlength')">Minimum 8 characters</mat-error>
+          @if (data?.id) {
+            <mat-hint>Leave blank to keep the current password</mat-hint>
+          }
+        </mat-form-field>
 
         <mat-slide-toggle formControlName="is_active" color="primary">Active</mat-slide-toggle>
       </form>
@@ -110,6 +128,7 @@ export class UserFormDialog implements OnInit {
   private snack = inject(MatSnackBar);
 
   saving = false;
+  hidePassword = true;
   roles: Role[] = [];
 
   // Map RBAC code back to legacy role for backend POST/PUT
@@ -126,23 +145,54 @@ export class UserFormDialog implements OnInit {
     first_name:  new FormControl(this.data?.first_name ?? '', [Validators.required]),
     last_name:   new FormControl(this.data?.last_name ?? ''),
     email:       new FormControl(this.data?.email ?? '', [Validators.required, Validators.email]),
-    role_id:     new FormControl(this.data?.role_id ?? '', [Validators.required]),
+    role_id:     new FormControl('', [Validators.required]),
     designation: new FormControl((this.data as any)?.designation ?? '', [Validators.maxLength(100)]),
-    password:    new FormControl('', this.data?.id ? [] : [Validators.required, Validators.minLength(8)]),
+    password:    new FormControl('', this.data?.id ? [optionalMinLength(8)] : [Validators.required, Validators.minLength(8)]),
     is_active:   new FormControl(this.data?.is_active ?? true),
   });
+
+  compareRoleIds = (a: string | null | undefined, b: string | null | undefined): boolean =>
+    a != null && b != null && String(a) === String(b);
 
   ngOnInit() {
     this.rbacSvc.getRoles().subscribe({
       next: (r) => {
         this.roles = r.roles;
-        // Pre-select role for edit
-        if (this.data?.role_id) {
-          this.form.patchValue({ role_id: this.data.role_id });
+        const roleId = this.resolveRoleId(this.data, r.roles);
+        if (roleId) {
+          this.form.patchValue({ role_id: roleId });
         }
       },
       error: () => this.snack.open('Failed to load roles', 'Close', { duration: 3000 }),
     });
+  }
+
+  /** Match current user to a role option (by id, RBAC code, or legacy role). */
+  private resolveRoleId(user: (RbacUser & { legacy_role?: string }) | null, roles: Role[]): string {
+    if (!user || !roles.length) return '';
+
+    if (user.role_id) {
+      const byId = roles.find(r => String(r.id) === String(user.role_id));
+      if (byId) return String(byId.id);
+    }
+
+    if (user.role_code) {
+      const byCode = roles.find(r => r.code === user.role_code);
+      if (byCode) return String(byCode.id);
+    }
+
+    const legacyToCode: Record<string, string> = {
+      admin: 'clinic_admin',
+      doctor: 'doctor',
+      receptionist: 'reception',
+    };
+    const legacyCode = legacyToCode[user.legacy_role];
+    if (legacyCode) {
+      const byLegacy = roles.find(r => r.code === legacyCode);
+      if (byLegacy) return String(byLegacy.id);
+    }
+
+    return '';
   }
 
   save() {
@@ -150,13 +200,21 @@ export class UserFormDialog implements OnInit {
     this.saving = true;
 
     const { first_name, last_name, email, role_id, designation, password, is_active } = this.form.value;
-    const selectedRole = this.roles.find(r => r.id === role_id);
-    const legacyRole = selectedRole ? (this.rbacToLegacy[selectedRole.code] || 'receptionist') : 'receptionist';
+    const selectedRole = this.roles.find(r => String(r.id) === String(role_id));
+    if (!selectedRole) {
+      this.saving = false;
+      this.snack.open('Please select a valid role', 'Close', { duration: 4000 });
+      return;
+    }
+
+    const legacyRole = this.rbacToLegacy[selectedRole.code] || 'receptionist';
 
     if (this.data?.id) {
-      // Edit
       const payload: any = { first_name, last_name, email, role: legacyRole, designation, is_active };
-      this.staffSvc.update(this.data.id, payload).subscribe({
+      if (password?.trim()) payload.password = password.trim();
+      this.staffSvc.update(this.data.id, payload).pipe(
+        switchMap(() => this.rbacSvc.assignRole(this.data!.id, selectedRole.id, selectedRole.code)),
+      ).subscribe({
         next: () => {
           this.saving = false;
           this.dialogRef.close(true);
@@ -168,9 +226,10 @@ export class UserFormDialog implements OnInit {
         },
       });
     } else {
-      // Create
       const payload: any = { first_name, last_name, email, role: legacyRole, designation, password, is_active };
-      this.staffSvc.create(payload).subscribe({
+      this.staffSvc.create(payload).pipe(
+        switchMap(res => this.rbacSvc.assignRole(res.user.id, selectedRole.id, selectedRole.code)),
+      ).subscribe({
         next: () => {
           this.saving = false;
           this.dialogRef.close(true);

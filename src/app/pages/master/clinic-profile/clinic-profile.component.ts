@@ -8,6 +8,7 @@ import { TablerIconsModule } from 'angular-tabler-icons';
 import { ToastService } from '../../../services/toast.service';
 import { ClinicsService } from '../../../services/clinics.service';
 import { Clinic } from '../../../models/clinic.model';
+import { clinicEmailValidators, clinicPhoneValidators, normalizeIndianMobile } from '../../../utils/form-validators';
 
 const ACCEPTED_TYPES = ['image/jpeg', 'image/png', 'image/webp'];
 const MAX_BYTES = 2 * 1024 * 1024;
@@ -33,8 +34,8 @@ export class ClinicProfileComponent implements OnInit {
 
   form = new FormGroup({
     name:    new FormControl('', [Validators.required]),
-    phone:   new FormControl('', [Validators.required]),
-    email:   new FormControl('', [Validators.required, Validators.email]),
+    phone:   new FormControl('', clinicPhoneValidators),
+    email:   new FormControl('', clinicEmailValidators),
     address: new FormControl('', [Validators.required]),
     city:    new FormControl('', [Validators.required]),
     state:   new FormControl(''),
@@ -43,7 +44,10 @@ export class ClinicProfileComponent implements OnInit {
   ngOnInit() {
     this.svc.get().subscribe({
       next: (r) => {
-        this.form.patchValue(r.clinic);
+        this.form.patchValue({
+          ...r.clinic,
+          phone: normalizeIndianMobile(r.clinic.phone),
+        });
         this.logoUrl.set(r.clinic.logo_url ?? null);
         this.loading.set(false);
       },
@@ -52,6 +56,7 @@ export class ClinicProfileComponent implements OnInit {
   }
 
   save() {
+    this.form.markAllAsTouched();
     if (this.form.invalid) return;
     this.saving.set(true);
     this.svc.updateActive(this.form.value as Partial<Clinic>).subscribe({
@@ -93,6 +98,15 @@ export class ClinicProfileComponent implements OnInit {
         this.logoUploading.set(false);
       },
     });
+  }
+
+  onPhoneInput(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    const digits = normalizeIndianMobile(input.value);
+    if (input.value !== digits) {
+      this.form.get('phone')!.setValue(digits, { emitEvent: false });
+      input.value = digits;
+    }
   }
 
   removeLogo() {

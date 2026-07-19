@@ -282,9 +282,30 @@
             <!-- Item -->
             <mat-form-field appearance="outline" class="full">
               <mat-label>Item</mat-label>
-              <mat-select formControlName="item_id" (selectionChange)="onItemSelected($event.value)">
-                @for (item of items(); track item.id) {
-                  <mat-option [value]="item.id">{{ item.name }}</mat-option>
+              <mat-select formControlName="item_id"
+                          (selectionChange)="onItemSelected($event.value)"
+                          (openedChange)="onReceiveItemSelectOpened($event)">
+                <mat-option class="select-search-option" disabled>
+                  <div class="select-search-inner" (click)="$event.stopPropagation()">
+                    <mat-icon>search</mat-icon>
+                    <input #receiveItemSearchInput class="select-search-input"
+                           type="text"
+                           placeholder="Search items…"
+                           [value]="receiveItemSearch()"
+                           (input)="receiveItemSearch.set($any($event.target).value)"
+                           (keydown)="$event.stopPropagation()">
+                  </div>
+                </mat-option>
+                @for (item of filteredReceiveItems(); track item.id) {
+                  <mat-option [value]="item.id">
+                    {{ item.name }}
+                    @if (item.generic_name) {
+                      <span class="select-option-sub"> — {{ item.generic_name }}</span>
+                    }
+                  </mat-option>
+                }
+                @if (filteredReceiveItems().length === 0) {
+                  <mat-option disabled>No items match your search</mat-option>
                 }
               </mat-select>
               <mat-error>Select an item</mat-error>
